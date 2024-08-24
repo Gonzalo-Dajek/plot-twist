@@ -1,4 +1,4 @@
-const assert = require('assert');
+const assert = require("assert");
 // TODO:
 //  -- https://sinonjs.org/
 //  -- also research TDD syntax
@@ -6,11 +6,11 @@ const assert = require('assert');
 //  -- https://sinonjs.org/
 //  -- https://javascript.info/testing-mocha
 
-describe('Array', function () {
-  describe('.indexOf()', function () {
-    it('should return -1 when the value is not present', function () {
-      assert.equal([1, 2, 3].indexOf(4), -1);
-      assert.equal([1,2].indexOf(2), 1);
+describe("Array", function () {
+    describe(".indexOf()", function () {
+        it("should return -1 when the value is not present", function () {
+            assert.equal([1, 2, 3].indexOf(4), -1);
+            assert.equal([1, 2].indexOf(2), 1);
+        });
     });
-  });
 });
