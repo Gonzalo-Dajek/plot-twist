@@ -9,7 +9,7 @@
   "license": "",
   "author": "",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "mocha",
     "start": "webpack serve --config webpack.config.dev.js",
     "build": "webpack --config webpack.config.prod.js"
   },
@@ -20,5 +20,10 @@
     "webpack-cli": "^5.1.4",
     "webpack-dev-server": "^5.0.4",
     "webpack-merge": "^5.10.0"
+  },
+  "dependencies": {
+    "chai": "^5.1.1",
+    "mocha": "^10.7.3",
+    "sinon": "^18.0.0"
   }
 }
