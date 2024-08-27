@@ -1,4 +1,5 @@
-const assert = require("assert");
+// const assert = require("assert");
+import {assert} from 'chai';
 // TODO:
 //  -- https://sinonjs.org/
 //  -- also research TDD syntax

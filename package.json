@@ -1,4 +1,5 @@
 {
+    "type": "module",
     "name": "plot-twist",
     "version": "0.0.1",
     "description": "PlotTwist is a tool for visualizing complex data interactively with multi-view support.",
