@@ -1,7 +1,7 @@
 import { parse } from "csv-parse/browser/esm/sync";
 
 const dataStore = {
-    raw_records: [],
+    rawRecords: [],
 };
 
 const tableLookUp = {};
@@ -21,12 +21,12 @@ document
                 const csvContent = e.target.result;
 
                 // parse CSV
-                dataStore.raw_records = parse(csvContent, {
+                dataStore.rawRecords = parse(csvContent, {
                     columns: true,
                     skip_empty_lines: true,
                 });
 
-                console.log(dataStore.raw_records); // CONSOLE_LOG
+                console.log(dataStore.rawRecords); // CONSOLE_LOG
 
                 // on success create table look up
                 createTableLookUp();
@@ -45,19 +45,19 @@ document
     });
 
 function createTableLookUp() {
-    let n = dataStore.raw_records.length;
+    let n = dataStore.rawRecords.length;
     if (n === 0) {
         return;
     }
 
-    for (let row in dataStore.raw_records[0]) {
+    for (let row in dataStore.rawRecords[0]) {
         tableLookUp[row] = [];
 
         for (let i = 0; i < n; i++) {
-            let record_i = dataStore.raw_records[i];
+            let record_i = dataStore.rawRecords[i];
             tableLookUp[row].push([record_i[row], i]);
         }
 
-        tableLookUp[row].sort();
+        // tableLookUp[row].sort(); // TODO: add binary search
     }
 }
