@@ -34,7 +34,7 @@ document
 
                 initializeDropdown(optionsArr, "dropdown-scatter-x-axis");
                 initializeDropdown(optionsArr, "dropdown-scatter-y-axis");
-                initializeDropdown(optionsArr, "dropdown-histogram")
+                initializeDropdown(optionsArr, "dropdown-histogram");
                 console.log("optionsArr:");
                 console.log(optionsArr); // CONSOLE_LOG
             };
@@ -48,7 +48,6 @@ document
             reader.readAsText(file);
         }
     });
-
 
 function initializeDropdown(optionsArray, dropdownId) {
     const dropdown = document.getElementById(dropdownId);
@@ -65,8 +64,12 @@ function initializeDropdown(optionsArray, dropdownId) {
 document
     .getElementById("create-scatter-plot-btn")
     .addEventListener("click", () => {
-        const selectedX = document.getElementById("dropdown-scatter-x-axis").value;
-        const selectedY = document.getElementById("dropdown-scatter-y-axis").value;
+        const selectedX = document.getElementById(
+            "dropdown-scatter-x-axis"
+        ).value;
+        const selectedY = document.getElementById(
+            "dropdown-scatter-y-axis"
+        ).value;
 
         createScatterPlot(selectedX, selectedY);
     });
@@ -76,23 +79,23 @@ function createScatterPlot(selectedX, selectedY) {
     let fields = pc.fields();
 
     // Create a new div for the new plot
-    const newPlotDiv = document.createElement('div');
+    const newPlotDiv = document.createElement("div");
     newPlotDiv.id = `plot${id}`;
-    newPlotDiv.style.width = '50%';
-    newPlotDiv.style.height = '500px';
-    document.getElementById('plotContainer').appendChild(newPlotDiv);
+    newPlotDiv.style.width = "50%";
+    newPlotDiv.style.height = "500px";
+    document.getElementById("plotContainer").appendChild(newPlotDiv);
 
     const trace = {
-        x: fields[selectedX].map(e => e[0]),  // X-axis data
-        y: fields[selectedY].map(e => e[0]),  // Y-axis data
-        mode: 'markers',     // Scatter plot mode
-        type: 'scatter'      // Plot type
+        x: fields[selectedX].map((e) => e[0]), // X-axis data
+        y: fields[selectedY].map((e) => e[0]), // Y-axis data
+        mode: "markers", // Scatter plot mode
+        type: "scatter", // Plot type
     };
 
     const layout = {
-        title: 'Scatter Plot',
+        title: "Scatter Plot",
         xaxis: { title: selectedX },
-        yaxis: { title: selectedY }
+        yaxis: { title: selectedY },
     };
 
     const data = [trace];
@@ -101,13 +104,17 @@ function createScatterPlot(selectedX, selectedY) {
     Plotly.newPlot(newPlotDiv.id, data, layout);
 
     // event listener for brushing
-    document.getElementById(newPlotDiv.id).on('plotly_selected', function(eventData) {
-        const selectedPointsIndexes = eventData.points.map(p => p.pointIndex);
+    document
+        .getElementById(newPlotDiv.id)
+        .on("plotly_selected", function (eventData) {
+            const selectedPointsIndexes = eventData.points.map(
+                (p) => p.pointIndex
+            );
 
-        console.log("selectedPointsIndexes:");
-        console.log(selectedPointsIndexes);
-        pc.updatePlotsView(id, selectedPointsIndexes);
-    });
+            console.log("selectedPointsIndexes:");
+            console.log(selectedPointsIndexes);
+            pc.updatePlotsView(id, selectedPointsIndexes);
+        });
 
     // document.getElementById(newPlotDiv.id).on('plotly_selecting', function(eventData) {
     //     const selectedPointIndexes = eventData.points.map(p => p.pointIndex);
@@ -118,9 +125,20 @@ function createScatterPlot(selectedX, selectedY) {
     // });
 
     // TODO: add update plot behaviour
-    pc.addPlot(id, comoActualizarPlot);
+    pc.addPlot(id, function comoActualizarPlot(changes){
+        let plotData = document.getElementById(newPlotDiv.id).data;
+        const colors = plotData[0].marker.color;
+        changes.changeToSelected.forEach(index => {
+            colors[index] = 'red';
+        });
+        changes.changeToDeselected.forEach(index => {
+            colors[index] = 'blue';
+        });
 
-    document.getElementById(newPlotDiv.id).on('plotly_deselect', function() {
+        Plotly.restyle('plot', 'marker.color', [colors]);
+    });
+
+    document.getElementById(newPlotDiv.id).on("plotly_deselect", function () {
         console.log("plotly_deselect");
     });
 }
@@ -129,11 +147,10 @@ function createScatterPlot(selectedX, selectedY) {
 document
     .getElementById("create-histogram-plot-btn")
     .addEventListener("click", () => {
-        const selectedField = document.getElementById("dropdown-histogram").value;
+        const selectedField =
+            document.getElementById("dropdown-histogram").value;
 
         createHistogram(selectedField);
     });
 
-function createHistogram(selectedField) {
-
-}
+function createHistogram(selectedField) {}
