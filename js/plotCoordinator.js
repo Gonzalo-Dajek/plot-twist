@@ -4,21 +4,22 @@ export class PlotCoordinator {
     _fields = {};
     // _fields.Medal = [["gold",0], ["silver",1], ... ]
     _plots = new Map();
-    // _plots[id] = {lastIndexesSelected: [2,1,5,7],
-    //               plotUpdateFunction: howToUpdatePlot}
+    // _plots.get(id) = {lastIndexesSelected: [2,1,5,7],
+    //                   plotUpdateFunction: howToUpdatePlot}
     _idCounter = 0;
-    _entriesSelectCounter = [];
+    _entriesSelectCounter;
 
-    constructor() {}
+    constructor() {
+    }
 
     addPlot(id, updateFunction) {
-        this._plots[id] = {
+        this._plots.set(id, {
             lastIndexesSelected: [],
             plotUpdateFunction: updateFunction,
-        };
+        })
 
         for (let i = 0; i < this._entries.length; i++) {
-            this._plots[id].lastIndexesSelected.push(i);
+            this._plots.get(id).lastIndexesSelected.push(i);
         }
 
         let n = this._entriesSelectCounter.length;
@@ -28,7 +29,7 @@ export class PlotCoordinator {
     }
 
     removePlot(id) {
-        let indexesSelected = this._plots[id].lastIndexesSelected;
+        let indexesSelected = this._plots.get(id).lastIndexesSelected;
         for (let i = 0; i < indexesSelected.length; i++) {
             this._entriesSelectCounter[indexesSelected[i]]--;
         }
@@ -37,13 +38,13 @@ export class PlotCoordinator {
     }
 
     updatePlotsView(id, selectedEntries) {
-        let set1 = new Set(this._plots[id].lastIndexesSelected);
+        let set1 = new Set(this._plots.get(id).lastIndexesSelected);
         let set2 = new Set(selectedEntries);
 
-        const newlySelectedIndexes = [...set1].filter(
-            (item) => !set2.has(item)
+        const newlySelectedIndexes = [...set2].filter(
+            (item) => !set1.has(item),
         );
-        const deselectedIndexes = [...set2].filter((item) => !set1.has(item));
+        const deselectedIndexes = [...set1].filter((item) => !set2.has(item));
 
         let changes = {
             changeToSelected: [],
@@ -64,11 +65,23 @@ export class PlotCoordinator {
             }
         }
 
-        for (let plot of this._plots) {
-            plot.plotUpdateFunction(changes); // TODO: ??? queda ser definida para scatter plot en la linea 120
+        let fullColorList = [];
+        let n = this._entriesSelectCounter.length;
+        fullColorList.length = n;
+        for (let i = 0; i <n; i++) {
+            if (this._entriesSelectCounter[i] === this._plots.size){
+                fullColorList[i]='blue';
+            }else{
+                fullColorList[i]='red';
+            }
         }
 
-        this._plots[id].lastIndexesSelected = selectedEntries;
+        for (let plot of this._plots.values()) {
+            console.log("PlotUpdateFunction" + id)
+            plot.plotUpdateFunction(changes, fullColorList);
+        }
+
+        this._plots.get(id).lastIndexesSelected = selectedEntries;
     }
 
     newPlotId() {
@@ -87,9 +100,9 @@ export class PlotCoordinator {
             return;
         }
 
-        this._entriesSelectCounter.length = n;
+        this._entriesSelectCounter= Array(n);
         for (let i = 0; i < n; i++) {
-            this._entriesSelectCounter = 0;
+            this._entriesSelectCounter[i] = 0;
         }
 
         for (let field in entries[0]) {
@@ -100,7 +113,7 @@ export class PlotCoordinator {
                 this._fields[field].push([entry_i[field], i]);
             }
         }
-        console.log("pc.fields:");
-        console.log(this._fields);
+        // console.log("pc.fields:");
+        // console.log(this._fields);
     }
 }

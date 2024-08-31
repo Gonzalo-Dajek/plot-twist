@@ -72,6 +72,7 @@ document
         ).value;
 
         createScatterPlot(selectedX, selectedY);
+
     });
 
 function createScatterPlot(selectedX, selectedY) {
@@ -103,18 +104,20 @@ function createScatterPlot(selectedX, selectedY) {
     // Render the plot in the newly created div
     Plotly.newPlot(newPlotDiv.id, data, layout);
 
+    let handleSelect = function (eventData) {
+        const selectedPointsIndexes = eventData.points.map(
+            (p) => p.pointIndex
+        );
+
+        console.log("selectedPointsIndexes:");
+        console.log(selectedPointsIndexes);
+        pc.updatePlotsView(id, selectedPointsIndexes);
+    };
+
     // event listener for brushing
     document
         .getElementById(newPlotDiv.id)
-        .on("plotly_selected", function (eventData) {
-            const selectedPointsIndexes = eventData.points.map(
-                (p) => p.pointIndex
-            );
-
-            console.log("selectedPointsIndexes:");
-            console.log(selectedPointsIndexes);
-            pc.updatePlotsView(id, selectedPointsIndexes);
-        });
+        .on("plotly_selecting", handleSelect);
 
     // document.getElementById(newPlotDiv.id).on('plotly_selecting', function(eventData) {
     //     const selectedPointIndexes = eventData.points.map(p => p.pointIndex);
@@ -125,22 +128,14 @@ function createScatterPlot(selectedX, selectedY) {
     // });
 
     // TODO: add update plot behaviour
-    pc.addPlot(id, function comoActualizarPlot(changes){
-        let plotData = document.getElementById(newPlotDiv.id).data;
-        const colors = plotData[0].marker.color;
-        changes.changeToSelected.forEach(index => {
-            colors[index] = 'red';
-        });
-        changes.changeToDeselected.forEach(index => {
-            colors[index] = 'blue';
-        });
-
-        Plotly.restyle('plot', 'marker.color', [colors]);
+    pc.addPlot(id, function comoActualizarPlot(changes, colorList) {
+        // let plotData = document.getElementById(newPlotDiv.id).data;
+        Plotly.restyle(newPlotDiv.id, "marker.color", [colorList]);
     });
 
-    document.getElementById(newPlotDiv.id).on("plotly_deselect", function () {
-        console.log("plotly_deselect");
-    });
+    // document.getElementById(newPlotDiv.id).on("plotly_deselect", function () {
+    //     console.log("plotly_deselect");
+    // });
 }
 
 // HISTOGRAM
