@@ -1,41 +1,46 @@
 import { parse } from "csv-parse/browser/esm/sync";
+import { PlotCoordinator } from "./js/plotCoordinator.js";
+import * as Plotly from "plotly.js-dist";
 
-const dataStore = {
-    rawRecords: [],
-};
+let pc = new PlotCoordinator();
 
-const tableLookUp = {};
-
+// HTML
 document
     .getElementById("csvFileInput")
     .addEventListener("change", function (event) {
-        const file = event.target.files[0]; // Get the selected file
+        // Get the selected file
+        const file = event.target.files[0];
         if (file) {
-            // TODO: add multiple csv functionality
-            // TODO: Wipe dataStore
-
             const reader = new FileReader();
-
-            // When the file is loaded, read it as text
             reader.onload = function (e) {
-                const csvContent = e.target.result;
+                const csvContent = e.target.result.toString();
 
                 // parse CSV
-                dataStore.rawRecords = parse(csvContent, {
+                let dataSet = parse(csvContent, {
                     columns: true,
                     skip_empty_lines: true,
                 });
 
-                console.log(dataStore.rawRecords); // CONSOLE_LOG
+                console.log("csv dataset parse:");
+                console.log(dataSet); // CONSOLE_LOG
 
-                // on success create table look up
-                createTableLookUp();
-                console.log(tableLookUp);
+                // On success:
+                pc.init(dataSet);
+                let fields = pc.fields();
+                let optionsArr = [];
+                for (let key in fields) {
+                    optionsArr.push(key);
+                }
+
+                initializeDropdown(optionsArr, "dropdown-scatter-x-axis");
+                initializeDropdown(optionsArr, "dropdown-scatter-y-axis");
+                initializeDropdown(optionsArr, "dropdown-histogram")
+                console.log("optionsArr:");
+                console.log(optionsArr); // CONSOLE_LOG
             };
 
-            // TODO: add ui feedback for error
             reader.onerror = function () {
-                // TODO: handle error?
+                // TODO: add ui feedback for error / handle error
                 console.error("Error reading the file");
             };
 
@@ -44,20 +49,91 @@ document
         }
     });
 
-function createTableLookUp() {
-    let n = dataStore.rawRecords.length;
-    if (n === 0) {
-        return;
-    }
 
-    for (let row in dataStore.rawRecords[0]) {
-        tableLookUp[row] = [];
+function initializeDropdown(optionsArray, dropdownId) {
+    const dropdown = document.getElementById(dropdownId);
 
-        for (let i = 0; i < n; i++) {
-            let record_i = dataStore.rawRecords[i];
-            tableLookUp[row].push([record_i[row], i]);
-        }
+    optionsArray.forEach((option) => {
+        const opt = document.createElement("option");
+        opt.value = option;
+        opt.textContent = option;
+        dropdown.appendChild(opt);
+    });
+}
 
-        // tableLookUp[row].sort(); // TODO: add binary search
-    }
+// SCATTER PLOT
+document
+    .getElementById("create-scatter-plot-btn")
+    .addEventListener("click", () => {
+        const selectedX = document.getElementById("dropdown-scatter-x-axis").value;
+        const selectedY = document.getElementById("dropdown-scatter-y-axis").value;
+
+        createScatterPlot(selectedX, selectedY);
+    });
+
+function createScatterPlot(selectedX, selectedY) {
+    let id = pc.newPlotId(); // Increment plot count
+    let fields = pc.fields();
+
+    // Create a new div for the new plot
+    const newPlotDiv = document.createElement('div');
+    newPlotDiv.id = `plot${id}`;
+    newPlotDiv.style.width = '50%';
+    newPlotDiv.style.height = '500px';
+    document.getElementById('plotContainer').appendChild(newPlotDiv);
+
+    const trace = {
+        x: fields[selectedX].map(e => e[0]),  // X-axis data
+        y: fields[selectedY].map(e => e[0]),  // Y-axis data
+        mode: 'markers',     // Scatter plot mode
+        type: 'scatter'      // Plot type
+    };
+
+    const layout = {
+        title: 'Scatter Plot',
+        xaxis: { title: selectedX },
+        yaxis: { title: selectedY }
+    };
+
+    const data = [trace];
+
+    // Render the plot in the newly created div
+    Plotly.newPlot(newPlotDiv.id, data, layout);
+
+    // event listener for brushing
+    document.getElementById(newPlotDiv.id).on('plotly_selected', function(eventData) {
+        const selectedPointsIndexes = eventData.points.map(p => p.pointIndex);
+
+        console.log("selectedPointsIndexes:");
+        console.log(selectedPointsIndexes);
+        pc.updatePlotsView(id, selectedPointsIndexes);
+    });
+
+    // document.getElementById(newPlotDiv.id).on('plotly_selecting', function(eventData) {
+    //     const selectedPointIndexes = eventData.points.map(p => p.pointIndex);
+    //
+    //     // console.log("selectingPointIndexes:");
+    //     // console.log(selectedPointIndexes);
+    //     updatePlots(selectedPointIndexes);
+    // });
+
+    // TODO: add update plot behaviour
+    pc.addPlot(id, comoActualizarPlot);
+
+    document.getElementById(newPlotDiv.id).on('plotly_deselect', function() {
+        console.log("plotly_deselect");
+    });
+}
+
+// HISTOGRAM
+document
+    .getElementById("create-histogram-plot-btn")
+    .addEventListener("click", () => {
+        const selectedField = document.getElementById("dropdown-histogram").value;
+
+        createHistogram(selectedField);
+    });
+
+function createHistogram(selectedField) {
+
 }

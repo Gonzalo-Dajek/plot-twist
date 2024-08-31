@@ -1,6 +1,6 @@
 import { assert } from "chai";
 import { test, suite } from "mocha";
-import { helloWorld } from "../js/plot.js";
+import { helloWorld } from "../js/plotUtils.js";
 
 suite("Array", function () {
     suite("#indexOf()", function () {
