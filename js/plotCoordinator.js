@@ -9,14 +9,13 @@ export class PlotCoordinator {
     _idCounter = 0;
     _entriesSelectCounter;
 
-    constructor() {
-    }
+    constructor() {}
 
     addPlot(id, updateFunction) {
         this._plots.set(id, {
             lastIndexesSelected: [],
             plotUpdateFunction: updateFunction,
-        })
+        });
 
         for (let i = 0; i < this._entries.length; i++) {
             this._plots.get(id).lastIndexesSelected.push(i);
@@ -42,7 +41,7 @@ export class PlotCoordinator {
         let set2 = new Set(selectedEntries);
 
         const newlySelectedIndexes = [...set2].filter(
-            (item) => !set1.has(item),
+            (item) => !set1.has(item)
         );
         const deselectedIndexes = [...set1].filter((item) => !set2.has(item));
 
@@ -77,7 +76,7 @@ export class PlotCoordinator {
         }
 
         for (let plot of this._plots.values()) {
-            console.log("PlotUpdateFunction" + id)
+            console.log("PlotUpdateFunction" + id);
             plot.plotUpdateFunction(changes, fullColorList);
         }
 
@@ -100,7 +99,7 @@ export class PlotCoordinator {
             return;
         }
 
-        this._entriesSelectCounter= Array(n);
+        this._entriesSelectCounter = Array(n);
         for (let i = 0; i < n; i++) {
             this._entriesSelectCounter[i] = 0;
         }

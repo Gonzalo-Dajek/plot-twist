@@ -82,8 +82,8 @@ function createScatterPlot(selectedX, selectedY) {
     // Create a new div for the new plot
     const newPlotDiv = document.createElement("div");
     newPlotDiv.id = `plot${id}`;
-    newPlotDiv.style.width = "50%";
-    newPlotDiv.style.height = "500px";
+    newPlotDiv.style.width = "33%";
+    newPlotDiv.style.height = "300px";
     document.getElementById("plotContainer").appendChild(newPlotDiv);
 
     const trace = {
@@ -105,6 +105,7 @@ function createScatterPlot(selectedX, selectedY) {
     Plotly.newPlot(newPlotDiv.id, data, layout);
 
     let handleSelect = function (eventData) {
+        // eventData.event.preventDefault();
         const selectedPointsIndexes = eventData.points.map(
             (p) => p.pointIndex
         );
@@ -119,6 +120,35 @@ function createScatterPlot(selectedX, selectedY) {
         .getElementById(newPlotDiv.id)
         .on("plotly_selecting", handleSelect);
 
+    // document
+    //     .getElementById(newPlotDiv.id)
+    //     .on("plotly_selected", (eventData) => {
+    //     eventData.event.preventDefault();
+    // });
+    //
+    // document
+    //     .getElementById(newPlotDiv.id)
+    //     .on("plotly_deselected", (eventData) => {
+    //     eventData.event.preventDefault();
+    // });
+    //
+    // document
+    //     .getElementById(newPlotDiv.id)
+    //     .on("plotly_hover", (eventData) => {
+    //         eventData.event.preventDefault();
+    // });
+    //
+    // document
+    //     .getElementById(newPlotDiv.id)
+    //     .on("plotly_unhover", (eventData) => {
+    //         eventData.event.preventDefault();
+    //     });
+    //
+    // document
+    //     .getElementById(newPlotDiv.id)
+    //     .on("plotly_click", (eventData) => {
+    //         eventData.event.preventDefault();
+    //     });
     // document.getElementById(newPlotDiv.id).on('plotly_selecting', function(eventData) {
     //     const selectedPointIndexes = eventData.points.map(p => p.pointIndex);
     //
