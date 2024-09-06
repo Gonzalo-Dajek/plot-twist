@@ -7,7 +7,7 @@
     flex-wrap: wrap;
     justify-content: flex-start;
 }
-.plot{
+.plot {
     width: 300px;
     height: 300px;
     /*position: relative; !* Ensure positioning for child elements *!*/
