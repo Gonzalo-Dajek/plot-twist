@@ -11,6 +11,10 @@ export class PlotCoordinator {
 
     constructor() {}
 
+    newPlotId() {
+        return ++this._idCounter;
+    }
+
     addPlot(id, updateFunction) {
         this._plots.set(id, {
             lastIndexesSelected: [],
@@ -36,59 +40,39 @@ export class PlotCoordinator {
         this._plots.delete(id);
     }
 
-    updatePlotsView(id, selectedEntries) {
-        let set1 = new Set(this._plots.get(id).lastIndexesSelected);
-        let set2 = new Set(selectedEntries);
+    updatePlotsView(id, newlySelected) {
+        let lastSelected = this._plots.get(id).lastIndexesSelected;
 
-        const newlySelectedIndexes = [...set2].filter(
-            (item) => !set1.has(item)
-        );
-        const deselectedIndexes = [...set1].filter((item) => !set2.has(item));
-
-        let changes = {
-            changeToSelected: [],
-            changeToDeselected: [],
-        };
-
-        for (let index of newlySelectedIndexes) {
-            let counter = ++this._entriesSelectCounter[index];
-            if (counter === this._plots.size) {
-                changes.changeToSelected.push(index);
-            }
+        for (let index of lastSelected) {
+            this._entriesSelectCounter[index]--;
         }
-
-        for (let index of deselectedIndexes) {
-            let counter = --this._entriesSelectCounter[index];
-            if (counter < this._plots.size) {
-                changes.changeToDeselected.push(index);
-            }
-        }
-
-        let fullColorList = [];
-        let n = this._entriesSelectCounter.length;
-        fullColorList.length = n;
-        for (let i = 0; i <n; i++) {
-            if (this._entriesSelectCounter[i] === this._plots.size){
-                fullColorList[i]='blue';
-            }else{
-                fullColorList[i]='red';
-            }
+        for (let index of newlySelected) {
+            this._entriesSelectCounter[index]++;
         }
 
         for (let plot of this._plots.values()) {
-            console.log("PlotUpdateFunction" + id);
-            plot.plotUpdateFunction(changes, fullColorList);
+            // console.log("PlotUpdateFunction" + id);
+            plot.plotUpdateFunction();
         }
 
-        this._plots.get(id).lastIndexesSelected = selectedEntries;
-    }
-
-    newPlotId() {
-        return ++this._idCounter;
+        this._plots.get(id).lastIndexesSelected = newlySelected;
     }
 
     fields() {
-        return this._fields;
+        let fields = [];
+        for (let key in this._fields) {
+            fields.push(key);
+        }
+
+        return fields;
+    }
+
+    fieldEntries(field) {
+        return this._fields[field];
+    }
+
+    isSelected(entry) {
+        return this._entriesSelectCounter[entry] === this._plots.size;
     }
 
     init(entries) {
@@ -112,7 +96,5 @@ export class PlotCoordinator {
                 this._fields[field].push([entry_i[field], i]);
             }
         }
-        // console.log("pc.fields:");
-        // console.log(this._fields);
     }
 }

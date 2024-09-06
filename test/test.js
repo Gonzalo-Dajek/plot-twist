@@ -4,8 +4,8 @@ import { suite, test } from "mocha";
 import { parse } from "csv-parse/sync";
 import { PlotCoordinator } from "../js/plotCoordinator.js";
 
-import { fileURLToPath } from 'url';
-import { dirname } from 'path';
+import { fileURLToPath } from "url";
+import { dirname } from "path";
 import * as fs from "fs";
 import * as path from "path";
 
@@ -39,25 +39,16 @@ suite("PlotCoordinator", function () {
     test("addPlots", function () {
         let pc = new PlotCoordinator();
         pc.init(data);
+        let fields = pc.fields();
+        let field1 = pc.fieldEntries(fields[0]);
+        let field2 = pc.fieldEntries(fields[1]);
+        let field3 = pc.fieldEntries(fields[2]);
+
         let id1 = pc.newPlotId();
         let id2 = pc.newPlotId();
 
-        function logUpdate(changes, fullColorList){
-            console.log("Changes: \n");
-            console.log(changes);
-            console.log("fullColorList: \n");
-            console.log(fullColorList);
-        }
-        pc.addPlot(id1, logUpdate);
-        pc.addPlot(id2, logUpdate)
+        pc.addPlot()
 
-        console.log("id1: " + id1 + "\n_plot[id1]:");
-        console.log(pc._plots[id1]);
-
-        console.log("id2: " + id2 + "\n_plot[id2]:");
-        console.log(pc._plots[id2]);
-
-        pc.updatePlotsView(id1, [0]);
-        assert.equal(1,1);
+        assert.equal(1, 1);
     });
 });
