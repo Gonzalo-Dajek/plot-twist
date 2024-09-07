@@ -8,26 +8,27 @@ async function loadCSV(pathToCsv) {
     });
 }
 
-let data = await loadCSV("../local_data/athlete_events_2500.csv");
+let data = await loadCSV("../local_data/athlete_events_500.csv");
 let pc = new PlotCoordinator();
 pc.init(data);
-
-let fields = ["Height", "Weight", "Age"];
-
-for (let f1 of fields) {
-    for (let f2 of fields) {
-        // createScatterPlot(f1, f2, pc.newPlotId());
-        if (f1 === f2) {
-            createHistogram(f1, pc.newPlotId());
-        } else {
-            createScatterPlot(f1, f2, pc.newPlotId());
-        }
-    }
-}
+//
+// let fields = ["Height", "Weight", "Age", "Year"];
+//
+// for (let f1 of fields) {
+//     for (let f2 of fields) {
+//         if (f1 === f2) {
+//             createHistogram(f1, pc.newPlotId());
+//         } else {
+//             createScatterPlot(f1, f2, pc.newPlotId());
+//         }
+//     }
+// }
 
 // createScatterPlot("Height", "Weight", pc.newPlotId());
 // createScatterPlot("Height", "Weight", pc.newPlotId());
 // createHistogram("Height", pc.newPlotId());
+
+// createParallelCoordinates(pc.newPlotId());
 
 function createScatterPlot(xField, yField, id) {
     d3.select("#plotsContainer")
@@ -164,7 +165,7 @@ function createScatterPlot(xField, yField, id) {
 
             d3.select(this)
                 .style("fill", isSelected ? selectedColor : unselectedColor)
-                .style("r", isSelected ? 2.5 : 1.5);
+                .style("r", isSelected ? 2.5 : 1.3);
         });
     });
 }
@@ -220,6 +221,7 @@ function createHistogram(field, id) {
         .domain([0, d3.max(bins, (d) => d.selected + d.unselected)])
         .range([height - marginBottom, marginTop]);
 
+    // add svg element
     const svg = d3
         .select(`#histogram_${id}`)
         .append("svg")
@@ -340,3 +342,117 @@ function createHistogram(field, id) {
         });
     }
 }
+
+// function createParallelCoordinates(keys, keyz, id) {
+function createParallelCoordinates(data, keys, keyz, containerId){
+    // Specify chart dimensions
+    // const containerId = "plotsContainer";
+    const width = 600;
+    const height = keys.length * 120;
+    // const height = 600
+    const marginTop = 20;
+    const marginRight = 10;
+    const marginBottom = 20;
+    const marginLeft = 10;
+
+    // Create horizontal x scale for each key
+    const x = new Map(Array.from(keys, key => [
+        key,
+        d3.scaleLinear()
+            .domain(d3.extent(data, d => Number(d[key])))
+            .range([marginLeft, width - marginRight])
+    ]));
+
+    // Create vertical y scale
+    const y = d3.scalePoint()
+        .domain(keys)
+        .range([marginTop, height - marginBottom]);
+
+    // Create color scale
+    const color = d3.scaleSequential()
+        .domain(d3.extent(data, d => Number(d[keyz])))
+        .interpolator(d3.interpolateBrBG);
+
+    // Create the SVG container
+    const svg = d3.select(`#${containerId}`)
+        .append("svg")
+        .attr("viewBox", `0 0 ${width} ${height}`)
+        .attr("width", width)
+        .attr("height", height);
+
+    // Line generator function
+    const line = d3.line()
+        .defined(([, value]) => value != null)
+        .x(([key, value]) => x.get(key)(value))
+        .y(([key]) => y(key));
+
+    // Append lines
+    const path = svg.append("g")
+        .attr("fill", "none")
+        .attr("stroke-width", 1.5)
+        .attr("stroke-opacity", 0.4)
+        .selectAll("path")
+        .data(data)
+        .join("path")
+        .attr("stroke", d => color(d[keyz]))
+        .attr("d", d => line(keys.map(key => [key, d[key]])))
+        .append("title")
+        .text(d => d.name);
+
+    // Append axes for each key
+    const axes = svg.append("g")
+        .selectAll("g")
+        .data(keys)
+        .join("g")
+        .attr("transform", d => `translate(0,${y(d)})`)
+        .each(function(d) {
+            d3.select(this).call(d3.axisBottom(x.get(d)));
+        })
+        .call(g => g.append("text")
+            .attr("x", marginLeft)
+            .attr("y", -6)
+            .attr("text-anchor", "start")
+            .attr("fill", "currentColor")
+            .text(d => d))
+        .call(g => g.selectAll("text")
+            .clone(true).lower()
+            .attr("fill", "none")
+            .attr("stroke-width", 5)
+            .attr("stroke-linejoin", "round")
+            .attr("stroke", "white"));
+
+    // Brush behavior
+    const deselectedColor = "#ddd";
+    const brushHeight = 50;
+    const brush = d3.brushX()
+        .extent([[marginLeft, -(brushHeight / 2)], [width - marginRight, brushHeight / 2]])
+        .on("start brush end", brushed);
+
+    axes.call(brush);
+
+    const selections = new Map();
+
+    function brushed(event, key) {
+        const selection = event.selection;
+        if (selection === null) selections.delete(key);
+        else selections.set(key, selection.map(x.get(key).invert));
+        const selected = [];
+        path.each(function(d) {
+            const active = Array.from(selections).every(([key, [min, max]]) => d[key] >= min && d[key] <= max);
+            d3.select(this).style("stroke", active ? color(d[keyz]) : deselectedColor);
+            if (active) {
+                d3.select(this).raise();
+                selected.push(d);
+            }
+        });
+        // Optionally: handle selected data further here
+        console.log(selected);
+    }
+}
+
+
+const keys = ["Weight", "Year", "Age"];
+const keyz = "Weight";
+
+// createParallelCoordinates(keys, keyz, pc.newPlotId());
+createParallelCoordinates(data, keys, keyz, 'plotsContainer');

@@ -1,5 +1,5 @@
 #plotsContainer {
-    width: 900px; /* Or a specific width like 800px */
+    width: 1200px; /* Or a specific width like 800px */
     /*height: 500px; !* Or a percentage of the viewport height *!*/
     border: 1px solid black; /* For visual debugging */
     display: flex;

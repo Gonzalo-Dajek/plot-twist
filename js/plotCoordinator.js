@@ -1,8 +1,6 @@
 export class PlotCoordinator {
     _entries = [];
     // _entries[index] = {Sex: Male, age: 31, ... , selectedCounter: 0}
-    _fields = {};
-    // _fields.Medal = [["gold",0], ["silver",1], ... ]
     _plots = new Map();
     // _plots.get(id) = {lastIndexesSelected: [2,1,5,7],
     //                   plotUpdateFunction: howToUpdatePlot}
@@ -29,6 +27,8 @@ export class PlotCoordinator {
         for (let i = 0; i < n; i++) {
             this._entriesSelectCounter[i]++;
         }
+
+        this.updatePlotsView(id, this._plots.get(id).lastIndexesSelected);
     }
 
     removePlot(id) {
@@ -60,15 +60,13 @@ export class PlotCoordinator {
 
     fields() {
         let fields = [];
-        for (let key in this._fields) {
-            fields.push(key);
+        if(this._entries.length>0){
+            for (let field in this._entries[0]) {
+                fields.push(field);
+            }
         }
 
         return fields;
-    }
-
-    fieldEntries(field) {
-        return this._fields[field];
     }
 
     isSelected(entry) {
@@ -86,15 +84,6 @@ export class PlotCoordinator {
         this._entriesSelectCounter = Array(n);
         for (let i = 0; i < n; i++) {
             this._entriesSelectCounter[i] = 0;
-        }
-
-        for (let field in entries[0]) {
-            this._fields[field] = [];
-
-            for (let i = 0; i < n; i++) {
-                let entry_i = entries[i];
-                this._fields[field].push([entry_i[field], i]);
-            }
         }
     }
 }
