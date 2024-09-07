@@ -24,9 +24,9 @@ pc.init(data);
 //     }
 // }
 
-// createScatterPlot("Height", "Weight", pc.newPlotId());
-// createScatterPlot("Height", "Weight", pc.newPlotId());
-// createHistogram("Height", pc.newPlotId());
+createScatterPlot("Height", "Weight", pc.newPlotId());
+createScatterPlot("Height", "Weight", pc.newPlotId());
+createHistogram("Height", pc.newPlotId());
 
 // createParallelCoordinates(pc.newPlotId());
 
@@ -344,9 +344,9 @@ function createHistogram(field, id) {
 }
 
 // function createParallelCoordinates(keys, keyz, id) {
-function createParallelCoordinates(data, keys, keyz, containerId){
+function createParallelCoordinates( keys, keyz, id) {
     // Specify chart dimensions
-    // const containerId = "plotsContainer";
+    const containerId = "plotsContainer";
     const width = 600;
     const height = keys.length * 120;
     // const height = 600
@@ -356,103 +356,136 @@ function createParallelCoordinates(data, keys, keyz, containerId){
     const marginLeft = 10;
 
     // Create horizontal x scale for each key
-    const x = new Map(Array.from(keys, key => [
-        key,
-        d3.scaleLinear()
-            .domain(d3.extent(data, d => Number(d[key])))
-            .range([marginLeft, width - marginRight])
-    ]));
+    const x = new Map(
+        Array.from(keys, (key) => [
+            key,
+            d3
+                .scaleLinear()
+                .domain(d3.extent(data, (d) => Number(d[key])))
+                .range([marginLeft, width - marginRight]),
+        ])
+    );
 
     // Create vertical y scale
-    const y = d3.scalePoint()
+    const y = d3
+        .scalePoint()
         .domain(keys)
         .range([marginTop, height - marginBottom]);
 
     // Create color scale
-    const color = d3.scaleSequential()
-        .domain(d3.extent(data, d => Number(d[keyz])))
+    const color = d3
+        .scaleSequential()
+        .domain(d3.extent(data, (d) => Number(d[keyz])))
         .interpolator(d3.interpolateBrBG);
 
     // Create the SVG container
-    const svg = d3.select(`#${containerId}`)
+    const svg = d3
+        .select(`#${containerId}`)
         .append("svg")
         .attr("viewBox", `0 0 ${width} ${height}`)
         .attr("width", width)
         .attr("height", height);
 
     // Line generator function
-    const line = d3.line()
+    const line = d3
+        .line()
         .defined(([, value]) => value != null)
         .x(([key, value]) => x.get(key)(value))
         .y(([key]) => y(key));
 
     // Append lines
-    const path = svg.append("g")
+    const path = svg
+        .append("g")
         .attr("fill", "none")
         .attr("stroke-width", 1.5)
         .attr("stroke-opacity", 0.4)
         .selectAll("path")
         .data(data)
         .join("path")
-        .attr("stroke", d => color(d[keyz]))
-        .attr("d", d => line(keys.map(key => [key, d[key]])))
+        .attr("stroke", (d) => color(d[keyz]))
+        .attr("d", (d) => line(keys.map((key) => [key, d[key]])))
         .append("title")
-        .text(d => d.name);
+        .text((d) => d.name);
 
     // Append axes for each key
-    const axes = svg.append("g")
+    const axes = svg
+        .append("g")
         .selectAll("g")
         .data(keys)
         .join("g")
-        .attr("transform", d => `translate(0,${y(d)})`)
-        .each(function(d) {
+        .attr("transform", (d) => `translate(0,${y(d)})`)
+        .each(function (d) {
             d3.select(this).call(d3.axisBottom(x.get(d)));
         })
-        .call(g => g.append("text")
-            .attr("x", marginLeft)
-            .attr("y", -6)
-            .attr("text-anchor", "start")
-            .attr("fill", "currentColor")
-            .text(d => d))
-        .call(g => g.selectAll("text")
-            .clone(true).lower()
-            .attr("fill", "none")
-            .attr("stroke-width", 5)
-            .attr("stroke-linejoin", "round")
-            .attr("stroke", "white"));
+        .call((g) =>
+            g
+                .append("text")
+                .attr("x", marginLeft)
+                .attr("y", -6)
+                .attr("text-anchor", "start")
+                .attr("fill", "currentColor")
+                .text((d) => d)
+        )
+        .call((g) =>
+            g
+                .selectAll("text")
+                .clone(true)
+                .lower()
+                .attr("fill", "none")
+                .attr("stroke-width", 5)
+                .attr("stroke-linejoin", "round")
+                .attr("stroke", "white")
+        );
 
     // Brush behavior
+    const selections = new Map();
+
+    function handleSelection(event, key) {
+        const selection = event.selection;
+        if (selection === null) {
+            selections.delete(key);
+        } else {
+            selections.set(key, selection.map(x.get(key).invert));
+        }
+        const selected = [];
+        path.each(function (d, i) {
+            const active = Array.from(selections).every(
+                ([key, [min, max]]) => d[key] >= min && d[key] <= max
+            );
+
+            if (active) {
+                d3.select(this).raise();
+                // selected.push(d); // selected entry
+                selected.push(i);
+            }
+        });
+
+        pc.updatePlotsView(id, selected);
+    }
+
+
+    const throttledHandleSelection = throttle(handleSelection, 100);
+
     const deselectedColor = "#ddd";
     const brushHeight = 50;
-    const brush = d3.brushX()
-        .extent([[marginLeft, -(brushHeight / 2)], [width - marginRight, brushHeight / 2]])
-        .on("start brush end", brushed);
+    const brush = d3
+        .brushX()
+        .extent([
+            [marginLeft, -(brushHeight / 2)],
+            [width - marginRight, brushHeight / 2],
+        ])
+        .on("start brush end", throttledHandleSelection);
 
     axes.call(brush);
 
-    const selections = new Map();
 
-    function brushed(event, key) {
-        const selection = event.selection;
-        if (selection === null) selections.delete(key);
-        else selections.set(key, selection.map(x.get(key).invert));
-        const selected = [];
-        path.each(function(d) {
-            const active = Array.from(selections).every(([key, [min, max]]) => d[key] >= min && d[key] <= max);
-            d3.select(this).style("stroke", active ? color(d[keyz]) : deselectedColor);
-            if (active) {
-                d3.select(this).raise();
-                selected.push(d);
-            }
-        });
-        // Optionally: handle selected data further here
-        console.log(selected);
-    }
+    pc.addPlot(id, function () {
+        // fill
+    });
 }
 
-
-const keys = ["Weight", "Year", "Age"];
+const keys = ["Weight", "Height", "Age"];
 const keyz = "Weight";
 
 // createParallelCoordinates(keys, keyz, pc.newPlotId());
-createParallelCoordinates(data, keys, keyz, 'plotsContainer');
+createParallelCoordinates(keys, keyz , pc.newPlotId());
