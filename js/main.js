@@ -1,44 +1,50 @@
-import { PlotCoordinator } from "./js/plotCoordinator.js";
+import { PlotCoordinator } from "./plotCoordinator.js";
 import * as d3 from "d3";
-import throttle from "lodash/throttle";
+import {run} from "./benchMark.js";
+
+import throttle from "lodash/throttle.js"; // TODO: add throttle
 
 async function loadCSV(pathToCsv) {
     return await d3.csv(pathToCsv, function (data) {
         return data;
     });
 }
+// run();
 
-let data = await loadCSV("../local_data/athlete_events_500.csv");
+
+let data = await loadCSV("../local_data/athlete_events_1000.csv");
 let pc = new PlotCoordinator();
+console.log(data);
 pc.init(data);
+
+let fields = ["Height", "Weight", "Age", "Year"];
+
+for (let f1 of fields) {
+    for (let f2 of fields) {
+        if (f1 === f2) {
+            createHistogram(f1, pc.newPlotId(),data,pc);
+        } else {
+            createScatterPlot(f1, f2, pc.newPlotId(),data,pc);
+        }
+    }
+}
+// createScatterPlot("Height", "Weight", pc.newPlotId(),data,pc);
+// createScatterPlot("Height", "Weight", pc.newPlotId(),data,pc);
+// createHistogram("Height", pc.newPlotId(),data,pc);
 //
-// let fields = ["Height", "Weight", "Age", "Year"];
-//
-// for (let f1 of fields) {
-//     for (let f2 of fields) {
-//         if (f1 === f2) {
-//             createHistogram(f1, pc.newPlotId());
-//         } else {
-//             createScatterPlot(f1, f2, pc.newPlotId());
-//         }
-//     }
-// }
+let keys = ["Weight", "Height", "Age"];
+let keyz = "Weight";
+createParallelCoordinates(keys, keyz, pc.newPlotId(),data,pc);
 
-createScatterPlot("Height", "Weight", pc.newPlotId());
-createScatterPlot("Height", "Weight", pc.newPlotId());
-createHistogram("Height", pc.newPlotId());
+keys = ["Age", "Height", "Year", "Weight"];
+keyz = "Age";
+createParallelCoordinates(keys, keyz, pc.newPlotId(),data,pc);
 
-// createParallelCoordinates(pc.newPlotId());
-
-function createScatterPlot(xField, yField, id) {
+export function createScatterPlot(xField, yField, id,data,pc) {
     d3.select("#plotsContainer")
         .append("div")
         .attr("id", `plot_${id}`)
         .attr("class", "plot");
-
-    // color
-    const selectedColor = "green";
-    const unselectedColor = "grey";
 
     // Specify the chart’s dimensions.
     const container = d3.select(`#plot_${id}`);
@@ -48,6 +54,9 @@ function createScatterPlot(xField, yField, id) {
     const marginRight = 20;
     const marginBottom = 25;
     const marginLeft = 30;
+
+    let selectedColor = "#589E4B";
+    let unselectedColor = "grey";
 
     // Create the horizontal (x) scale, positioning N/A values on the left margin.
     const xMax = d3.max(data, (d) => Number(d[xField]));
@@ -68,7 +77,7 @@ function createScatterPlot(xField, yField, id) {
         .nice()
         .range([height - marginBottom, marginTop])
         .unknown(height - marginBottom);
-
+    //
     // Create the SVG container.
     const svg = d3
         .select(`#plot_${id}`)
@@ -106,6 +115,51 @@ function createScatterPlot(xField, yField, id) {
                 .attr("font-weight", "bold")
                 .text(yField)
         );
+
+    // Add x-axis
+    svg.append("g")
+        .attr("transform", `translate(0,${height - marginBottom})`)
+        .call(d3.axisBottom(x));
+
+    // Add y-axis
+    svg.append("g")
+        .attr("transform", `translate(${marginLeft},0)`)
+        .call(d3.axisLeft(y));
+
+    // Append the axis lines (grid lines)
+    svg.append("g")
+        .attr("class", "grid")
+        .attr("transform", `translate(0,${height - marginBottom})`)
+        .call(
+            d3
+                .axisBottom(x)
+                .tickSize(-height + marginTop + marginBottom)
+                .tickFormat("")
+        )
+        .call((g) => g.select(".domain").remove())
+        .call((g) =>
+            g
+                .selectAll(".tick line")
+                .style("stroke-width", 0.5) // Thinner lines
+                .style("stroke-opacity", 0.3)
+        ); // Less opacity
+
+    svg.append("g")
+        .attr("class", "grid")
+        .attr("transform", `translate(${marginLeft},0)`)
+        .call(
+            d3
+                .axisLeft(y)
+                .tickSize(-width + marginLeft + marginRight)
+                .tickFormat("")
+        )
+        .call((g) => g.select(".domain").remove())
+        .call((g) =>
+            g
+                .selectAll(".tick line")
+                .style("stroke-width", 0.5) // Thinner lines
+                .style("stroke-opacity", 0.3)
+        ); // Less opacity
 
     // Append the dots
     const dot = svg
@@ -165,12 +219,14 @@ function createScatterPlot(xField, yField, id) {
 
             d3.select(this)
                 .style("fill", isSelected ? selectedColor : unselectedColor)
-                .style("r", isSelected ? 2.5 : 1.3);
+                .style("r", isSelected ? 2.5 : 1.2)
+                .style("fill-opacity", isSelected ? 0.5 : 0.2);
+            // .style("r", isSelected ? 2.5 : 1.2);
         });
     });
 }
 
-function createHistogram(field, id) {
+export function createHistogram(field, id,data,pc) {
     d3.select("#plotsContainer")
         .append("div")
         .attr("id", `histogram_${id}`)
@@ -184,8 +240,8 @@ function createHistogram(field, id) {
     const marginBottom = 25;
     const marginLeft = 30;
 
-    const selectedColor = "green";
-    const unselectedColor = "grey";
+    let selectedColor = "#589E4B";
+    let unselectedColor = "grey";
 
     // Define x-axis scale
     const x = d3
@@ -237,6 +293,53 @@ function createHistogram(field, id) {
     svg.append("g")
         .attr("transform", `translate(${marginLeft},0)`)
         .call(d3.axisLeft(y));
+
+    // text
+    svg.append("text")
+        .attr("x", width - marginRight)
+        .attr("y", marginTop + 5)
+        .attr("text-anchor", "end")
+        .style("font-size", "12px")
+        .style("font-weight", "bold")
+        .style("fill", "black")
+        .style("font-family", "sans-serif") // Set the font to sans-serif
+        .text(field) // TODO: agregar Coeficiente de spearman y pearson
+        .raise();
+
+    // Append the axis lines (grid lines)
+    svg.append("g")
+        .attr("class", "grid")
+        .attr("transform", `translate(0,${height - marginBottom})`)
+        .call(
+            d3
+                .axisBottom(x)
+                .tickSize(-height + marginTop + marginBottom)
+                .tickFormat("")
+        )
+        .call((g) => g.select(".domain").remove())
+        .call((g) =>
+            g
+                .selectAll(".tick line")
+                .style("stroke-width", 0.5) // Thinner lines
+                .style("stroke-opacity", 0.3)
+        ); // Less opacity
+
+    svg.append("g")
+        .attr("class", "grid")
+        .attr("transform", `translate(${marginLeft},0)`)
+        .call(
+            d3
+                .axisLeft(y)
+                .tickSize(-width + marginLeft + marginRight)
+                .tickFormat("")
+        )
+        .call((g) => g.select(".domain").remove())
+        .call((g) =>
+            g
+                .selectAll(".tick line")
+                .style("stroke-width", 0.5) // Thinner lines
+                .style("stroke-opacity", 0.3)
+        ); // Less opacity
 
     // Create bars (stacked for selected/unselected)
     const bar = svg
@@ -343,17 +446,20 @@ function createHistogram(field, id) {
     }
 }
 
-// function createParallelCoordinates(keys, keyz, id) {
-function createParallelCoordinates( keys, keyz, id) {
+export function createParallelCoordinates(keys, keyz, id,data,pc) {
     // Specify chart dimensions
     const containerId = "plotsContainer";
-    const width = 600;
+    const width = 300;
     const height = keys.length * 120;
     // const height = 600
     const marginTop = 20;
     const marginRight = 10;
     const marginBottom = 20;
     const marginLeft = 10;
+
+    const selectedColor = "green";
+    const unselectedColor = "grey";
+    let selectedColorSecondary = "#FFC784";
 
     // Create horizontal x scale for each key
     const x = new Map(
@@ -376,7 +482,10 @@ function createParallelCoordinates( keys, keyz, id) {
     const color = d3
         .scaleSequential()
         .domain(d3.extent(data, (d) => Number(d[keyz])))
-        .interpolator(d3.interpolateBrBG);
+        // .interpolator(d3.interpolateRgb.gamma(1.6)("purple", "orange"));
+        .interpolator(
+            d3.interpolateRgb.gamma(0.7)(selectedColorSecondary, selectedColor)
+        );
 
     // Create the SVG container
     const svg = d3
@@ -397,8 +506,9 @@ function createParallelCoordinates( keys, keyz, id) {
     const path = svg
         .append("g")
         .attr("fill", "none")
-        .attr("stroke-width", 1.5)
-        .attr("stroke-opacity", 0.4)
+        .attr("class", `data-paths${id}`)
+        .attr("stroke-width", 1.5) // TODO: agregar variable
+        .attr("stroke-opacity", 0.4) // TODO: agregar variable
         .selectAll("path")
         .data(data)
         .join("path")
@@ -438,16 +548,17 @@ function createParallelCoordinates( keys, keyz, id) {
         );
 
     // Brush behavior
+
     const selections = new Map();
 
     function handleSelection(event, key) {
-        const selection = event.selection;
+        let selection = event.selection;
         if (selection === null) {
             selections.delete(key);
         } else {
             selections.set(key, selection.map(x.get(key).invert));
         }
-        const selected = [];
+        let selected = [];
         path.each(function (d, i) {
             const active = Array.from(selections).every(
                 ([key, [min, max]]) => d[key] >= min && d[key] <= max
@@ -463,10 +574,8 @@ function createParallelCoordinates( keys, keyz, id) {
         pc.updatePlotsView(id, selected);
     }
 
-
     const throttledHandleSelection = throttle(handleSelection, 100);
 
-    const deselectedColor = "#ddd";
     const brushHeight = 50;
     const brush = d3
         .brushX()
@@ -478,14 +587,12 @@ function createParallelCoordinates( keys, keyz, id) {
 
     axes.call(brush);
 
-
     pc.addPlot(id, function () {
-        // fill
+        svg.selectAll(`.data-paths${id} path`)
+            .attr("stroke", (d, i) =>
+                pc.isSelected(i) ? color(d[keyz]) : unselectedColor
+            )
+            .attr("stroke-width", (d, i) => (pc.isSelected(i) ? 1.3 : 0.3))
+            .attr("stroke-opacity", (d, i) => (pc.isSelected(i) ? 0.3 : 0.05));
     });
 }
-
-const keys = ["Weight", "Height", "Age"];
-const keyz = "Weight";
-
-// createParallelCoordinates(keys, keyz, pc.newPlotId());
-createParallelCoordinates(keys, keyz , pc.newPlotId());

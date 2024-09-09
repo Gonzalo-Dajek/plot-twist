@@ -6,6 +6,34 @@ export class PlotCoordinator {
     //                   plotUpdateFunction: howToUpdatePlot}
     _idCounter = 0;
     _entriesSelectCounter;
+    _BENCHMARK= {
+        isActive: false,
+        deltaUpdateIndexes: undefined,
+        deltaUpdatePlots: undefined,
+    };
+    _benchMark(where){
+        if(this._BENCHMARK.isActive){
+            let startTime, endTime;
+            switch (where){
+                case "preIndexUpdate":
+                    this._BENCHMARK.updateIndexStart=performance.now();
+                    break;
+                case "postIndexUpdate":
+                    startTime = this._BENCHMARK.updateIndexStart;
+                    endTime = performance.now();
+                    this._BENCHMARK.deltaUpdateIndexes=endTime-startTime;
+                    break;
+                case "prePlotsUpdate":
+                    this._BENCHMARK.updatePlotsStart=performance.now();
+                    break;
+                case "postPlotsUpdate":
+                    startTime = this._BENCHMARK.updatePlotsStart;
+                    endTime = performance.now();
+                    this._BENCHMARK.deltaUpdatePlots=endTime-startTime;
+                    break;
+            }
+        }
+    }
 
     constructor() {}
 
@@ -43,24 +71,30 @@ export class PlotCoordinator {
     updatePlotsView(id, newlySelected) {
         let lastSelected = this._plots.get(id).lastIndexesSelected;
 
+        this._benchMark("preIndexUpdate");
         for (let index of lastSelected) {
             this._entriesSelectCounter[index]--;
         }
         for (let index of newlySelected) {
             this._entriesSelectCounter[index]++;
         }
+        this._benchMark("postIndexUpdate");
 
+        this._benchMark("prePlotsUpdate");
         for (let plot of this._plots.values()) {
-            // console.log("PlotUpdateFunction" + id);
             plot.plotUpdateFunction();
         }
+        this._benchMark("postPlotsUpdate");
+
+        // console.log("Delta update Plots:  ",this._BENCHMARK.deltaUpdatePlots);
+        // console.log("Delta update Indexes:  ",this._BENCHMARK.deltaUpdateIndexes);
 
         this._plots.get(id).lastIndexesSelected = newlySelected;
     }
 
     fields() {
         let fields = [];
-        if(this._entries.length>0){
+        if (this._entries.length > 0) {
             for (let field in this._entries[0]) {
                 fields.push(field);
             }

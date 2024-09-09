@@ -1,16 +1,12 @@
 import { assert } from "chai";
 import { suite, test } from "mocha";
-
-import { parse } from "csv-parse/sync";
-import { PlotCoordinator } from "../js/plotCoordinator.js";
-
 import { fileURLToPath } from "url";
-import { dirname } from "path";
 import * as fs from "fs";
 import * as path from "path";
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+import { parse } from "csv-parse/sync";
+import { PlotCoordinator } from "../js/plotCoordinator.js";
+// import * as plotMain from "../js/main.js";
+// import * as d3 from "d3";
 
 function parseCSVToObject(filePath) {
     const fileData = fs.readFileSync(filePath, "utf8");
@@ -20,34 +16,21 @@ function parseCSVToObject(filePath) {
     });
 }
 
+
 suite("PlotCoordinator", function () {
-    const csvFilePath = path.join(
-        __dirname,
-        "./test_data/athlete_events_small.csv"
-    );
+    const __filename = fileURLToPath(import.meta.url);
+    const __dirname = path.dirname(__filename);
+    // const file = "./test_data/debug_dataset.csv";
+    const file = "./test_data/athlete_events_clean.csv";
+    const csvFilePath = path.join(__dirname, file);
+    const resultsFilePath = path.join(__dirname, "./output/benchmark.json");
     const data = parseCSVToObject(csvFilePath);
 
-    // let pcLog = new PlotCoordinator();
-    // pcLog.init(data);
-    // console.log("\n -------------------------------------------- \n _entries: ");
-    // console.log(pcLog._entries);
-    // console.log("\n -------------------------------------------- \n _fields:");
-    // console.log(pcLog._fields);
-    // console.log("\n -------------------------------------------- \n _entriesSelectCounter:")
-    // console.log(pcLog._entriesSelectCounter);
+    test("Number of plots _vs_ Number of entries", function () {
+        let results = [];
 
-    test("addPlots", function () {
-        let pc = new PlotCoordinator();
-        pc.init(data);
-        // let fields = pc.fields();
-        // let field1 = pc.fieldEntries(fields[0]);
-        // let field2 = pc.fieldEntries(fields[1]);
-        // let field3 = pc.fieldEntries(fields[2]);
-        //
-        // let id1 = pc.newPlotId();
-        // let id2 = pc.newPlotId();
-        //
-        // pc.addPlot()
+
+        fs.writeFile(resultsFilePath, JSON.stringify(results, null, 2), () => {});
 
         assert.equal(1, 1);
     });
