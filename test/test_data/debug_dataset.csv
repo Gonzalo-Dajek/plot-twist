@@ -1,4 +1,4 @@
-ID,Name,Sex,Age,Weight,Medal
-"5",Alice,"F",25,55,Bronze
-"5",Alice,F,25,55,none
-6,Bob,"M",37,77,none
+ID,Name,Sex,Age,Weight,Medal,Height
+"5",Alice,"F",25,55,Bronze,165
+"5",Alice,F,25,55,none,175
+"6",Bob,"M",37,77,none,185
