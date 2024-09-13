@@ -21,16 +21,35 @@ suite("PlotCoordinator", function () {
     const __filename = fileURLToPath(import.meta.url);
     const __dirname = path.dirname(__filename);
     // const file = "./test_data/debug_dataset.csv";
-    const file = "./test_data/athlete_events_clean.csv";
+    const file = "./test_data/debug_dataset.csv";
     const csvFilePath = path.join(__dirname, file);
-    const resultsFilePath = path.join(__dirname, "./output/benchmark.json");
+    // const resultsFilePath = path.join(__dirname, "./output/benchmark.json");
     const data = parseCSVToObject(csvFilePath);
+    // let results = [];
+    // fs.writeFile(resultsFilePath, JSON.stringify(results, null, 2), () => {});
 
-    test("Number of plots _vs_ Number of entries", function () {
-        let results = [];
+    test("Debugging", function () {
+        let pc = new PlotCoordinator("index");
+        pc.init(data);
+        let id1 = pc.newPlotId();
+        pc.addPlot(id1, ()=>{});
+        pc.addPlot(pc.newPlotId(), ()=>{});
 
+        let select = [
+            {
+                range: [50, 60],
+                field: "Weight",
+                type: "numerical",
+            },
+            {
+                range: [160, 170],
+                field: "Height",
+                type: "numerical",
+            },
+        ];
 
-        fs.writeFile(resultsFilePath, JSON.stringify(results, null, 2), () => {});
+        pc.updatePlotsView(id1, select);
+
 
         assert.equal(1, 1);
     });

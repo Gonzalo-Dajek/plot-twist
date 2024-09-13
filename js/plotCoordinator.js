@@ -6,36 +6,44 @@ export class PlotCoordinator {
     //                   plotUpdateFunction: howToUpdatePlot}
     _idCounter = 0;
     _entriesSelectCounter;
-    _BENCHMARK= {
+    _dataStructure;
+    _BENCHMARK = {
         isActive: false,
         deltaUpdateIndexes: undefined,
         deltaUpdatePlots: undefined,
     };
-    _benchMark(where){
-        if(this._BENCHMARK.isActive){
+
+    _benchMark(where) {
+        if (this._BENCHMARK.isActive) {
             let startTime, endTime;
-            switch (where){
+            switch (where) {
                 case "preIndexUpdate":
-                    this._BENCHMARK.updateIndexStart=performance.now();
+                    this._BENCHMARK.updateIndexStart = performance.now();
                     break;
                 case "postIndexUpdate":
                     startTime = this._BENCHMARK.updateIndexStart;
                     endTime = performance.now();
-                    this._BENCHMARK.deltaUpdateIndexes=endTime-startTime;
+                    this._BENCHMARK.deltaUpdateIndexes = endTime - startTime;
                     break;
                 case "prePlotsUpdate":
-                    this._BENCHMARK.updatePlotsStart=performance.now();
+                    this._BENCHMARK.updatePlotsStart = performance.now();
                     break;
                 case "postPlotsUpdate":
                     startTime = this._BENCHMARK.updatePlotsStart;
                     endTime = performance.now();
-                    this._BENCHMARK.deltaUpdatePlots=endTime-startTime;
+                    this._BENCHMARK.deltaUpdatePlots = endTime - startTime;
                     break;
             }
         }
     }
 
-    constructor() {}
+    constructor(type) {
+        if (type) {
+            this._dataStructure = type;
+        } else {
+            console.error("Plot Coordinator type missing");
+        }
+    }
 
     newPlotId() {
         return ++this._idCounter;
@@ -43,7 +51,8 @@ export class PlotCoordinator {
 
     addPlot(id, updateFunction) {
         this._plots.set(id, {
-            lastIndexesSelected: [],
+            // lastSelection:[],
+            lastIndexesSelected:[],
             plotUpdateFunction: updateFunction,
         });
 
@@ -56,7 +65,7 @@ export class PlotCoordinator {
             this._entriesSelectCounter[i]++;
         }
 
-        this.updatePlotsView(id, this._plots.get(id).lastIndexesSelected);
+        this.updatePlotsView(id, []);
     }
 
     removePlot(id) {
@@ -68,28 +77,62 @@ export class PlotCoordinator {
         this._plots.delete(id);
     }
 
-    updatePlotsView(id, newlySelected) {
-        let lastSelected = this._plots.get(id).lastIndexesSelected;
+    _isSelectedRange(d, selectionArr) {
+        // console.log(selectionArr);
+        for(let selection of selectionArr){
+            const field = selection.field;
 
-        this._benchMark("preIndexUpdate");
-        for (let index of lastSelected) {
+            if(selection.type==="numerical"){
+                if(selection.range){
+                    const from = selection.range[0];
+                    const to = selection.range[1];
+                    if(!(from<=d[field] && d[field]<=to)){
+                        return false;
+                    }
+                }
+            }else{
+                const categories = selection.categories;
+                let isSelected = false;
+                for(let cat of categories){
+                    if(d[field]===cat){
+                        isSelected = true;
+                        break;
+                    }
+                }
+                if(!isSelected){
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    updatePlotsView(id, newSelection) {
+
+        // this._benchMark("preIndexUpdate");
+        let lastSelectedIndexes = this._plots.get(id).lastIndexesSelected;
+
+        let newlySelectedIndexes = this._entries
+            .map((d, i) => i)
+            .filter(i => this._isSelectedRange(this._entries[i], newSelection));
+
+        for (let index of lastSelectedIndexes) {
             this._entriesSelectCounter[index]--;
         }
-        for (let index of newlySelected) {
+        for (let index of newlySelectedIndexes) {
             this._entriesSelectCounter[index]++;
         }
-        this._benchMark("postIndexUpdate");
 
-        this._benchMark("prePlotsUpdate");
+        this._plots.get(id).lastIndexesSelected = newlySelectedIndexes;
+        // this._benchMark("postIndexUpdate");
+
+        // this._benchMark("prePlotsUpdate");
         for (let plot of this._plots.values()) {
             plot.plotUpdateFunction();
         }
-        this._benchMark("postPlotsUpdate");
+        // this._benchMark("postPlotsUpdate");
 
-        // console.log("Delta update Plots:  ",this._BENCHMARK.deltaUpdatePlots);
-        // console.log("Delta update Indexes:  ",this._BENCHMARK.deltaUpdateIndexes);
 
-        this._plots.get(id).lastIndexesSelected = newlySelected;
     }
 
     fields() {

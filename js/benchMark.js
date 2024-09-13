@@ -9,44 +9,52 @@ export async function run() {
         });
     }
 
-    let data = await loadCSV("../local_data/athlete_events_10000.csv");
-    // console.log(data);
+    let data = await loadCSV("../local_data/athlete_events_20000.csv");
+    console.log(data);
 
     let results = [];
-    for (let entriesNum = 5000; entriesNum <= 100_000; entriesNum += 5000) {
+    for (let entriesNum = 1000; entriesNum <= 20_000; entriesNum += 1000) {
+        console.log("_etnriesNum: ", entriesNum);
         let sample = data.slice(0, entriesNum);
 
-        for (let plotsNum = 2; plotsNum <= 32; plotsNum += 2) {
-            let pc = new PlotCoordinator();
-            pc.init(sample);
-            for (let i = 0; i < plotsNum; i++) {
-                createScatterPlot("Weight", "Height", pc.newPlotId(),data,pc);
-            }
-            pc._BENCHMARK.isActive = true;
-            let selection = [];
-            for (let i = 0; i < sample.length / 2; i++) {
-                selection.push(i);
-            }
+        for (let plotsNum = 2; plotsNum <= 10; plotsNum += 2) {
+            console.log("__plotsNum: ", plotsNum);
+            let runs = 10;
+            let deltaIndex = 0;
+            let deltaPlot = 0;
+            for (let run = 0; run < runs; run++) {
+                console.log("___run: ", run);
+                let pc = new PlotCoordinator();
+                pc.init(sample);
+                for (let i = 0; i < plotsNum; i++) {
+                    createScatterPlot("Weight", "Height", pc.newPlotId(),data,pc);
+                }
+                pc._BENCHMARK.isActive = true;
+                let selection = [];
+                for (let i = 0; i < sample.length / 2; i++) {
+                    selection.push(i);
+                }
 
+                d3.select("#plotsContainer").selectAll(".plot").remove();
+                d3.select("#plotsContainer").selectAll(".plot")
+                    .on(".zoom", null)    // Clear zoom events if applicable
+                    .on(".brush", null)   // Clear brush events if applicable
+                    .on("click", null)    // Clear custom events if applicable
+                    .remove();            // Remove the elements
+
+                pc.updatePlotsView(1, selection);
+                for (let id = 1; id <= pc._idCounter; id++){
+                    pc.removePlot(id);
+                }
+                deltaPlot+= pc._BENCHMARK.deltaUpdatePlots;
+                deltaIndex+= pc._BENCHMARK.deltaUpdateIndexes;
+            }
             results.push({
                 entriesNum: entriesNum,
                 plotsNum: plotsNum,
-                deltaPlot: pc._BENCHMARK.deltaUpdatePlots,
-                deltaIndex: pc._BENCHMARK.deltaUpdateIndexes,
+                deltaPlot: deltaPlot/runs,
+                deltaIndex: deltaIndex/runs,
             });
-
-            pc.updatePlotsView(1, selection);
-            for (let id = 1; id <= pc._idCounter; id++){
-                pc.removePlot(id);
-            }
-
-            d3.select("#plotsContainer").selectAll(".plot").remove();
-            d3.select("#plotsContainer").selectAll(".plot")
-                .on(".zoom", null)    // Clear zoom events if applicable
-                .on(".brush", null)   // Clear brush events if applicable
-                .on("click", null)    // Clear custom events if applicable
-                .remove();            // Remove the elements
-
         }
     }
     const json = JSON.stringify(results, null, 2);
