@@ -1,25 +1,54 @@
 import * as d3 from "d3";
-import throttle from "lodash/throttle.js";
+import throttle from "lodash-es/throttle.js";
 
 export function createScatterPlot(xField, yField, id, data, pc, gridPos) {
     d3.select("#plotsContainer")
         .append("div")
-        .attr("id", `plot_${id}`)
+        .attr("id", `scatterPlot_${id}`)
         .attr("class", "plot gridBox")
         .style("grid-column", gridPos.col)
         .style("grid-row", gridPos.row);
 
     // Specify the chart’s dimensions.
-    const container = d3.select(`#plot_${id}`);
+    const container = d3.select(`#scatterPlot_${id}`);
     const width = container.node().clientWidth;
-    const height = container.node().clientHeight;
-    const marginTop = 15;
+    const height = container.node().clientHeight-40;
+
+    const marginTop = 5;
     const marginRight = 20;
     const marginBottom = 25;
     const marginLeft = 30;
 
     let selectedColor = "#589E4B";
     let unselectedColor = "grey";
+
+    // Add a div at the top for the buttons
+    const buttonDiv = container.append("div")
+        .attr("class", "plot-button-container");
+
+    // Add the delete button
+    buttonDiv.append("button")
+        .text("Delete Plot")
+        .on("click", () => {
+            pc.removePlot(id);
+            // Remove the entire scatter plot container
+            container.remove();
+        });
+
+// Add the button for calling foo()
+    buttonDiv.append("button")
+        .text("AND")
+        .on("click", () => {
+            // foo(); // Call your foo() function
+        });
+
+// Add the button for calling bar()
+    buttonDiv.append("button")
+        .text("NOT")
+        .on("click", () => {
+            // bar(); // Call your bar() function
+        });
+//
 
     // Create the horizontal (x) scale, positioning N/A values on the left margin.
     const xMax = d3.max(data, (d) => Number(d[xField]));
@@ -43,7 +72,7 @@ export function createScatterPlot(xField, yField, id, data, pc, gridPos) {
     //
     // Create the SVG container.
     const svg = d3
-        .select(`#plot_${id}`)
+        .select(`#scatterPlot_${id}`)
         .append("svg")
         .attr("viewBox", `0 0 ${width} ${height}`)
         .attr("preserveAspectRatio", "xMidYMid meet")

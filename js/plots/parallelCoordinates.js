@@ -1,5 +1,5 @@
 import * as d3 from "d3";
-import throttle from "lodash/throttle.js";
+import throttle from "lodash-es/throttle.js";
 
 export function createParallelCoordinates(keys, keyz, id, data, pc, gridPos) {
     d3.select("#plotsContainer")
@@ -10,9 +10,10 @@ export function createParallelCoordinates(keys, keyz, id, data, pc, gridPos) {
         .style("grid-row", `${gridPos.row} / span 2`);
 
     // Specify chart dimensions
-    const width = 290;
+    const container = d3.select(`#parallelCoord_${id}`);
+    const width = container.node().clientWidth;
     // const height = keys.length * 120;
-    const height = 600
+    const height = 600-40;
     const marginTop = 20;
     const marginRight = 10;
     const marginBottom = 20;
@@ -21,6 +22,7 @@ export function createParallelCoordinates(keys, keyz, id, data, pc, gridPos) {
     const selectedColor = "green";
     const unselectedColor = "grey";
     let selectedColorSecondary = "#FFC784";
+
 
     // Create horizontal x scale for each key
     const x = new Map(
@@ -110,29 +112,38 @@ export function createParallelCoordinates(keys, keyz, id, data, pc, gridPos) {
 
     // Brush behavior
 
-    const selections = new Map();
+    const selectionsFromAxis = new Map();
 
-    function handleSelection(event, key) {
-        let selection = event.selection;
+    function handleSelection({selection}, fieldSelected) {
         if (selection === null) {
-            selections.delete(key);
+            selectionsFromAxis.delete(fieldSelected);
         } else {
-            selections.set(key, selection.map(x.get(key).invert));
+            selectionsFromAxis.set(fieldSelected, selection.map(x.get(fieldSelected).invert));
         }
-        let selected = [];
-        path.each(function (d, i) {
-            const active = Array.from(selections).every(
-                ([key, [min, max]]) => d[key] >= min && d[key] <= max
-            );
+        // let selected = [];
+        // path.each(function (d, i) {
+        //     const active = Array.from(selectionsFromAxis).every(
+        //         ([key, [min, max]]) => d[key] >= min && d[key] <= max
+        //     );
+        //
+        //     if (active) {
+        //         d3.select(this).raise();
+        //         // selected.push(d); // selected entry
+        //         selected.push(i);
+        //     }
+        // });
 
-            if (active) {
-                d3.select(this).raise();
-                // selected.push(d); // selected entry
-                selected.push(i);
-            }
-        });
+        // Convert selectionsFromAxis to desired structure
+        const selectRanges = Array.from(selectionsFromAxis, ([field, [min, max]]) => ({
+            range: [min, max],
+            field: field,
+            type: "numerical", // Assuming all are numerical for this example
+        }));
 
-        pc.updatePlotsView(id, selected);
+        // You can use selectRanges here as needed
+        // console.log(selectRanges);
+
+        pc.updatePlotsView(id, selectRanges);
     }
 
     const throttledHandleSelection = throttle(handleSelection, 100);

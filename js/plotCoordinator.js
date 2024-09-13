@@ -52,6 +52,7 @@ export class PlotCoordinator {
     addPlot(id, updateFunction) {
         this._plots.set(id, {
             // lastSelection:[],
+            selectionMode:"AND",
             lastIndexesSelected:[],
             plotUpdateFunction: updateFunction,
         });
@@ -75,9 +76,13 @@ export class PlotCoordinator {
         }
 
         this._plots.delete(id);
+        for (let plot of this._plots.values()) {
+            plot.plotUpdateFunction();
+        }
     }
 
-    _isSelectedRange(d, selectionArr) {
+    _isSelectedRange(d, selectionArr, id) {
+        // TODO: id << para NAND?
         // console.log(selectionArr);
         for(let selection of selectionArr){
             const field = selection.field;
@@ -109,12 +114,12 @@ export class PlotCoordinator {
 
     updatePlotsView(id, newSelection) {
 
-        // this._benchMark("preIndexUpdate");
+        this._benchMark("preIndexUpdate");
         let lastSelectedIndexes = this._plots.get(id).lastIndexesSelected;
 
         let newlySelectedIndexes = this._entries
             .map((d, i) => i)
-            .filter(i => this._isSelectedRange(this._entries[i], newSelection));
+            .filter(i => this._isSelectedRange(this._entries[i], newSelection, id));
 
         for (let index of lastSelectedIndexes) {
             this._entriesSelectCounter[index]--;
@@ -124,13 +129,13 @@ export class PlotCoordinator {
         }
 
         this._plots.get(id).lastIndexesSelected = newlySelectedIndexes;
-        // this._benchMark("postIndexUpdate");
+        this._benchMark("postIndexUpdate");
 
-        // this._benchMark("prePlotsUpdate");
+        this._benchMark("prePlotsUpdate");
         for (let plot of this._plots.values()) {
             plot.plotUpdateFunction();
         }
-        // this._benchMark("postPlotsUpdate");
+        this._benchMark("postPlotsUpdate");
 
 
     }
@@ -148,6 +153,10 @@ export class PlotCoordinator {
 
     isSelected(entry) {
         return this._entriesSelectCounter[entry] === this._plots.size;
+    }
+
+    changeSelectionMode(id, selectMode){
+        this._plots.get(id).selectionMode = selectMode;
     }
 
     init(entries) {

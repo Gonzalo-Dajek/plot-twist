@@ -10,7 +10,7 @@ export function createBarPlot(field, id, data, pc, gridPos) {
 
     const container = d3.select(`#barplot_${id}`);
     const width = container.node().clientWidth;
-    const height = container.node().clientHeight;
+    const height = container.node().clientHeight-40;
     // const marginTop = 30;
     const marginTop = 15;
     const marginRight = 20;
@@ -18,6 +18,7 @@ export function createBarPlot(field, id, data, pc, gridPos) {
     const marginLeft = 30;
 
     let unselectedColor = "grey";
+
 
     // Use the provided categories (allCategories) to ensure all are present on the x-axis
     const categories = Array.from(new Set(data.map((d) => d[field])));
@@ -215,7 +216,7 @@ export function createBarPlot(field, id, data, pc, gridPos) {
             ];
         }
 
-        console.log(selectedCategories);
+        // console.log(selectedCategories);
         // Update the font weight of the x-axis labels based on selection
         svg.selectAll(".x-axis-label")
             .style("font-weight", function () {

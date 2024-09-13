@@ -24,17 +24,18 @@ for (let [i, f1] of fields.entries()) {
     for (let [j, f2] of fields.entries()) {
         let gridPos = { col: i + 1, row: j + 1 };
         if (f1 === f2) {
-            createHistogram(f1, pc.newPlotId(), data, pc, gridPos);
+            createHistogram(f2, pc.newPlotId(), data, pc, gridPos);
         } else {
             createScatterPlot(f1, f2, pc.newPlotId(), data, pc, gridPos);
         }
     }
 }
 
+
 let keys = ["Weight", "Height", "Age", "Year"];
 let keyz = "Weight";
 createParallelCoordinates(keys, keyz, pc.newPlotId(), data, pc, {col: 4, row: 1});
-createBarPlot("Medal", pc.newPlotId(), data, pc, {col: 4, row: 3});
+createBarPlot("Sex", pc.newPlotId(), data, pc, {col: 4, row: 3});
 
 
 

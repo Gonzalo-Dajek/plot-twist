@@ -1,5 +1,5 @@
 import * as d3 from "d3";
-import throttle from "lodash/throttle.js";
+import throttle from "lodash-es/throttle.js";
 
 export function createHistogram(field, id, data, pc, gridPos) {
     d3.select("#plotsContainer")
@@ -11,7 +11,7 @@ export function createHistogram(field, id, data, pc, gridPos) {
 
     const container = d3.select(`#histogram_${id}`);
     const width = container.node().clientWidth;
-    const height = container.node().clientHeight;
+    const height = container.node().clientHeight-40;
     const marginTop = 15;
     const marginRight = 20;
     const marginBottom = 25;
@@ -19,6 +19,8 @@ export function createHistogram(field, id, data, pc, gridPos) {
 
     let selectedColor = "#589E4B";
     let unselectedColor = "grey";
+
+
 
     // Define x-axis scale
     const x = d3
