@@ -1,28 +1,33 @@
 import * as d3 from "d3";
 import throttle from "lodash-es/throttle.js";
+import { createButtons } from "./plotsUtils/buttons.js";
 
 export function createParallelCoordinates(keys, keyz, id, data, pc, gridPos) {
+    let divId = `parallelCoord_${id}`;
+    divId=divId + "_" + keys.join("_");
     d3.select("#plotsContainer")
         .append("div")
-        .attr("id", `parallelCoord_${id}`)
+        .attr("id", divId)
         .attr("class", "plot gridRectangle")
         .style("grid-column", gridPos.col)
         .style("grid-row", `${gridPos.row} / span 2`);
 
     // Specify chart dimensions
-    const container = d3.select(`#parallelCoord_${id}`);
+    const container = d3.select(`#${divId}`);
     const width = container.node().clientWidth;
     // const height = keys.length * 120;
-    const height = 600-40;
+    const height = 596-40;
     const marginTop = 20;
     const marginRight = 10;
-    const marginBottom = 20;
+    const marginBottom = 30;
     const marginLeft = 10;
 
     const selectedColor = "green";
     const unselectedColor = "grey";
     let selectedColorSecondary = "#FFC784";
 
+    let btns = createButtons(container, pc, id,false);
+    let setActiveButton = btns.setActiveButton;
 
     // Create horizontal x scale for each key
     const x = new Map(
@@ -53,7 +58,7 @@ export function createParallelCoordinates(keys, keyz, id, data, pc, gridPos) {
 
     // Create the SVG container
     const svg = d3
-        .select(`#parallelCoord_${id}`)
+        .select(`#${divId}`)
         .append("svg")
         .attr("viewBox", `0 0 ${width} ${height}`)
         .attr("preserveAspectRatio", "xMidYMid meet");

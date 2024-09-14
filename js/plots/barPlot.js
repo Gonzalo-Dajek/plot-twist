@@ -1,14 +1,16 @@
 import * as d3 from "d3";
+import { createButtons } from "./plotsUtils/buttons.js";
 
 export function createBarPlot(field, id, data, pc, gridPos) {
+    const divId = `barplot_${id}_${field}`;
     d3.select("#plotsContainer")
         .append("div")
-        .attr("id", `barplot_${id}`)
+        .attr("id", divId)
         .attr("class", "plot gridBox")
         .style("grid-column", gridPos.col)
         .style("grid-row", gridPos.row);
 
-    const container = d3.select(`#barplot_${id}`);
+    const container = d3.select(`#${divId}`);
     const width = container.node().clientWidth;
     const height = container.node().clientHeight-40;
     // const marginTop = 30;
@@ -19,6 +21,8 @@ export function createBarPlot(field, id, data, pc, gridPos) {
 
     let unselectedColor = "grey";
 
+    let btns = createButtons(container, pc, id);
+    let setActiveButton = btns.setActiveButton;
 
     // Use the provided categories (allCategories) to ensure all are present on the x-axis
     const categories = Array.from(new Set(data.map((d) => d[field])));
@@ -62,7 +66,7 @@ export function createBarPlot(field, id, data, pc, gridPos) {
 
     // Add svg element
     const svg = d3
-        .select(`#barplot_${id}`)
+        .select(`#${divId}`)
         .append("svg")
         .attr("viewBox", `0 0 ${width} ${height}`)
         .attr("preserveAspectRatio", "xMidYMid meet");
@@ -192,12 +196,15 @@ export function createBarPlot(field, id, data, pc, gridPos) {
     function handleSingleClick(clickedCategory) {
         // Reset to only the clicked category
         selectedCategories = [clickedCategory];
+
         updateSelection();
     }
 
     // Handle click event for the background
     function handleBackgroundClick() {
         selectedCategories = [];
+        setActiveButton("AND");
+        pc.changeSelectionMode(id, "AND");
         updateSelection();
     }
 

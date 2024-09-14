@@ -52,8 +52,9 @@ export class PlotCoordinator {
     addPlot(id, updateFunction) {
         this._plots.set(id, {
             // lastSelection:[],
-            selectionMode:"AND",
-            lastIndexesSelected:[],
+            lastSelectionRange: [],
+            selectionMode: "AND",
+            lastIndexesSelected: [],
             plotUpdateFunction: updateFunction,
         });
 
@@ -84,27 +85,27 @@ export class PlotCoordinator {
     _isSelectedRange(d, selectionArr, id) {
         // TODO: id << para NAND?
         // console.log(selectionArr);
-        for(let selection of selectionArr){
+        for (let selection of selectionArr) {
             const field = selection.field;
 
-            if(selection.type==="numerical"){
-                if(selection.range){
+            if (selection.type === "numerical") {
+                if (selection.range) {
                     const from = selection.range[0];
                     const to = selection.range[1];
-                    if(!(from<=d[field] && d[field]<=to)){
+                    if (!(from <= d[field] && d[field] <= to)) {
                         return false;
                     }
                 }
-            }else{
+            } else {
                 const categories = selection.categories;
                 let isSelected = false;
-                for(let cat of categories){
-                    if(d[field]===cat){
+                for (let cat of categories) {
+                    if (d[field] === cat) {
                         isSelected = true;
                         break;
                     }
                 }
-                if(!isSelected){
+                if (!isSelected) {
                     return false;
                 }
             }
@@ -113,13 +114,21 @@ export class PlotCoordinator {
     }
 
     updatePlotsView(id, newSelection) {
+        this._plots.get(id).lastSelectionRange = newSelection;
 
         this._benchMark("preIndexUpdate");
         let lastSelectedIndexes = this._plots.get(id).lastIndexesSelected;
 
         let newlySelectedIndexes = this._entries
             .map((d, i) => i)
-            .filter(i => this._isSelectedRange(this._entries[i], newSelection, id));
+            .filter((i) => {
+                let isInRanges = this._isSelectedRange(
+                    this._entries[i],
+                    newSelection,
+                    id
+                );
+                return (this._plots.get(id).selectionMode === "AND") ? isInRanges : !isInRanges;
+            });
 
         for (let index of lastSelectedIndexes) {
             this._entriesSelectCounter[index]--;
@@ -136,8 +145,6 @@ export class PlotCoordinator {
             plot.plotUpdateFunction();
         }
         this._benchMark("postPlotsUpdate");
-
-
     }
 
     fields() {
@@ -155,8 +162,9 @@ export class PlotCoordinator {
         return this._entriesSelectCounter[entry] === this._plots.size;
     }
 
-    changeSelectionMode(id, selectMode){
+    changeSelectionMode(id, selectMode) {
         this._plots.get(id).selectionMode = selectMode;
+        this.updatePlotsView(id, this._plots.get(id).lastSelectionRange);
     }
 
     init(entries) {

@@ -1,12 +1,22 @@
 #plotsContainer {
-    width: 1210px;
+    width: 1810px;
     border: 1px solid black; /* For visual debugging */
     display: grid;
     /*grid-template-columns: repeat(4, calc(100%/4));*/
-    grid-template-columns: repeat(4, 290px);
+    grid-template-columns: repeat(6, 290px);
+    grid-template-rows: repeat(3, 290px);
     gap: 15px;                  /* Equal spacing between grid items (both horizontal and vertical) */
     padding: 15px;              /* Optional padding around grid */
     /*background-color: antiquewhite;*/
+}
+
+.grid-cell{
+    border: 1px solid black;
+    background-color: white;
+    display: flex;
+    gap: 10px;
+    padding: 10px;
+    flex-direction: column;
 }
 
 .gridBox{
@@ -16,7 +26,7 @@
 
 .gridRectangle{
     width: 290px;
-    height: 600px;
+    height: 596px;
 }
 
 .plot {
@@ -43,6 +53,18 @@
 
 .plot-button-container button:hover {
     background-color: #ddd;
+}
+.plot-button-container button.active {
+    background-color: white; /* Active button color */
+    color: black;
+    /*border: 1px solid #4CAF50;*/
+}
+.plot-button-container button.disabled {
+    background-color: #999;
+    color: white;
+    border: 1px solid #999;
+    /*cursor: not-allowed;*/
+    /*pointer-events: none;  !* Prevents interaction with the button *!*/
 }
 
 body{

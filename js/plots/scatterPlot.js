@@ -1,18 +1,21 @@
 import * as d3 from "d3";
 import throttle from "lodash-es/throttle.js";
+import { createButtons } from "./plotsUtils/buttons.js";
 
 export function createScatterPlot(xField, yField, id, data, pc, gridPos) {
+    const divId = `scatterPlot_${id}_${xField}_${yField}`;
+
     d3.select("#plotsContainer")
         .append("div")
-        .attr("id", `scatterPlot_${id}`)
+        .attr("id", divId)
         .attr("class", "plot gridBox")
         .style("grid-column", gridPos.col)
         .style("grid-row", gridPos.row);
 
     // Specify the chart’s dimensions.
-    const container = d3.select(`#scatterPlot_${id}`);
+    const container = d3.select(`#${divId}`);
     const width = container.node().clientWidth;
-    const height = container.node().clientHeight-40;
+    const height = container.node().clientHeight - 40;
 
     const marginTop = 5;
     const marginRight = 20;
@@ -22,33 +25,8 @@ export function createScatterPlot(xField, yField, id, data, pc, gridPos) {
     let selectedColor = "#589E4B";
     let unselectedColor = "grey";
 
-    // Add a div at the top for the buttons
-    const buttonDiv = container.append("div")
-        .attr("class", "plot-button-container");
-
-    // Add the delete button
-    buttonDiv.append("button")
-        .text("Delete Plot")
-        .on("click", () => {
-            pc.removePlot(id);
-            // Remove the entire scatter plot container
-            container.remove();
-        });
-
-// Add the button for calling foo()
-    buttonDiv.append("button")
-        .text("AND")
-        .on("click", () => {
-            // foo(); // Call your foo() function
-        });
-
-// Add the button for calling bar()
-    buttonDiv.append("button")
-        .text("NOT")
-        .on("click", () => {
-            // bar(); // Call your bar() function
-        });
-//
+    let btns = createButtons(container, pc, id);
+    let setActiveButton = btns.setActiveButton;
 
     // Create the horizontal (x) scale, positioning N/A values on the left margin.
     const xMax = d3.max(data, (d) => Number(d[xField]));
@@ -72,7 +50,7 @@ export function createScatterPlot(xField, yField, id, data, pc, gridPos) {
     //
     // Create the SVG container.
     const svg = d3
-        .select(`#scatterPlot_${id}`)
+        .select(`#${divId}`)
         .append("svg")
         .attr("viewBox", `0 0 ${width} ${height}`)
         .attr("preserveAspectRatio", "xMidYMid meet")
@@ -254,23 +232,25 @@ export function createScatterPlot(xField, yField, id, data, pc, gridPos) {
                 },
             ];
         } else {
-            selectRanges = [];
-            // selectRanges = [
-            //     {
-            //         range: null,
-            //         xField: xField,
-            //         type: "numerical",
-            //     },
-            //     {
-            //         range: null,
-            //         field: yField,
-            //         type: "numerical",
-            //     },
-            // ];
+            // selectRanges = [];
+            selectRanges = [
+                {
+                    range: null,
+                    xField: xField,
+                    type: "numerical",
+                },
+                {
+                    range: null,
+                    field: yField,
+                    type: "numerical",
+                },
+            ];
+            setActiveButton("AND");
+            pc.changeSelectionMode(id, "AND");
         }
 
-        // console.log(selectRanges);
         pc.updatePlotsView(id, selectRanges);
+        // console.log(selectRanges);
     }
 
     const throttledHandleSelection = throttle(handleSelection, 100);

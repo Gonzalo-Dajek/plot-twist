@@ -1,15 +1,17 @@
 import * as d3 from "d3";
 import throttle from "lodash-es/throttle.js";
+import { createButtons } from "./plotsUtils/buttons.js";
 
 export function createHistogram(field, id, data, pc, gridPos) {
+    const divId = `histogram_${id}_${field}`;
     d3.select("#plotsContainer")
         .append("div")
-        .attr("id", `histogram_${id}`)
+        .attr("id", divId)
         .attr("class", "plot gridBox")
         .style("grid-column", gridPos.col)
         .style("grid-row", gridPos.row);
 
-    const container = d3.select(`#histogram_${id}`);
+    const container = d3.select(`#${divId}`);
     const width = container.node().clientWidth;
     const height = container.node().clientHeight-40;
     const marginTop = 15;
@@ -20,7 +22,8 @@ export function createHistogram(field, id, data, pc, gridPos) {
     let selectedColor = "#589E4B";
     let unselectedColor = "grey";
 
-
+    let btns  = createButtons(container, pc, id);
+    let setActiveButton = btns.setActiveButton;
 
     // Define x-axis scale
     const x = d3
@@ -58,7 +61,7 @@ export function createHistogram(field, id, data, pc, gridPos) {
 
     // add svg element
     const svg = d3
-        .select(`#histogram_${id}`)
+        .select(`#${divId}`)
         .append("svg")
         .attr("viewBox", `0 0 ${width} ${height}`)
         .attr("preserveAspectRatio", "xMidYMid meet");
@@ -168,7 +171,10 @@ export function createHistogram(field, id, data, pc, gridPos) {
                     type: "numerical",
                 },
             ];
+            setActiveButton("AND");
+            pc.changeSelectionMode(id, "AND");
         }
+
         pc.updatePlotsView(id, selectRanges);
     }
 
