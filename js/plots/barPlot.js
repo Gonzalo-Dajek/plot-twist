@@ -21,7 +21,7 @@ export function createBarPlot(field, id, data, pc, gridPos) {
 
     let unselectedColor = "grey";
 
-    let btns = createButtons(container, pc, id);
+    let btns = createButtons(container, pc, id, false);
     let setActiveButton = btns.setActiveButton;
 
     // Use the provided categories (allCategories) to ensure all are present on the x-axis

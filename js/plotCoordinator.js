@@ -85,6 +85,8 @@ export class PlotCoordinator {
     _isSelectedRange(d, selectionArr, id) {
         // TODO: id << para NAND?
         // console.log(selectionArr);
+        const selectType = this._plots.get(id).selectionMode;
+        let isSelectedTypeNot = false;
         for (let selection of selectionArr) {
             const field = selection.field;
 
@@ -92,9 +94,22 @@ export class PlotCoordinator {
                 if (selection.range) {
                     const from = selection.range[0];
                     const to = selection.range[1];
-                    if (!(from <= d[field] && d[field] <= to)) {
-                        return false;
+                    if(selectType==="NOT"){
+                        if (!(from <= d[field] && d[field] <= to)) {
+                           isSelectedTypeNot = true;
+                        }
                     }
+                    if(selectType==="AND"){
+                        if (!(from <= d[field] && d[field] <= to)) {
+                            return false;
+                        }
+                    }
+                    if(selectType==="OR"){
+                        if ((from <= d[field] && d[field] <= to)) {
+                            return false;
+                        }
+                    }
+
                 }
             } else {
                 const categories = selection.categories;
@@ -110,7 +125,11 @@ export class PlotCoordinator {
                 }
             }
         }
-        return true;
+        if(selectType==="NOT"){
+            return !isSelectedTypeNot;
+        }else{
+            return true;
+        }
     }
 
     updatePlotsView(id, newSelection) {

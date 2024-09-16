@@ -106,7 +106,7 @@ function createGridItems(containerId, grid, fields, pc, data) {
     }
 }
 
-export function setUpLoadFile(){
+export function setUpLoadFile(data, pc){
     const fileInput = document.getElementById("fileInput");
 
     fileInput.addEventListener("change", () => {
@@ -117,11 +117,10 @@ export function setUpLoadFile(){
 
             reader.onload = async (event) => {
                 const csvData = event.target.result;
-                const data = await d3.csvParse(csvData);
+                data = await d3.csvParse(csvData);
 
                 // Do something with the parsed data
                 console.log(data);
-                let pc = new PlotCoordinator("index");
                 pc.init(data);
                 createGridItems("plotsContainer", { col: 6, row: 3 }, pc.fields(), pc, data); // For example, 18 cells
             };
@@ -172,4 +171,86 @@ function exportLayout() {
 // Attach the export function to the button click event
 export function setUpExport(){
     document.getElementById("exportLayoutButton").addEventListener("click", exportLayout);
+}
+
+// Function to be called with the parsed JSON data
+function loadLayout(layoutData, pc) {
+    console.log("Loaded layout:", layoutData);
+    layoutData.forEach(item => {
+        // Split the type string into an array of segments
+        const segments = item.type.split("_");
+
+        // Use the first segment in the switch statement
+        switch (segments[0]) {
+            case "scatterPlot":
+                createScatterPlot(
+                    segments[2],
+                    segments[3],
+                    pc.newPlotId(),
+                    pc._entries,
+                    pc,
+                    { col: item.col, row: item.row }
+                );
+                break;
+            case "parallelCoord":
+                // console.log("a");  // Action for parallelCoord
+                createParallelCoordinates(
+                    segments.slice(2),
+                    segments[2],
+                    pc.newPlotId(),
+                    pc._entries,
+                    pc,
+                    {
+                        col: item.col,
+                        row: item.row,
+                    }
+                );
+                break;
+            case "histogram":
+                // console.log("b");  // Action for histogram
+                createHistogram(segments[2], pc.newPlotId(), pc._entries, pc, {
+                    col: item.col,
+                    row: item.row,
+                });
+                break;
+            case "barplot":
+                createBarPlot(segments[2], pc.newPlotId(), pc._entries, pc, {
+                    col: item.col,
+                    row: item.row,
+                });
+                break;
+            // default:
+                // console.log("Unknown type");
+        }
+    });
+}
+
+export function setUpLayoutFileLoader(data, pc) {
+    const fileInput = document.getElementById("layoutInput");
+
+    fileInput.addEventListener("change", () => {
+        const file = fileInput.files[0];
+
+        if (file) {
+            const reader = new FileReader();
+
+            reader.onload = (event) => {
+                try {
+                    // Parse the JSON data from the file
+                    data = JSON.parse(event.target.result);
+
+                    // Call loadLayout with the parsed JSON object
+                    loadLayout(data, pc);
+                } catch (error) {
+                    console.error("Error parsing JSON:", error);
+                    alert("Invalid JSON file. Please select a valid JSON file.");
+                }
+            };
+
+            // Read the file as text (JSON)
+            reader.readAsText(file);
+        } else {
+            alert("Please select a JSON file.");
+        }
+    });
 }

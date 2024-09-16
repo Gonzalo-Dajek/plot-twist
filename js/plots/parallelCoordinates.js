@@ -26,7 +26,7 @@ export function createParallelCoordinates(keys, keyz, id, data, pc, gridPos) {
     const unselectedColor = "grey";
     let selectedColorSecondary = "#FFC784";
 
-    let btns = createButtons(container, pc, id,false);
+    let btns = createButtons(container, pc, id,true);
     let setActiveButton = btns.setActiveButton;
 
     // Create horizontal x scale for each key

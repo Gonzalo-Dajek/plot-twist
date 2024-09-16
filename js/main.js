@@ -4,21 +4,27 @@ import { createScatterPlot } from "./plots/scatterPlot.js";
 import { createHistogram } from "./plots/histogram.js";
 import { createParallelCoordinates } from "./plots/parallelCoordinates.js";
 import { createBarPlot } from "./plots/barPlot.js";
-import { setUpLoadFile, setUpExport } from "./setUpUi.js";
+import {
+    setUpLoadFile,
+    setUpExport,
+    setUpLayoutFileLoader,
+} from "./setUpUi.js";
 
-// import {run} from "./benchMark.js";
-// run();
+import {run} from "./benchMark.js";
+run();
 
-setUpLoadFile();
-setUpExport()
+// let pc = new PlotCoordinator("index");
+// let data = [];
+// setUpLoadFile(data,pc);
+// setUpExport();
+// setUpLayoutFileLoader(data,pc);
 
-async function loadCSV(pathToCsv) {
-    return await d3.csv(pathToCsv, function (data) {
-        return data;
-    });
-}
-
-
+// async function loadCSV(pathToCsv) {
+//     return await d3.csv(pathToCsv, function (data) {
+//         return data;
+//     });
+// }
+//
 // // let data = await loadCSV("../test/test_data/debug_dataset.csv");
 // let data = await loadCSV("../local_data/athlete_events_1000.csv");
 // let pc = new PlotCoordinator("index");
