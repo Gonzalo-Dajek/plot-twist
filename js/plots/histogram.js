@@ -1,6 +1,6 @@
 import * as d3 from "d3";
 import throttle from "lodash-es/throttle.js";
-import { createButtons } from "./plotsUtils/buttons.js";
+import { createButtons } from "./plotsUtils/plotButtons.js";
 
 export function createHistogram(field, id, data, pc, gridPos) {
     const divId = `histogram_${id}_${field}`;

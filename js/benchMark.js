@@ -1,4 +1,4 @@
-import { createScatterPlot } from "./main.js";
+import { createScatterPlot } from "./plots/scatterPlot.js";
 import * as d3 from "d3";
 import { PlotCoordinator } from "./plotCoordinator.js";
 
@@ -13,21 +13,21 @@ export async function run() {
     console.log(data);
 
     let results = [];
-    for (let entriesNum = 1000; entriesNum <= 20_000; entriesNum += 1000) {
+    for (let entriesNum = 1000; entriesNum <= 10_000; entriesNum += 2000) {
         console.log("_etnriesNum: ", entriesNum);
         let sample = data.slice(0, entriesNum);
 
         for (let plotsNum = 2; plotsNum <= 10; plotsNum += 2) {
             console.log("__plotsNum: ", plotsNum);
-            let runs = 10;
+            let runs = 5;
             let deltaIndex = 0;
             let deltaPlot = 0;
             for (let run = 0; run < runs; run++) {
                 console.log("___run: ", run);
-                let pc = new PlotCoordinator();
+                let pc = new PlotCoordinator("Index");
                 pc.init(sample);
                 for (let i = 0; i < plotsNum; i++) {
-                    createScatterPlot("Weight", "Height", pc.newPlotId(),data,pc);
+                    createScatterPlot("Weight", "Height", pc.newPlotId(),data,pc,{col:1, row:1});
                 }
                 pc._BENCHMARK.isActive = true;
                 let selection = [];
@@ -37,9 +37,9 @@ export async function run() {
 
                 d3.select("#plotsContainer").selectAll(".plot").remove();
                 d3.select("#plotsContainer").selectAll(".plot")
-                    .on(".zoom", null)    // Clear zoom events if applicable
-                    .on(".brush", null)   // Clear brush events if applicable
-                    .on("click", null)    // Clear custom events if applicable
+                    .on(".zoom", null)
+                    .on(".brush", null)
+                    .on("click", null)
                     .remove();            // Remove the elements
 
                 pc.updatePlotsView(1, selection);

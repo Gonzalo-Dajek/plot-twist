@@ -3,13 +3,169 @@ import { createBarPlot } from "./plots/barPlot.js";
 import { createHistogram } from "./plots/histogram.js";
 import { createParallelCoordinates } from "./plots/parallelCoordinates.js";
 import * as d3 from "d3";
-import { PlotCoordinator } from "./plotCoordinator.js";
 
-function createGridItems(containerId, grid, fields, pc, data) {
+function createPlotMenu(plotType, gridCell, plotMenu, addPlotButton, pc, data, gridPos) {
+    // Remove the plot type menu
+    gridCell.removeChild(plotMenu);
+
+    // Create a new menu for plot options
+    const plotOptionsDiv = document.createElement("div");
+    plotOptionsDiv.classList.add("plot-options");
+
+    // Create a container for the select fields (scrollable)
+    const plotFieldsContainer = document.createElement("div");
+    plotFieldsContainer.classList.add("plot-fields-container");
+
+    // Number of selected fields depending on type of plot
+    let numSelectFields;
+    switch (plotType) {
+        case "Scatter Plot":
+            numSelectFields = 2;
+            break;
+        case "Parallel Coordinates":
+            numSelectFields = 5;
+            break;
+        case "Bar Plot":
+            numSelectFields = 1;
+            break;
+        case "Histogram":
+            numSelectFields = 1;
+            break;
+    }
+    // Array to store selected values
+    const selectedFields = [];
+    selectedFields.length = numSelectFields;
+
+
+    // Add select fields dynamically
+    for (let i = 0; i < numSelectFields; i++) {
+        let selectField;
+        selectField = document.createElement("select");
+        selectField.classList.add("plot-select");
+
+        // If it's a Parallel Coordinates plot, add a "None" option
+        if (plotType === "Parallel Coordinates" && i >= 2) {
+            const noneOption = document.createElement("option");
+            noneOption.value = "none";
+            noneOption.text = "None";
+            selectField.appendChild(noneOption);
+        }
+
+        // Add options from the fields array to the select element
+        pc.fields().forEach(field => {
+            const option = document.createElement("option");
+            option.value = field;
+            option.text = field;
+            selectField.appendChild(option);
+        });
+
+        // Add label and select field to the scrollable container
+        const label = document.createElement("label");
+        label.textContent = `Select field ${i + 1}`;
+        label.classList.add("plot-select-label");
+
+        // Add the selected field value to the array when the value changes
+        selectedFields[i] = selectField.value;
+        selectField.addEventListener("change", () => {
+            selectedFields[i] = selectField.value;
+        });
+
+        plotFieldsContainer.appendChild(label);
+        plotFieldsContainer.appendChild(selectField);
+    }
+
+    // Append the fields container to the plot options div
+    plotOptionsDiv.appendChild(plotFieldsContainer);
+
+    // Add buttons at the bottom in a separate fixed container
+    const plotButtonsContainer = document.createElement("div");
+    plotButtonsContainer.classList.add("plot-buttons-container");
+
+    // Create and append the create button
+    const createButton = document.createElement("button");
+    createButton.textContent = "Create";
+    createButton.addEventListener("click", () => {
+        switch (plotType) {
+            case "Scatter Plot":
+                createScatterPlot(
+                    selectedFields[0],
+                    selectedFields[1],
+                    pc.newPlotId(),
+                    data,
+                    pc,
+                    gridPos,
+                );
+                break;
+            case "Parallel Coordinates":
+                createParallelCoordinates(
+                    selectedFields.filter(e => e !== "none"),
+                    selectedFields.filter(e => e !== "none")[0],
+                    pc.newPlotId(),
+                    data,
+                    pc,
+                    gridPos,
+                );
+                break;
+            case "Bar Plot":
+                createBarPlot(selectedFields[0], pc.newPlotId(), data, pc, gridPos);
+                break;
+            case "Histogram":
+                createHistogram(selectedFields[0], pc.newPlotId(), data, pc, gridPos);
+                break;
+        }
+    });
+    createButton.classList.add("plot-button", "create-button");
+    plotButtonsContainer.appendChild(createButton);
+
+    // Create and append the cancel button
+    const cancelButton = document.createElement("button");
+    cancelButton.textContent = "Back";
+    cancelButton.classList.add("plot-button", "cancel-button");
+    cancelButton.addEventListener("click", () => {
+        gridCell.removeChild(plotOptionsDiv); // Remove the plot options menu
+        createPlotTypeMenu(gridCell, addPlotButton, pc, data, gridPos); // Show plot type menu again
+    });
+    plotButtonsContainer.appendChild(cancelButton);
+
+    // Append the buttons container to the plot options div
+    plotOptionsDiv.appendChild(plotButtonsContainer);
+
+    // Add the plot options div to the grid cell
+    gridCell.appendChild(plotOptionsDiv);
+}
+
+function createPlotTypeMenu(gridCell, addPlotButton, pc, data, gridPos) {
+    // Create a menu for plot type selection
+    const plotMenu = document.createElement("div");
+    plotMenu.classList.add("plot-menu");
+
+    // Create buttons for different plot types
+    const plotTypes = ["Scatter Plot", "Bar Plot", "Parallel Coordinates", "Histogram"];
+    plotTypes.forEach(plotType => {
+        const plotButton = document.createElement("button");
+        plotButton.textContent = plotType;
+        plotButton.addEventListener("click", () => {
+            createPlotMenu(plotType, gridCell, plotMenu, addPlotButton, pc, data, gridPos); // Proceed to plot-specific menu
+        });
+        plotMenu.appendChild(plotButton);
+    });
+
+    // Create Cancel button for the plot type menu
+    const cancelButton = document.createElement("button");
+    cancelButton.textContent = "Back";
+    cancelButton.classList.add("cancel-button"); // Add this class for styling
+    cancelButton.addEventListener("click", () => {
+        gridCell.removeChild(plotMenu); // Remove plot menu
+        addPlotButton.style.display = "flex"; // Show the Add Plot button again
+    });
+    plotMenu.appendChild(cancelButton);
+
+    // Add the plot menu to the grid cell
+    gridCell.appendChild(plotMenu);
+}
+
+function createGridItems(containerId, grid, pc, data) {
     const container = document.getElementById(containerId);
-
-    // Clear existing content (if needed)
-    // container.innerHTML = '';
 
     for (let col = 1; col <= grid.col; col++) {
         for (let row = 1; row <= grid.row; row++) {
@@ -22,83 +178,26 @@ function createGridItems(containerId, grid, fields, pc, data) {
             gridCell.style.gridColumn = `${col}`; // Set the column position
             gridCell.style.gridRow = `${row}`; // Set the row position
 
-            // Array to store the select elements
-            const selects = [];
+            // Create a container div for the Add Plot button
+            const buttonContainer = document.createElement("div");
+            buttonContainer.classList.add("button-container");
 
-            // Create 5 selects for fields
-            for (let i = 0; i < 4; i++) {
-                const select = document.createElement("select");
+            // Create the Add Plot button
+            const addPlotButton = document.createElement("button");
+            addPlotButton.textContent = "Add Plot";
+            addPlotButton.addEventListener("click", () => {
+                // Create the plot menu with 4 plot options and a cancel button
+                createPlotTypeMenu(gridCell, buttonContainer, pc, data, { col: col, row: row });
 
-                fields.forEach((f) => {
-                    const option = document.createElement("option");
-                    option.value = f;
-                    option.textContent = f;
-                    select.appendChild(option);
-                });
-
-                gridCell.appendChild(select);
-                selects.push(select); // Add the select element to the array
-            }
-
-            // Create scatter
-            const scatterBtn = document.createElement("button");
-            scatterBtn.textContent = "Create Scatter";
-            scatterBtn.addEventListener("click", () => {
-                createScatterPlot(
-                    selects[0].value,
-                    selects[1].value,
-                    pc.newPlotId(),
-                    data,
-                    pc,
-                    { col: col, row: row }
-                );
+                // Hide the Add Plot button
+                buttonContainer.style.display = "none";
             });
 
-            gridCell.appendChild(scatterBtn);
+            // Add the Add Plot button to the button container
+            buttonContainer.appendChild(addPlotButton);
 
-            // Create barPlot
-            const barPlotBtn = document.createElement("button");
-            barPlotBtn.textContent = "Create bar plot";
-            barPlotBtn.addEventListener("click", () => {
-                createBarPlot(selects[0].value, pc.newPlotId(), data, pc, {
-                    col: col,
-                    row: row,
-                });
-            });
-
-            gridCell.appendChild(barPlotBtn);
-
-            // Create histogram
-            const histogramBtn = document.createElement("button");
-            histogramBtn.textContent = "Create histogram";
-            histogramBtn.addEventListener("click", () => {
-                createHistogram(selects[0].value, pc.newPlotId(), data, pc, {
-                    col: col,
-                    row: row,
-                });
-            });
-
-            gridCell.appendChild(histogramBtn);
-
-            // Create parallelCoord
-            const parallelCoordBtn = document.createElement("button");
-            parallelCoordBtn.textContent = "Create parallel coordinates";
-            parallelCoordBtn.addEventListener("click", () => {
-                const selectedValues = selects.map((select) => select.value);
-                createParallelCoordinates(
-                    selectedValues,
-                    selectedValues[0],
-                    pc.newPlotId(),
-                    data,
-                    pc,
-                    {
-                        col: col,
-                        row: row,
-                    }
-                );
-            });
-
-            gridCell.appendChild(parallelCoordBtn);
+            // Append the button container to the grid cell
+            gridCell.appendChild(buttonContainer);
 
             // Append the grid cell div to the container
             container.appendChild(gridCell);
@@ -106,7 +205,8 @@ function createGridItems(containerId, grid, fields, pc, data) {
     }
 }
 
-export function setUpLoadFile(data, pc){
+
+export function setUpLoadFile(data, pc) {
     const fileInput = document.getElementById("fileInput");
 
     fileInput.addEventListener("change", () => {
@@ -119,10 +219,9 @@ export function setUpLoadFile(data, pc){
                 const csvData = event.target.result;
                 data = await d3.csvParse(csvData);
 
-                // Do something with the parsed data
-                console.log(data);
+                // console.log(data);
                 pc.init(data);
-                createGridItems("plotsContainer", { col: 6, row: 3 }, pc.fields(), pc, data); // For example, 18 cells
+                createGridItems("plotsContainer", { col: 6, row: 3 }, pc, data); // For example, 18 cells
             };
 
             reader.readAsText(file);
@@ -139,8 +238,8 @@ function getGridElementsInfo() {
 
     for (const element of elements) {
         const id = element.id;
-        const col = window.getComputedStyle(element).getPropertyValue('grid-column-start');
-        const row = window.getComputedStyle(element).getPropertyValue('grid-row-start');
+        const col = window.getComputedStyle(element).getPropertyValue("grid-column-start");
+        const row = window.getComputedStyle(element).getPropertyValue("grid-row-start");
 
         gridInfoArray.push({ type: id, col: parseInt(col), row: parseInt(row) });
     }
@@ -169,7 +268,7 @@ function exportLayout() {
 }
 
 // Attach the export function to the button click event
-export function setUpExport(){
+export function setUpExport() {
     document.getElementById("exportLayoutButton").addEventListener("click", exportLayout);
 }
 
@@ -189,7 +288,7 @@ function loadLayout(layoutData, pc) {
                     pc.newPlotId(),
                     pc._entries,
                     pc,
-                    { col: item.col, row: item.row }
+                    { col: item.col, row: item.row },
                 );
                 break;
             case "parallelCoord":
@@ -203,7 +302,7 @@ function loadLayout(layoutData, pc) {
                     {
                         col: item.col,
                         row: item.row,
-                    }
+                    },
                 );
                 break;
             case "histogram":
@@ -220,7 +319,7 @@ function loadLayout(layoutData, pc) {
                 });
                 break;
             // default:
-                // console.log("Unknown type");
+            // console.log("Unknown type");
         }
     });
 }
@@ -239,6 +338,7 @@ export function setUpLayoutFileLoader(data, pc) {
                     // Parse the JSON data from the file
                     data = JSON.parse(event.target.result);
 
+                    // TODO: clean layout
                     // Call loadLayout with the parsed JSON object
                     loadLayout(data, pc);
                 } catch (error) {

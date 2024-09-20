@@ -94,17 +94,17 @@ export class PlotCoordinator {
                 if (selection.range) {
                     const from = selection.range[0];
                     const to = selection.range[1];
-                    if(selectType==="NOT"){
+                    if (selectType === "NOT") {
                         if (!(from <= d[field] && d[field] <= to)) {
-                           isSelectedTypeNot = true;
+                            isSelectedTypeNot = true;
                         }
                     }
-                    if(selectType==="AND"){
+                    if (selectType === "AND") {
                         if (!(from <= d[field] && d[field] <= to)) {
                             return false;
                         }
                     }
-                    if(selectType==="OR"){
+                    if (selectType === "OR") {
                         if ((from <= d[field] && d[field] <= to)) {
                             return false;
                         }
@@ -125,9 +125,9 @@ export class PlotCoordinator {
                 }
             }
         }
-        if(selectType==="NOT"){
+        if (selectType === "NOT") {
             return !isSelectedTypeNot;
-        }else{
+        } else {
             return true;
         }
     }
@@ -144,7 +144,7 @@ export class PlotCoordinator {
                 let isInRanges = this._isSelectedRange(
                     this._entries[i],
                     newSelection,
-                    id
+                    id,
                 );
                 return (this._plots.get(id).selectionMode === "AND") ? isInRanges : !isInRanges;
             });

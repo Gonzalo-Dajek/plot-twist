@@ -1,6 +1,6 @@
 import * as d3 from "d3";
 import throttle from "lodash-es/throttle.js";
-import { createButtons } from "./plotsUtils/buttons.js";
+import { createButtons } from "./plotsUtils/plotButtons.js";
 
 export function createParallelCoordinates(keys, keyz, id, data, pc, gridPos) {
     let divId = `parallelCoord_${id}`;

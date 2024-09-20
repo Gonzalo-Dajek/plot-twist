@@ -1,6 +1,6 @@
 import * as d3 from "d3";
 import throttle from "lodash-es/throttle.js";
-import { createButtons } from "./plotsUtils/buttons.js";
+import { createButtons } from "./plotsUtils/plotButtons.js";
 
 export function createScatterPlot(xField, yField, id, data, pc, gridPos) {
     const divId = `scatterPlot_${id}_${xField}_${yField}`;
@@ -206,11 +206,11 @@ export function createScatterPlot(xField, yField, id, data, pc, gridPos) {
     //     );
     // }
 
-    // Helper function to calculate ranks
-    function rank(values) {
-        const sorted = [...values].sort((a, b) => a - b);
-        return values.map((v) => sorted.indexOf(v) + 1);
-    }
+    // // Helper function to calculate ranks
+    // function rank(values) {
+    //     const sorted = [...values].sort((a, b) => a - b);
+    //     return values.map((v) => sorted.indexOf(v) + 1);
+    // }
 
     // Create the brush behavior.
     function handleSelection({ selection }) {

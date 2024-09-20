@@ -93,7 +93,6 @@ export function createButtons(container, pc, id, addSelectionType = true) {
         setActiveButton("AND");
     }
 
-
-
+    // let setActiveButton = ()=>{};
     return { setActiveButton };
 }

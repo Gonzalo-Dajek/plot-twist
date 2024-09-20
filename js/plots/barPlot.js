@@ -1,5 +1,5 @@
 import * as d3 from "d3";
-import { createButtons } from "./plotsUtils/buttons.js";
+import { createButtons } from "./plotsUtils/plotButtons.js";
 
 export function createBarPlot(field, id, data, pc, gridPos) {
     const divId = `barplot_${id}_${field}`;
