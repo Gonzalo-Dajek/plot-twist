@@ -4,6 +4,9 @@ body {
     font-family: 'Open Sans', sans-serif;
     background-color: #f7f7f7;
     color: #344767;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
 
 .top-bar-dummy {
@@ -30,31 +33,29 @@ body {
 }
 
 .top-bar.scrolled {
-    background: rgba(255, 255, 255, 0.6); /* Frosted glass effect after scroll */
-    backdrop-filter: blur(10px); /* Apply the blur effect when scrolled */
-    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1); /* Soft shadow after scroll */
-
-    margin: 0 auto; /* Center the top-bar */
-    white-space: nowrap; /* Prevent wrapping on scroll as well */
+    background: rgba(255, 255, 255, 0.6);
+    backdrop-filter: blur(10px);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    margin: 0 auto;
+    white-space: nowrap;
 }
-
 
 .top-bar-inner {
     display: flex;
     justify-content: center;
     align-items: center;
     gap: 20px;
-    white-space: nowrap; /* Ensure no wrapping inside the content */
+    white-space: nowrap;
 }
 
 .file-input {
     border: none;
-    background-color: rgba(240, 240, 240, 0.6); /* Slightly more transparent */
+    background-color: rgba(240, 240, 240, 0.6);
     padding: 8px;
-    border-radius: 8px; /* Keep rounded edges */
+    border-radius: 8px;
     width: 300px;
     text-align: center;
-    box-shadow: inset 2px 2px 4px rgba(0, 0, 0, 0.1), inset -2px -2px 4px rgba(255, 255, 255, 0.5); /* Softer shadows */
+    box-shadow: inset 2px 2px 4px rgba(0, 0, 0, 0.1), inset -2px -2px 4px rgba(255, 255, 255, 0.5);
     margin-left: 10px;
 }
 
@@ -101,17 +102,90 @@ body {
     box-shadow: 4px 4px 12px rgba(0, 0, 0, 0.2), -4px -4px 12px rgba(255, 255, 255, 0.9); /* Optional: increase shadow on hover */
 }
 
+/* Plot Container + ColRow Btns*/
+#grid-container {
+    display: grid;
+    grid-template-columns: auto auto;
+    grid-template-rows: auto auto;
+    gap: 0; /* Adjust as needed for spacing */
+    width: fit-content;
+    height: fit-content;
+    align-items: center; /* Center items vertically in the grid */
+    justify-items: center; /* Center items horizontally in the grid */
+    /*box-sizing: border-box;*/
+}
+
+#plotsContainer {
+    grid-column: 1 / 2;
+    grid-row: 1 / 2;
+    background-color: #f0f0f0; /* Light background for visibility */
+    padding: 10px; /* Padding for internal spacing */
+}
+
+#col, #row {
+    padding: 0;
+    margin: 0;
+    border: none;
+    cursor: pointer;
+}
+
+#col {
+    grid-column: 2 / 3;
+    grid-row: 1 / 2;
+    display: none;
+    height: calc(100% - 2*15px);
+    width: 50px;
+    margin-right: 15px;
+}
+
+#row {
+    grid-column: 1 / 2;
+    grid-row: 2 / 3;
+    display: none;
+    height: 50px;
+    width: calc(100% - 2*15px);
+    margin-bottom: 15px;
+}
+
+#grid-container > div:last-child {
+    grid-column: 2 / 3;
+    grid-row: 2 / 3;
+}
+
+#col:hover, #row:hover {
+    /*background-color: #4A5ECA;*/
+    background-color: #d9d9d9;
+}
+
+#col, #row {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 20px;
+    font-weight: bolder;
+    font-size: 20px;
+    color: #344767;
+    border-radius: 10px;
+    border: none;
+    box-shadow: none;
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+    /*background-color: #5C6BC0;*/
+    background-color: #f0f0f0;
+}
+
 /* Plots*/
 
 #plotsContainer {
     /*overflow-x: auto; !* Allow horizontal scrolling *!*/
-    width: 1810px;
-    display: grid;
-    grid-template-columns: repeat(6, 290px);
-    grid-template-rows: repeat(3, 290px);
+    display: inline-grid;
     gap: 15px;
     padding: 15px;
     background-color: #f7f7f7;
+    /*height: auto;*/
+    /*width: auto;*/
+    width: fit-content; /* Set width to fit the content */
+    height: fit-content;
 }
 
 .grid-cell {

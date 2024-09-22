@@ -22,7 +22,7 @@ export function createHistogram(field, id, data, pc, gridPos) {
 
     // let selectedColor = "#589E4B";
     let selectedColor = "#465191";
-    let unselectedColor = "#999999";
+    let unselectedColor = "#c9c9c9";
 
     let btns = createButtons(container, pc, id);
     let setActiveButton = btns.setActiveButton;

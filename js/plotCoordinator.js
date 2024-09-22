@@ -82,9 +82,18 @@ export class PlotCoordinator {
         }
     }
 
+    removeAll() {
+        for (let [id, plot] of this._plots.entries()) {
+            let indexesSelected = plot.lastIndexesSelected;
+            for (let i = 0; i < indexesSelected.length; i++) {
+                this._entriesSelectCounter[indexesSelected[i]]--;
+            }
+        }
+        this._plots.clear();
+    }
+
+
     _isSelectedRange(d, selectionArr, id) {
-        // TODO: id << para NAND?
-        // console.log(selectionArr);
         const selectType = this._plots.get(id).selectionMode;
         let isSelectedTypeNot = false;
         for (let selection of selectionArr) {

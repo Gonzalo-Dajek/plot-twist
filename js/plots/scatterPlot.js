@@ -24,7 +24,7 @@ export function createScatterPlot(xField, yField, id, data, pc, gridPos) {
     const marginLeft = 40;
 
     let selectedColor = "#5C6BC0";
-    let unselectedColor = "grey";
+    let unselectedColor = "hsl(0, 0%, 75%)";
 
     let btns = createButtons(container, pc, id);
     let setActiveButton = btns.setActiveButton;
@@ -148,7 +148,7 @@ export function createScatterPlot(xField, yField, id, data, pc, gridPos) {
         .attr("cy", (d) => y(Number(d[yField])))
         .attr("r", 2.5) // radius
         .attr("fill", selectedColor) // Dot color
-        .attr("fill-opacity", 0.3) // Transparency
+        .attr("fill-opacity", 0.7) // Transparency
         .attr("stroke", "none"); // border
 
     // Calculate the linear regression line
@@ -277,8 +277,12 @@ export function createScatterPlot(xField, yField, id, data, pc, gridPos) {
 
             d3.select(this)
                 .style("fill", isSelected ? selectedColor : unselectedColor)
-                .style("r", isSelected ? 2.5 : 1.2)
-                .style("fill-opacity", isSelected ? 0.5 : 0.2);
+                .style("r", isSelected ? 2.7 : 1.4)
+                .style("fill-opacity", isSelected ? 0.8 : 0.2);
+
+            // if (isSelected) {
+            //     d3.select(this).raise();  // Bring selected dots to the top
+            // }
             // .style("r", isSelected ? 2.5 : 1.2);
         });
 

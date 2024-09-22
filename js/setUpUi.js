@@ -5,6 +5,53 @@ import { createParallelCoordinates } from "./plots/parallelCoordinates.js";
 import * as d3 from "d3";
 import { PlotCoordinator } from "./plotCoordinator.js";
 
+function adjustBodyStyle() {
+    console.log("resize");
+    const content = document.getElementById("grid-container");
+    const body = document.body;
+
+    const contentRect = content.getBoundingClientRect();
+    if (contentRect.width > window.innerWidth) {
+        body.style.display = "block";
+        body.style.flexDirection = "";
+        body.style.alignItems = "";
+    } else {
+        body.style.display = "flex";
+        body.style.flexDirection = "column";
+        body.style.alignItems = "center";
+    }
+}
+
+export function setUpResize(containerId, grid, pcRef, data) {
+
+    document.getElementById("col").addEventListener("click", function() {
+
+        grid.col++;
+        const container = document.getElementById(containerId);
+
+        container.style.gridTemplateColumns = `repeat(${grid.col}, 350px)`;
+        container.style.gridTemplateRows = `repeat(${grid.row}, 350px)`;
+
+        for (let i = 1; i <= grid.row; i++) {
+            createGridCell(container, { col: grid.col, row: i }, pcRef, data);
+        }
+        adjustBodyStyle();
+    });
+
+    document.getElementById("row").addEventListener("click", function() {
+        grid.row++;
+        const container = document.getElementById(containerId);
+
+        container.style.gridTemplateColumns = `repeat(${grid.col}, 350px)`;
+        container.style.gridTemplateRows = `repeat(${grid.row}, 350px)`;
+
+        for (let i = 1; i <= grid.col; i++) {
+            createGridCell(container, { col: i, row: grid.row }, pcRef, data);
+        }
+        adjustBodyStyle();
+    });
+}
+
 function createPlotMenu(
     plotType,
     gridCell,
@@ -14,7 +61,6 @@ function createPlotMenu(
     data,
     gridPos,
 ) {
-    // Remove the plot type menu
     gridCell.removeChild(plotMenu);
 
     // Create a new menu for plot options
@@ -99,7 +145,7 @@ function createPlotMenu(
                     selectedFields[0],
                     selectedFields[1],
                     pcRef.pc.newPlotId(),
-                    data,
+                    pcRef.pc._entries,
                     pcRef.pc,
                     gridPos,
                 );
@@ -109,7 +155,7 @@ function createPlotMenu(
                     selectedFields.filter((e) => e !== "none"),
                     selectedFields.filter((e) => e !== "none")[0],
                     pcRef.pc.newPlotId(),
-                    data,
+                    pcRef.pc._entries,
                     pcRef.pc,
                     gridPos,
                 );
@@ -118,7 +164,7 @@ function createPlotMenu(
                 createBarPlot(
                     selectedFields[0],
                     pcRef.pc.newPlotId(),
-                    data,
+                    pcRef.pc._entries,
                     pcRef.pc,
                     gridPos,
                 );
@@ -127,7 +173,7 @@ function createPlotMenu(
                 createHistogram(
                     selectedFields[0],
                     pcRef.pc.newPlotId(),
-                    data,
+                    pcRef.pc._entries,
                     pcRef.pc,
                     gridPos,
                 );
@@ -142,7 +188,7 @@ function createPlotMenu(
     cancelButton.classList.add("plot-button", "cancel-button");
     cancelButton.addEventListener("click", () => {
         gridCell.removeChild(plotOptionsDiv); // Remove the plot options menu
-        createPlotTypeMenu(gridCell, addPlotButton, pcRef.pc, data, gridPos); // Show plot type menu again
+        createPlotTypeMenu(gridCell, addPlotButton, pcRef, data, gridPos); // Show plot type menu again
     });
     plotButtonsContainer.appendChild(cancelButton);
 
@@ -154,7 +200,7 @@ function createPlotMenu(
     gridCell.appendChild(plotOptionsDiv);
 }
 
-function createPlotTypeMenu(gridCell, addPlotButton, pcRef, data, gridPos) {
+function createPlotTypeMenu(gridCell, addPlotButton, pcRef, dataSet, gridPos) {
     // Create a menu for plot type selection
     const plotMenu = document.createElement("div");
     plotMenu.classList.add("plot-menu");
@@ -176,7 +222,7 @@ function createPlotTypeMenu(gridCell, addPlotButton, pcRef, data, gridPos) {
                 plotMenu,
                 addPlotButton,
                 pcRef,
-                data,
+                dataSet,
                 gridPos,
             ); // Proceed to plot-specific menu
         });
@@ -197,57 +243,60 @@ function createPlotTypeMenu(gridCell, addPlotButton, pcRef, data, gridPos) {
     gridCell.appendChild(plotMenu);
 }
 
-function createGridItems(containerId, grid, pcRef, data) {
+function createGridCell(container, { col, row }, pcRef, dataSet) {
+    // Create a div for the grid cell
+    const gridCell = document.createElement("div");
+    gridCell.classList.add("grid-cell"); // Add a class for styling if needed
+    gridCell.setAttribute("id", `grid-cell-${col}-${row}`);
+
+    // Style the grid cell for specific row and column
+    gridCell.style.gridColumn = `${col}`; // Set the column position
+    gridCell.style.gridRow = `${row}`; // Set the row position
+
+    // Create a container div for the Add Plot button
+    const buttonContainer = document.createElement("div");
+    buttonContainer.classList.add("button-container");
+
+    // Create the Add Plot button
+    const addPlotButton = document.createElement("button");
+    addPlotButton.textContent = "Add Plot";
+    addPlotButton.addEventListener("click", () => {
+        // Create the plot menu with 4 plot options and a cancel button
+        createPlotTypeMenu(gridCell, buttonContainer, pcRef, dataSet, {
+            col: col,
+            row: row,
+        });
+
+        // Hide the Add Plot button
+        buttonContainer.style.display = "none";
+    });
+
+    // Add the Add Plot button to the button container
+    buttonContainer.appendChild(addPlotButton);
+
+    // Append the button container to the grid cell
+    gridCell.appendChild(buttonContainer);
+
+    // Append the grid cell div to the container
+    container.appendChild(gridCell);
+}
+
+function createGridItems(containerId, grid, pcRef, dataSet) {
     const container = document.getElementById(containerId);
 
-    // Set the number of columns and rows in the CSS grid
-    container.style.gridTemplateColumns = `repeat(${grid.col}, 290px)`;
-    container.style.gridTemplateRows = `repeat(${grid.row}, 290px)`;
+    container.style.gridTemplateColumns = `repeat(${grid.col}, 350px)`;
+    container.style.gridTemplateRows = `repeat(${grid.row}, 350px)`;
 
-    // Adjust the container's width and height
-    const containerWidth = grid.col * 290 + (grid.col - 1) * 15 + 30; // width of cells + gaps + padding
-    const containerHeight = grid.row * 290 + (grid.row - 1) * 15 + 30; // height of cells + gaps + padding
-
-    container.style.width = `${containerWidth}px`;
-    container.style.height = `${containerHeight}px`;
-
+    // // Adjust the container's width and height
+    // const containerWidth = grid.col * 350 + (grid.col - 1) * 15 + 30; // width of cells + gaps + padding
+    // const containerHeight = grid.row * 350 + (grid.row - 1) * 15 + 30; // height of cells + gaps + padding
+    //
+    // container.style.width = `${containerWidth}px`;
+    // container.style.height = `${containerHeight}px`;
+    //
     for (let col = 1; col <= grid.col; col++) {
         for (let row = 1; row <= grid.row; row++) {
-            // Create a div for the grid cell
-            const gridCell = document.createElement("div");
-            gridCell.classList.add("grid-cell"); // Add a class for styling if needed
-            gridCell.setAttribute("id", `grid-cell-${col}-${row}`);
-
-            // Style the grid cell for specific row and column
-            gridCell.style.gridColumn = `${col}`; // Set the column position
-            gridCell.style.gridRow = `${row}`; // Set the row position
-
-            // Create a container div for the Add Plot button
-            const buttonContainer = document.createElement("div");
-            buttonContainer.classList.add("button-container");
-
-            // Create the Add Plot button
-            const addPlotButton = document.createElement("button");
-            addPlotButton.textContent = "Add Plot";
-            addPlotButton.addEventListener("click", () => {
-                // Create the plot menu with 4 plot options and a cancel button
-                createPlotTypeMenu(gridCell, buttonContainer, pcRef, data, {
-                    col: col,
-                    row: row,
-                });
-
-                // Hide the Add Plot button
-                buttonContainer.style.display = "none";
-            });
-
-            // Add the Add Plot button to the button container
-            buttonContainer.appendChild(addPlotButton);
-
-            // Append the button container to the grid cell
-            gridCell.appendChild(buttonContainer);
-
-            // Append the grid cell div to the container
-            container.appendChild(gridCell);
+            createGridCell(container, { col, row }, pcRef, dataSet);
         }
     }
 }
@@ -264,7 +313,7 @@ export function setUpLoadCsv(data, pcRef, gridSize) {
             reader.onload = async (event) => {
                 const csvData = event.target.result;
 
-                const container = document.getElementById('plotsContainer');
+                const container = document.getElementById("plotsContainer");
 
                 while (container.firstChild) {
                     container.removeChild(container.firstChild);
@@ -276,6 +325,8 @@ export function setUpLoadCsv(data, pcRef, gridSize) {
                 pcRef.pc.init(data);
                 createGridItems("plotsContainer", gridSize, pcRef, data);
 
+                document.getElementById("col").style.display = "flex";
+                document.getElementById("row").style.display = "flex";
             };
 
             reader.readAsText(file);
@@ -343,54 +394,53 @@ export function setUpExportLayout(gridSize) {
 function loadLayout(layoutData, pcRef) {
     console.log("Loaded layout:", layoutData);
     // TODO: loadGridSize(layoutData[0])
-    layoutData[1].forEach((item) => {
-        // Split the type string into an array of segments
-        const segments = item.type.split("_");
+    if(layoutData[1]){
+        layoutData[1].forEach((item) => {
+            const segments = item.type.split("_");
 
-        // Use the first segment in the switch statement
-        switch (segments[0]) {
-            case "scatterPlot":
-                createScatterPlot(
-                    segments[2],
-                    segments[3],
-                    pcRef.pc.newPlotId(),
-                    pcRef.pc._entries,
-                    pcRef.pc,
-                    { col: item.col, row: item.row },
-                );
-                break;
-            case "parallelCoord":
-                // console.log("a");  // Action for parallelCoord
-                createParallelCoordinates(
-                    segments.slice(2),
-                    segments[2],
-                    pcRef.pc.newPlotId(),
-                    pcRef.pc._entries,
-                    pcRef.pc,
-                    {
+            switch (segments[0]) {
+                case "scatterPlot":
+                    createScatterPlot(
+                        segments[2],
+                        segments[3],
+                        pcRef.pc.newPlotId(),
+                        pcRef.pc._entries,
+                        pcRef.pc,
+                        { col: item.col, row: item.row },
+                    );
+                    break;
+                case "parallelCoord":
+                    createParallelCoordinates(
+                        segments.slice(2),
+                        segments[2],
+                        pcRef.pc.newPlotId(),
+                        pcRef.pc._entries,
+                        pcRef.pc,
+                        {
+                            col: item.col,
+                            row: item.row,
+                        },
+                    );
+                    break;
+                case "histogram":
+                    createHistogram(segments[2], pcRef.pc.newPlotId(), pcRef.pc._entries, pcRef.pc, {
                         col: item.col,
                         row: item.row,
-                    },
-                );
-                break;
-            case "histogram":
-                // console.log("b");  // Action for histogram
-                createHistogram(segments[2], pcRef.pc.newPlotId(), pcRef.pc._entries, pcRef.pc, {
-                    col: item.col,
-                    row: item.row,
-                });
-                break;
-            case "barplot":
-                createBarPlot(segments[2], pcRef.pc.newPlotId(), pcRef.pc._entries, pcRef.pc, {
-                    col: item.col,
-                    row: item.row,
-                });
-                break;
-        }
-    });
+                    });
+                    break;
+                case "barplot":
+                    createBarPlot(segments[2], pcRef.pc.newPlotId(), pcRef.pc._entries, pcRef.pc, {
+                        col: item.col,
+                        row: item.row,
+                    });
+                    break;
+            }
+        });
+    }
+
 }
 
-export function setUpLoadLayout(data, pcRef) {
+export function setUpLoadLayout(dataSet, pcRef, gridSize) {
     const fileInput = document.getElementById("layoutInput");
 
     fileInput.addEventListener("change", () => {
@@ -401,11 +451,21 @@ export function setUpLoadLayout(data, pcRef) {
 
             reader.onload = (event) => {
                 try {
-                    // Parse the JSON data from the file
-                    data = JSON.parse(event.target.result);
+                    let parsedData = JSON.parse(event.target.result);
 
-                    // TODO: clean layout
-                    loadLayout(data, pcRef);
+                    const container = document.getElementById("plotsContainer");
+
+                    while (container.firstChild) {
+                        container.removeChild(container.firstChild);
+                    }
+
+                    gridSize.col = parsedData[0].col;
+                    gridSize.row = parsedData[0].row;
+
+                    pcRef.pc.removeAll();
+                    createGridItems("plotsContainer", gridSize, pcRef, dataSet);
+                    loadLayout(parsedData, pcRef);
+                    adjustBodyStyle();
                 } catch (error) {
                     console.error("Error parsing JSON:", error);
                     alert(

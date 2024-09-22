@@ -16,19 +16,18 @@ export function createParallelCoordinates(keys, keyz, id, data, pc, gridPos) {
     // Specify chart dimensions
     const container = d3.select(`#${divId}`);
     const width = container.node().clientWidth;
+    const height = container.node().clientHeight-40;
     // const height = keys.length * 120;
-    const height = 596 - 40;
+    // const height = 596 - 40;
     const marginTop = 20;
     const marginRight = 15;
     const marginBottom = 30;
     const marginLeft = 15;
 
-    const selectedColor = "green";
     const unselectedColor = "grey";
-    let selectedColorSecondary = "#FFC784";
 
     let btns = createButtons(container, pc, id, true);
-    let setActiveButton = btns.setActiveButton;
+    // let setActiveButton = btns.setActiveButton;
 
     // Create horizontal x scale for each key
     const x = new Map(
@@ -88,8 +87,8 @@ export function createParallelCoordinates(keys, keyz, id, data, pc, gridPos) {
         .append("g")
         .attr("fill", "none")
         .attr("class", `data-paths${id}`)
-        .attr("stroke-width", 1.5) // TODO: agregar variable
-        .attr("stroke-opacity", 0.4) // TODO: agregar variable
+        .attr("stroke-width", 1.5)
+        .attr("stroke-opacity", 0.4)
         .selectAll("path")
         .data(data)
         .join("path")
@@ -189,6 +188,6 @@ export function createParallelCoordinates(keys, keyz, id, data, pc, gridPos) {
                 pc.isSelected(i) ? color(d[keyz]) : unselectedColor
             )
             .attr("stroke-width", (d, i) => (pc.isSelected(i) ? 1.3 : 0.3))
-            .attr("stroke-opacity", (d, i) => (pc.isSelected(i) ? 0.3 : 0.05));
+            .attr("stroke-opacity", (d, i) => (pc.isSelected(i) ? 0.7 : 0.05));
     });
 }
