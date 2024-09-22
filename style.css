@@ -9,9 +9,19 @@ body {
     align-items: center;
 }
 
+.top-bar-fixedRectangle {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
+    height: 63px;
+    background-color: rgba(255, 255, 255, 0.4);
+    border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
 .top-bar-dummy {
-    height: 50px;
-    visibility: hidden;
+    height: 63px;
 }
 
 .top-bar {
@@ -29,7 +39,7 @@ body {
     transform: translateX(-50%); /* Adjusting the centering */
     z-index: 10;
     transition: background 0.1s ease, box-shadow 0.1s ease;
-    white-space: nowrap;
+    /*white-space: nowrap;*/
 }
 
 .top-bar.scrolled {
@@ -44,11 +54,12 @@ body {
     display: flex;
     justify-content: center;
     align-items: center;
-    gap: 20px;
+    gap: 5px;
     white-space: nowrap;
 }
 
-.file-input {
+.indentFileUpload{
+    margin-right: 30px;
     border: none;
     background-color: rgba(240, 240, 240, 0.6);
     padding: 8px;
@@ -57,33 +68,49 @@ body {
     text-align: center;
     box-shadow: inset 2px 2px 4px rgba(0, 0, 0, 0.1), inset -2px -2px 4px rgba(255, 255, 255, 0.5);
     margin-left: 10px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+}
+
+.indentFileUpload .file-name{
+    font-family: Arial, sans-serif;
+    font-weight: normal;
+    font-size: 13px;
+    color: grey;
+}
+
+.custom-file-upload{
+    content: 'Select File';
+    display: inline-block;
+    background: #5C6BC0; /* Soft Indigo */
+    color: white;
+    font-family: Arial, sans-serif;
+    font-weight: normal;
+    font-size: 13px;
+    padding: 5px 10px;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-right: 10px;
+    transition: background 0.2s ease-in-out;
+}
+
+.file-input {
+    display: none; /* Hide the default file input */
+}
+
+.custom-file-upload:hover{
+    background: #3F51B5; /* Darker Indigo */
+}
+
+.indentFileUpload input[type="file"] {
+    display: none;
 }
 
 .file-input::-webkit-file-upload-button {
     visibility: hidden;
     display: none;
-}
-.file-input::before {
-    content: 'Select File';
-    display: inline-block;
-    background: #5C6BC0; /* Soft Indigo */
-    color: white;
-    padding: 5px 10px;
-    border-radius: 5px;
-    cursor: pointer;
-    margin-right: 10px;
-    transition: background 0.2s ease-in-out; /* Smooth transition for background */
-}
-
-.file-input:hover::before {
-    background: #3F51B5; /* Darker Indigo */
-}
-
-.file-input:after {
-    content: attr(data-file-name);
-    display: inline-block;
-    padding-left: 10px;
-    color: #555;
 }
 
 .top-bar-button {

@@ -6,7 +6,6 @@ import * as d3 from "d3";
 import { PlotCoordinator } from "./plotCoordinator.js";
 
 function adjustBodyStyle() {
-    console.log("resize");
     const content = document.getElementById("grid-container");
     const body = document.body;
 
@@ -78,7 +77,7 @@ function createPlotMenu(
             numSelectFields = 2;
             break;
         case "Parallel Coordinates":
-            numSelectFields = 5;
+            numSelectFields = 10;
             break;
         case "Bar Plot":
             numSelectFields = 1;
@@ -281,7 +280,7 @@ function createGridCell(container, { col, row }, pcRef, dataSet) {
     container.appendChild(gridCell);
 }
 
-function createGridItems(containerId, grid, pcRef, dataSet) {
+export function createGridItems(containerId, grid, pcRef, dataSet) {
     const container = document.getElementById(containerId);
 
     container.style.gridTemplateColumns = `repeat(${grid.col}, 350px)`;
@@ -302,6 +301,22 @@ function createGridItems(containerId, grid, pcRef, dataSet) {
 }
 
 export function setUpLoadCsv(data, pcRef, gridSize) {
+    document.addEventListener('DOMContentLoaded', function() {
+        // Function to update the file name display
+        function updateFileName(fileInputId, fileNameId) {
+            const fileInput = document.getElementById(fileInputId);
+            const fileNameDisplay = document.getElementById(fileNameId);
+
+            fileInput.addEventListener('change', function() {
+                fileNameDisplay.textContent = this.files.length > 0 ? this.files[0].name : 'No file chosen';
+            });
+        }
+
+        // Initialize the two file inputs with their corresponding display
+        updateFileName('fileInput', 'fileName1');
+        updateFileName("layoutInput", 'fileName2');
+    });
+
     const fileInput = document.getElementById("fileInput");
 
     fileInput.addEventListener("change", () => {
@@ -319,7 +334,24 @@ export function setUpLoadCsv(data, pcRef, gridSize) {
                     container.removeChild(container.firstChild);
                 }
 
-                data = await d3.csvParse(csvData);
+                let data = await d3.csvParse(csvData);
+
+                data = data.map(row => {
+                    const modifiedRow = {};
+
+                    // Iterate over each key-value pair in the row
+                    for (let key in row) {
+                        const modifiedKey = key
+                            .replace(/\s+/g, '-')    // Replace spaces with dashes
+                            .replace(/_/g, '-')      // Replace underscores with dashes
+                            .replace(/[^a-zA-Z0-9-]/g, ''); // Remove non-alphanumeric characters
+
+                        modifiedRow[modifiedKey] = row[key];
+                    }
+
+                    return modifiedRow;
+                });
+
                 pcRef.pc = new PlotCoordinator("index");
 
                 pcRef.pc.init(data);
@@ -392,8 +424,6 @@ export function setUpExportLayout(gridSize) {
 }
 
 function loadLayout(layoutData, pcRef) {
-    console.log("Loaded layout:", layoutData);
-    // TODO: loadGridSize(layoutData[0])
     if(layoutData[1]){
         layoutData[1].forEach((item) => {
             const segments = item.type.split("_");
@@ -446,6 +476,10 @@ export function setUpLoadLayout(dataSet, pcRef, gridSize) {
     fileInput.addEventListener("change", () => {
         const file = fileInput.files[0];
 
+        if(!pcRef.pc){
+            alert("Load a CSV file first.");
+            return;
+        }
         if (file) {
             const reader = new FileReader();
 
@@ -468,9 +502,9 @@ export function setUpLoadLayout(dataSet, pcRef, gridSize) {
                     adjustBodyStyle();
                 } catch (error) {
                     console.error("Error parsing JSON:", error);
-                    alert(
-                        "Invalid JSON file. Please select a valid JSON file.",
-                    );
+                    // alert(
+                    //     "Invalid JSON file. Please select a valid JSON file.",
+                    // );
                 }
             };
 
@@ -483,6 +517,18 @@ export function setUpLoadLayout(dataSet, pcRef, gridSize) {
 }
 
 export function setUpTopBarScroll() {
+
+    const topBar = document.querySelector('.top-bar-fixedRectangle');
+
+// Add a scroll event listener to the window
+    window.addEventListener('scroll', function() {
+        if (window.scrollY > 0) {
+            topBar.style.top = `-${window.scrollY}px`; // Move with scroll
+        } else {
+            topBar.style.top = '0'; // Reset top position
+        }
+    });
+
     window.addEventListener("scroll", function() {
         const topBar = document.querySelector(".top-bar");
         const scrollPosition = window.scrollY || window.pageYOffset;

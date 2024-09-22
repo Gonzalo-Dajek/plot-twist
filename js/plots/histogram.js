@@ -33,9 +33,19 @@ export function createHistogram(field, id, data, pc, gridPos) {
         .domain(d3.extent(data, (d) => Number(d[field])))
         .range([marginLeft, width - marginRight]);
 
+
+    // Create a bin generator
+    const binGenerator = d3.bin()
+        .domain(x.domain())  // Set the domain based on the x-scale (or use your own min/max values)
+        .thresholds(x.ticks());  // You can adjust this to use ticks or let it automatically choose
+
+    // Generate the bins from your data
+    let bins = binGenerator(data);
+
     // Create custom bins for the histogram manually
-    const thresholds = x.ticks(40);
-    const bins = Array.from({ length: thresholds.length - 1 }, (_, i) => ({
+    // const thresholds = x.ticks(Math.sqrt(data.length));
+    const thresholds = x.ticks(bins.length);
+    bins = Array.from({ length: thresholds.length - 1 }, (_, i) => ({
         x0: thresholds[i],
         x1: thresholds[i + 1],
         selected: 0,
@@ -98,14 +108,14 @@ export function createHistogram(field, id, data, pc, gridPos) {
             d3
                 .axisBottom(x)
                 .tickSize(-height + marginTop + marginBottom)
-                .tickFormat("")
+                .tickFormat(""),
         )
         .call((g) => g.select(".domain").remove())
         .call((g) =>
             g
                 .selectAll(".tick line")
                 .style("stroke-width", 0.5) // Thinner lines
-                .style("stroke-opacity", 0.3)
+                .style("stroke-opacity", 0.3),
         ); // Less opacity
 
     svg.append("g")
@@ -115,14 +125,14 @@ export function createHistogram(field, id, data, pc, gridPos) {
             d3
                 .axisLeft(y)
                 .tickSize(-width + marginLeft + marginRight)
-                .tickFormat("")
+                .tickFormat(""),
         )
         .call((g) => g.select(".domain").remove())
         .call((g) =>
             g
                 .selectAll(".tick line")
                 .style("stroke-width", 0.5) // Thinner lines
-                .style("stroke-opacity", 0.3)
+                .style("stroke-opacity", 0.3),
         ); // Less opacity
 
     // Create bars (stacked for selected/unselected)
@@ -188,7 +198,7 @@ export function createHistogram(field, id, data, pc, gridPos) {
                 [marginLeft, marginTop],
                 [width - marginRight, height - marginBottom],
             ])
-            .on("start brush end", throttledHandleSelection)
+            .on("start brush end", throttledHandleSelection),
     );
 
     pc.addPlot(id, updateHistogram);
@@ -213,17 +223,17 @@ export function createHistogram(field, id, data, pc, gridPos) {
             }
         });
 
-        bar.each(function (bin) {
+        bar.each(function(bin) {
             const selectedRect = d3
                 .select(this)
                 .selectAll("rect")
-                .filter(function () {
+                .filter(function() {
                     return d3.select(this).attr("fill") === selectedColor;
                 });
             const unselectedRect = d3
                 .select(this)
                 .selectAll("rect")
-                .filter(function () {
+                .filter(function() {
                     return d3.select(this).attr("fill") === unselectedColor;
                 });
 

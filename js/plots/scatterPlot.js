@@ -278,11 +278,11 @@ export function createScatterPlot(xField, yField, id, data, pc, gridPos) {
             d3.select(this)
                 .style("fill", isSelected ? selectedColor : unselectedColor)
                 .style("r", isSelected ? 2.7 : 1.4)
-                .style("fill-opacity", isSelected ? 0.8 : 0.2);
+                .style("fill-opacity", isSelected ? 1 : 1);
 
-            // if (isSelected) {
-            //     d3.select(this).raise();  // Bring selected dots to the top
-            // }
+            if (isSelected) {
+                d3.select(this).raise();  // Bring selected dots to the top
+            }
             // .style("r", isSelected ? 2.5 : 1.2);
         });
 

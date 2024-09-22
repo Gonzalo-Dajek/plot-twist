@@ -14,17 +14,13 @@ let pcRef = {pc: undefined};
 let data = [];
 let gridSize = { col: 3, row: 3 };
 
-// testPlots();
+// testPlots(pcRef, data, gridSize);
 
 setUpTopBarScroll();
 setUpLoadCsv(data, pcRef, gridSize);
 setUpExportLayout(gridSize);
 setUpLoadLayout(data, pcRef, gridSize);
 setUpResize("plotsContainer", gridSize, pcRef, data);
-
-
-
-
 
 
 
