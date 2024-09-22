@@ -105,11 +105,10 @@ export class PlotCoordinator {
                         }
                     }
                     if (selectType === "OR") {
-                        if ((from <= d[field] && d[field] <= to)) {
+                        if (from <= d[field] && d[field] <= to) {
                             return false;
                         }
                     }
-
                 }
             } else {
                 const categories = selection.categories;
@@ -144,9 +143,11 @@ export class PlotCoordinator {
                 let isInRanges = this._isSelectedRange(
                     this._entries[i],
                     newSelection,
-                    id,
+                    id
                 );
-                return (this._plots.get(id).selectionMode === "AND") ? isInRanges : !isInRanges;
+                return this._plots.get(id).selectionMode === "AND"
+                    ? isInRanges
+                    : !isInRanges;
             });
 
         for (let index of lastSelectedIndexes) {

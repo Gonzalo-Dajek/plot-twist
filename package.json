@@ -22,7 +22,7 @@
         "data exploration"
     ],
     "scripts": {
-        "lint-and-format": "eslint --fix . --ignore-pattern \"dist/*\" && prettier --write .",
+        "lint-and-format": "peslint --fix . --ignore-pattern \\\"dist/*\\\" && rettier --write .",
         "test": "mocha",
         "dev": "vite",
         "build": "vite build",

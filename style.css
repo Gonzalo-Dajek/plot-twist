@@ -1,80 +1,212 @@
 
+body {
+    margin: 0;
+    font-family: 'Open Sans', sans-serif;
+    background-color: #f7f7f7;
+    color: #344767;
+}
+
+.top-bar-dummy {
+    height: 50px;
+    visibility: hidden;
+}
+
+.top-bar {
+    font-weight: 700;
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    background: rgba(255, 255, 255, 0);
+    box-shadow: none;
+    border-radius: 15px;
+    padding: 10px 20px;
+    position: fixed; /* Change to fixed */
+    top: 0;
+    left: 50%; /* Centering trick */
+    transform: translateX(-50%); /* Adjusting the centering */
+    z-index: 10;
+    transition: background 0.1s ease, box-shadow 0.1s ease;
+    white-space: nowrap;
+}
+
+.top-bar.scrolled {
+    background: rgba(255, 255, 255, 0.6); /* Frosted glass effect after scroll */
+    backdrop-filter: blur(10px); /* Apply the blur effect when scrolled */
+    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1); /* Soft shadow after scroll */
+
+    margin: 0 auto; /* Center the top-bar */
+    white-space: nowrap; /* Prevent wrapping on scroll as well */
+}
+
+
+.top-bar-inner {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 20px;
+    white-space: nowrap; /* Ensure no wrapping inside the content */
+}
+
+.file-input {
+    border: none;
+    background-color: rgba(240, 240, 240, 0.6); /* Slightly more transparent */
+    padding: 8px;
+    border-radius: 8px; /* Keep rounded edges */
+    width: 300px;
+    text-align: center;
+    box-shadow: inset 2px 2px 4px rgba(0, 0, 0, 0.1), inset -2px -2px 4px rgba(255, 255, 255, 0.5); /* Softer shadows */
+    margin-left: 10px;
+}
+
+.file-input::-webkit-file-upload-button {
+    visibility: hidden;
+    display: none;
+}
+.file-input::before {
+    content: 'Select File';
+    display: inline-block;
+    background: #5C6BC0; /* Soft Indigo */
+    color: white;
+    padding: 5px 10px;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-right: 10px;
+    transition: background 0.2s ease-in-out; /* Smooth transition for background */
+}
+
+.file-input:hover::before {
+    background: #3F51B5; /* Darker Indigo */
+}
+
+.file-input:after {
+    content: attr(data-file-name);
+    display: inline-block;
+    padding-left: 10px;
+    color: #555;
+}
+
+.top-bar-button {
+    background: #5C6BC0; /* Soft Indigo */
+    border: none;
+    padding: 10px 20px;
+    border-radius: 10px;
+    cursor: pointer;
+    color: white;
+    box-shadow: 4px 4px 8px rgba(0, 0, 0, 0.1), -4px -4px 8px rgba(255, 255, 255, 0.7);
+    transition: background 0.2s ease-in-out, box-shadow 0.2s ease-in-out; /* Smooth transition for background and shadow */
+}
+
+.top-bar-button:hover {
+    background: #3F51B5; /* Darker Indigo */
+    box-shadow: 4px 4px 12px rgba(0, 0, 0, 0.2), -4px -4px 12px rgba(255, 255, 255, 0.9); /* Optional: increase shadow on hover */
+}
+
+/* Plots*/
+
 #plotsContainer {
+    /*overflow-x: auto; !* Allow horizontal scrolling *!*/
     width: 1810px;
-    border: 1px solid black; /* For visual debugging */
     display: grid;
-    /*grid-template-columns: repeat(4, calc(100%/4));*/
     grid-template-columns: repeat(6, 290px);
     grid-template-rows: repeat(3, 290px);
-    gap: 15px; /* Equal spacing between grid items (both horizontal and vertical) */
-    padding: 15px; /* Optional padding around grid */
-    /*background-color: antiquewhite;*/
+    gap: 15px;
+    padding: 15px;
+    background-color: #f7f7f7;
 }
 
 .grid-cell {
-    border: 1px solid black;
-    background-color: white;
-    display: flex;
-    gap: 10px;
-    padding: 10px;
-    flex-direction: column;
+    background-color: rgba(255, 255, 255, 0.4); /* Light transparent fill */
+    border-radius: 15px;
+    box-shadow: none; /* No shadows for a flat appearance */
+    border: 1px solid rgba(0, 0, 0, 0.05); /* Very light border for structure */
+    transition: background-color 0.3s ease;
 }
 
-.gridBox {
-    width: 290px;
-    height: 290px;
+.gridBox, .gridRectangle {
+    /*background: rgba(255, 255, 255); !* Frosted glass effect *!*/
+    backdrop-filter: blur(10px); /* Frosted effect with blur */
+    border-radius: 15px;
+    /*box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1); !* Soft shadow for subtle elevation *!*/
+    border: 1px solid rgba(0, 0, 0, 0.1);
 }
 
-.gridRectangle {
-    width: 290px;
-    height: 596px;
+.grid-cell:hover {
+    background-color: rgba(255, 255, 255, 0.6); /* Slight highlight on hover */
 }
 
+
+/* Plots styling */
 .plot {
-    border: 1px solid black;
-    background-color: white;
+    padding-top: 2px;
+    /*border: 1px solid black;*/
+    /*background-color: #ffffff;*/
+    background-color: rgba(251, 251, 251);
+    /*box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); !* Subtle shadow *!*/
 }
 
 .plot-button-container {
+
     height: 40px;
     display: flex;
-    /*padding-right: 10px;*/
-    /*padding-left: 10px;*/
-    justify-content: space-evenly;
+    padding-right: 10px;
+    padding-left: 10px;
+    justify-content: space-between;
     align-items: center;
 }
 
-.plot-button-container button {
-    /*margin-left: 10px;*/
-    padding: 5px 10px;
-    border: 1px solid black;
-    margin: -1px;
-    background-color: #f0f0f0;
+.plot-button-container .delete-plot{
+    padding: 7px;
+    font-size: 13px;
+    font-weight: bold;
     cursor: pointer;
+    box-sizing: border-box;
+    color: #344767;
+    background-color: #f0f0f0;
+    border-radius: 10px; /* Rounded corners */
+    border: none; /* No border */
+    transition: background-color 0.1s ease, box-shadow 0.1s ease; /* Smooth transitions */
+    text-align: center; /* Center text */
+
+}
+
+.plot-button-container .delete-plot:hover{
+    background-color: #d9d9d9;
+}
+
+.plot-button-container .right-buttons button {
+    padding: 7px;
+    font-size: 13px;
+    font-weight: bold;
+    cursor: pointer;
+    flex-grow: 1; /* Each button grows equally */
+    flex-basis: 0; /* Ensures buttons start at equal width */
+    box-sizing: border-box;
+    border-radius: 10px; /* Rounded corners */
+    border: none; /* No border */
+    transition: background-color 0.1s ease, box-shadow 0.1s ease; /* Smooth transitions */
+    text-align: center; /* Center text */
 }
 
 .plot-button-container button:hover {
-    background-color: #ddd;
+    background-color: #ddd; /* Darker grey on hover */
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1); /* Soft shadow on hover */
 }
 
 .plot-button-container button.active {
-    background-color: white; /* Active button color */
+    background-color: rgba(255,255,255,0); /* Active button color */
     color: black;
     /*border: 1px solid #4CAF50;*/
 }
 
 .plot-button-container button.disabled {
-    background-color: #999;
+    background-color: #5C6BC0;
     color: white;
     border: 1px solid #999;
     /*cursor: not-allowed;*/
     /*pointer-events: none;  !* Prevents interaction with the button *!*/
 }
 
-body {
-}
-
-/* PLOT CREATION STYLE */
+/* PLOT CREATION */
 .plot-options {
     display: flex;
     flex-direction: column;
@@ -82,135 +214,218 @@ body {
     height: 100%;
     padding: 10px;
     box-sizing: border-box;
-
     align-items: center;
-    background-color: #f9f9f9; /* Light background color */
-    border: 1px solid #ddd; /* Light border for the container */
-    border-radius: 5px; /* Rounded corners */
-    box-shadow: 0 4px 8px rgba(0,0,0,0.1); /* Subtle shadow */
-    width: 100%; /* Make sure it fits the grid cell width */
-
-    /*display: flex;*/
-    /*flex-direction: column;*/
-    /*justify-content: space-between;*/
-    /*height: 100%;*/
-    /*padding: 10px;*/
-    /*box-sizing: border-box;*/
+    background-color: rgba(249, 249, 249, 0.8); /* Semi-transparent background */
+    border: 1px solid rgba(221, 221, 221, 0.5); /* Light border */
+    border-radius: 10px; /* Rounded corners */
+    backdrop-filter: blur(10px); /* Frosted glass effect */
+    width: 100%; /* Full width */
+    /*box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); !* Subtle shadow *!*/
 }
 
 .plot-fields-container {
+    width: 92%;
     flex-grow: 1;
     overflow-y: auto;
     max-height: 300px; /* Adjust as needed */
+    padding: 10px; /* Inner padding */
+    background-color: rgba(255, 255, 255, 0.7); /* Slightly more opaque for content */
+    border-radius: 8px; /* Rounded corners */
+    border: 1px solid rgba(0, 0, 0, 0.05); /* Very light border for structure */
+
+    /* Subtle neumorphism inset shadow */
+    box-shadow:
+            inset 1px 1px 2px rgba(0, 0, 0, 0.03),   /* Softer dark inner shadow */
+            inset -1px -1px 2px rgba(255, 255, 255, 0.95); /* Softer light inner shadow */
 }
 
 .plot-select-label {
-    margin-top: 10px;
+    margin-left: 5px;
+
     font-weight: bold;
+    color: #5C6BC0; /* Indigo accent color */
 }
 
 .plot-select {
+    margin-top: 5px;
     margin-bottom: 15px;
-    padding: 5px;
+    padding: 10px; /* Adjusted padding */
     width: 100%;
-    box-sizing: border-box;
+    border: 1px solid rgba(221, 221, 221, 0.5); /* Light border */
+    border-radius: 8px; /* Rounded corners */
+    background-color: white; /* Flat white background for select */
+    transition: border-color 0.3s ease; /* Smooth transition for border color */
 }
+
+.plot-select:focus {
+    /*border-color: rgba(0,0,0,0.2); !* Indigo accent on focus *!*/
+    outline: none; /* Remove default outline */
+}
+
 
 .plot-buttons-container {
     display: flex;
-    justify-content: space-between;
+    justify-content: space-between; /* Distributes buttons with space in between */
+    align-items: center;
     padding-top: 10px;
+    width: 100%; /* Ensures the container spans the full width */
+    gap: 10px; /* Optional: adds space between buttons */
 }
 
 .plot-button {
     padding: 10px 15px;
-    font-size: 16px;
+    font-size: 14px;
+    font-weight: bold;
     cursor: pointer;
-    width: 48%; /* To align the buttons side by side */
+    flex-grow: 1; /* Each button grows equally */
+    flex-basis: 0; /* Ensures buttons start at equal width */
     box-sizing: border-box;
+    border-radius: 10px; /* Rounded corners */
+    border: none; /* No border */
+    transition: background-color 0.3s ease, box-shadow 0.3s ease; /* Smooth transitions */
+    text-align: center; /* Ensures text is centered */
 }
 
+
 .create-button {
-    background-color: #4CAF50;
+    background-color: #5C6BC0;
     color: white;
-    border: none;
+}
+
+.create-button:hover {
+    background-color: #3F51B5; /* Slightly more visible on hover */
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1); /* Soft shadow on hover */
 }
 
 .cancel-button {
-    background-color: #f44336;
-    color: white;
-    border: none;
+    background-color: #f0f0f0; /* Red background */
+    color: #344767;
 }
-/*PLOT SELECTION STYLE*/
-.plot-menu {
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    height: 100%;
-    padding: 10px;
-    box-sizing: border-box;
 
-    align-items: center;
-    background-color: #f9f9f9; /* Light background color */
-    border: 1px solid #ddd; /* Light border for the container */
-    border-radius: 5px; /* Rounded corners */
-    box-shadow: 0 4px 8px rgba(0,0,0,0.1); /* Subtle shadow */
-    width: 100%; /* Make sure it fits the grid cell width */
-    /*max-width: 300px; !* Optional: limit maximum width *!*/
+.cancel-button:hover {
+    background-color: #d9d9d9; /* Darker red on hover */
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1); /* Soft shadow on hover */
+}
+.plot-fields-container::-webkit-scrollbar {
+    width: 10px; /* Reduced scrollbar width */
+}
+
+.plot-fields-container::-webkit-scrollbar-track {
+    background-color: rgba(230, 230, 230, 0.8); /* Light grey track */
+    border-radius: 8px; /* Rounded corners for the track */
+}
+
+.plot-fields-container::-webkit-scrollbar-thumb {
+    background-color: rgba(150, 150, 150, 0.8); /* Soft grey thumb */
+    border: 2px solid transparent; /* Transparent border for thinner scrollbar */
+    border-radius: 8px; /* Rounded corners */
+    background-clip: padding-box; /* Ensures thumb doesn't overlap with the border */
+}
+
+.plot-fields-container::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(120, 120, 120, 0.8); /* Darker grey on hover */
+}
+
+.plot-fields-container::-webkit-scrollbar-button {
+    display: none; /* Hides the scrollbar arrows */
+}
+
+
+
+/*PLOT SELECTION*/
+.plot-menu {
+    display: grid;
+    /*grid-template-columns: repeat(2, 128px); !* 2 columns *!*/
+    grid-template-columns: repeat(2, 1fr); /* 2 columns */
+    /*grid-template-rows: repeat(2, 128px); !* 3 rows *!*/
+    grid-template-rows: repeat(2, 0.66fr); /* 3 rows */
+    grid-gap: 10px; /* Space between buttons */
+    width: 100%; /* Full width of the parent */
+    height: 100%; /* Full height of the parent */
+    padding: 10px; /* Inner padding */
+    box-sizing: border-box; /* Include padding in width/height */
+    background-color: rgba(249, 249, 249, 0.8); /* Semi-transparent background */
+    border: 1px solid rgba(221, 221, 221, 0.5); /* Light border */
+    border-radius: 10px; /* Rounded corners */
+    backdrop-filter: blur(10px); /* Frosted glass effect */
 }
 
 .plot-menu button {
-    background-color: #4CAF50; /* Default button color */
-    color: white;
-    border: none;
-    padding: 10px 20px;
-    margin: 5px 0;
-    border-radius: 5px; /* Rounded corners for buttons */
-    cursor: pointer;
-    width: 100%;
-    box-sizing: border-box;
-    font-size: 16px; /* Adjust font size */
+    display: flex;
+    align-items: center; /* Center content vertically */
+    justify-content: center; /* Center content horizontally */
+    padding: 10px 20px; /* Adjust padding */
+    font-size: 14px; /* Font size */
+    font-weight: bold; /* Bold text */
+    color: white; /* Text color */
+    border-radius: 10px; /* Rounded corners */
+    border: none; /* No border */
+    box-shadow: none; /* No shadow for seamless look */
+    cursor: pointer; /* Pointer on hover */
+    transition: background-color 0.3s ease, box-shadow 0.3s ease; /* Smooth transitions */
+    background-color: #5C6BC0;
 }
 
 .plot-menu button:hover {
-    background-color: #45a049; /* Darker green on hover */
-}
-
-.plot-menu button:active {
-    background-color: #388e3c; /* Even darker green when clicked */
+    background-color: #3F51B5; /* Slightly more visible on hover */
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1); /* Soft shadow on hover */
 }
 
 .plot-menu .cancel-button {
-    background-color: #f44336; /* Red background for cancel button */
+    grid-column: span 2; /* Span across both columns */
+    background-color: #f0f0f0; /* Red background for cancel button */
+    color: #344767; /* Text color for cancel button */
 }
 
 .plot-menu .cancel-button:hover {
-    background-color: #e53935; /* Darker red on hover */
+    background-color: #d9d9d9; /* Darker red on hover */
 }
 
-.plot-menu .cancel-button:active {
-    background-color: #c62828; /* Even darker red when clicked */
+.plot-menu {
+    /* Frosted effect and layout */
+    background-color: rgba(249, 249, 249, 0.8); /* Semi-transparent background for frosted effect */
+    border: 1px solid rgba(221, 221, 221, 0.5); /* Light border */
+    border-radius: 10px; /* More pronounced rounded corners */
+    backdrop-filter: blur(10px); /* Frosted glass effect */
+    padding: 10px; /* Inner padding */
 }
+
+
 
 /* STYLE FOR ADD PLOT */
 .button-container {
     display: flex;
-    justify-content: center; /* Center the button horizontally */
-    align-items: center; /* Center the button vertically */
-    height: 100%; /* Ensure the container takes the full height of the grid cell */
+    justify-content: center;
+    align-items: center;
+    height: 100%;
 }
 
 .button-container button {
+    display: flex;
+    align-items: center;
     padding: 10px 20px;
-    font-size: 16px;
-    border-radius: 5px;
-    background-color: #4CAF50;
-    color: white;
-    border: none;
+    font-size: 14px;
+    color: rgba(52, 71, 103, 0.6);
+    font-weight: bold;
+    border-radius: 10px;
+    background-color: rgba(255, 255, 255, 0); /* Seamless with cell color */
+    border: none; /* No border */
+    box-shadow: none; /* No shadow for seamless look */
     cursor: pointer;
+    transition: background-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.button-container button::before {
+    content: "+";
+    margin-right: 10px; /* Spacing between the + sign and text */
+    font-size: 18px; /* Slightly larger for emphasis */
+    color: #344767; /* Same color as the text */
 }
 
 .button-container button:hover {
-    background-color: #45a049;
+    background-color: rgba(255, 255, 255, 0.6); /* Slightly more visible on hover */
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1); /* Soft shadow on hover */
 }
+
+
 

@@ -1,5 +1,6 @@
 import * as d3 from "d3";
 import { createButtons } from "./plotsUtils/plotButtons.js";
+import { customTickFormat } from "./plotsUtils/ticks.js";
 
 export function createBarPlot(field, id, data, pc, gridPos) {
     const divId = `barplot_${id}_${field}`;
@@ -12,12 +13,12 @@ export function createBarPlot(field, id, data, pc, gridPos) {
 
     const container = d3.select(`#${divId}`);
     const width = container.node().clientWidth;
-    const height = container.node().clientHeight-40;
+    const height = container.node().clientHeight - 40;
     // const marginTop = 30;
-    const marginTop = 15;
+    const marginTop = 10;
     const marginRight = 20;
-    const marginBottom = 25;
-    const marginLeft = 30;
+    const marginBottom = 30;
+    const marginLeft = 40;
 
     let unselectedColor = "grey";
 
@@ -60,9 +61,15 @@ export function createBarPlot(field, id, data, pc, gridPos) {
         .range([height - marginBottom, marginTop]);
 
     // Define a color scale for the categories
-    const colorScale = d3
-        .scaleOrdinal(d3.schemeCategory10) // Or any color scheme you prefer
-        .domain(categories);
+    // const colorScale = d3
+    //     .scaleOrdinal(d3.schemeCategory10) // Or any color scheme you prefer
+    //     .domain(categories);
+    const categoriesColor = ["Category 1", "Category 2", "Category 3", "Category 4", "Category 5", "Category 6", "Category 7", "Category 8", "Category 9", "Category 10"];
+
+    const colorScale = d3.scaleOrdinal()
+        .domain(categoriesColor)
+        .range(categoriesColor.map((d, i) => d3.hsl(((i + 2) * 360 / categories.length) % 360, 0.44, 0.56).toString()));
+
 
     // Add svg element
     const svg = d3
@@ -76,25 +83,25 @@ export function createBarPlot(field, id, data, pc, gridPos) {
         .attr("width", width)
         .attr("height", height)
         .attr("fill", "transparent")
-        .on("click", function (event) {
+        .on("click", function() {
             // Handle click event on the background
             handleBackgroundClick();
         });
 
     // Add x-axis
-    const xAxisGroup = svg.append("g")
+    const xAxisGroup = svg
+        .append("g")
         .attr("transform", `translate(0,${height - marginBottom})`)
         .call(d3.axisBottom(x));
 
-    xAxisGroup.selectAll("text")
-        .attr("class", "x-axis-label"); // Add a class to each x-axis label
+    xAxisGroup.selectAll("text").attr("class", "x-axis-label"); // Add a class to each x-axis label
 
-    // Add y-axis
+// Add y-axis
     svg.append("g")
         .attr("transform", `translate(${marginLeft},0)`)
-        .call(d3.axisLeft(y));
+        .call(d3.axisLeft(y).ticks(7).tickFormat(customTickFormat));  // Use custom tick format
 
-    // Add text label
+// Add text label
     svg.append("text")
         .attr("x", width - marginRight)
         .attr("y", marginTop + 5)
@@ -105,8 +112,9 @@ export function createBarPlot(field, id, data, pc, gridPos) {
         .style("font-family", "sans-serif")
         .text(field);
 
+
     // Add grey lines parallel to the bars, connecting with the y-axis labels
-    const yTickValues = y.ticks(); // Get the tick values for the y-axis
+    const yTickValues = y.ticks(7); // Get the tick values for the y-axis
 
     svg.append("g")
         .selectAll("line")
@@ -120,11 +128,6 @@ export function createBarPlot(field, id, data, pc, gridPos) {
         .attr("stroke", "grey") // Color of the line
         .attr("stroke-width", 1)
         .attr("stroke-dasharray", "4,4"); // Optional: dashed line for better visibility
-
-    // Add y-axis
-    svg.append("g")
-        .attr("transform", `translate(${marginLeft},0)`)
-        .call(d3.axisLeft(y));
 
     // Create bars (stacked for selected/unselected)
     const bar = svg
@@ -144,7 +147,7 @@ export function createBarPlot(field, id, data, pc, gridPos) {
         .attr("fill", unselectedColor)
         // .attr("stroke", "black") // Grey outline for unselected bars
         // .attr("stroke-width", 1) // Add a thinner outline for unselected
-        .on("click", function (event, d) {
+        .on("click", function(event, d) {
             const clickedCategory = d.category;
 
             // Check if Ctrl (or Meta on macOS) is pressed
@@ -164,7 +167,7 @@ export function createBarPlot(field, id, data, pc, gridPos) {
         .attr("fill", (d) => colorScale(d.category)) // Use the color scale for selected bars
         // .attr("stroke", "black") // Grey outline for unselected bars
         // .attr("stroke-width", 1) // Add a thinner outline for unselected
-        .on("click", function (event, d) {
+        .on("click", function(event, d) {
             const clickedCategory = d.category;
 
             // Check if Ctrl (or Meta on macOS) is pressed
@@ -211,9 +214,9 @@ export function createBarPlot(field, id, data, pc, gridPos) {
     // Function to update the view with selected categories
     function updateSelection() {
         let selected;
-        if(selectedCategories.length===0){
+        if (selectedCategories.length === 0) {
             selected = [];
-        }else{
+        } else {
             selected = [
                 {
                     categories: selectedCategories,
@@ -225,10 +228,13 @@ export function createBarPlot(field, id, data, pc, gridPos) {
 
         // console.log(selectedCategories);
         // Update the font weight of the x-axis labels based on selection
-        svg.selectAll(".x-axis-label")
-            .style("font-weight", function () {
+        svg.selectAll(".x-axis-label").style("font-weight", function() {
+            const labelText = d3.select(this).text();
+            return selectedCategories.includes(labelText) ? "bolder" : "normal";
+        })
+            .style("font-size", function() {
                 const labelText = d3.select(this).text();
-                return selectedCategories.includes(labelText) ? "bold" : "normal";
+                return selectedCategories.includes(labelText) ? "12px" : "10px"; // Adjust sizes as needed
             });
 
         // Update the plot view with new selections
@@ -257,18 +263,18 @@ export function createBarPlot(field, id, data, pc, gridPos) {
             }
         });
 
-        bar.each(function (bin) {
+        bar.each(function(bin) {
             const unselectedRect = d3
                 .select(this)
                 .selectAll("rect")
-                .filter(function () {
+                .filter(function() {
                     return d3.select(this).attr("fill") === unselectedColor;
                 });
 
             const selectedRect = d3
                 .select(this)
                 .selectAll("rect")
-                .filter(function () {
+                .filter(function() {
                     return d3.select(this).attr("fill") !== unselectedColor;
                 });
 
@@ -281,7 +287,6 @@ export function createBarPlot(field, id, data, pc, gridPos) {
             unselectedRect
                 .attr("height", height - marginBottom - y(bin.unselected))
                 .attr("y", y(bin.unselected + bin.selected)); // Positioned based on only unselected height
-
         });
     }
 }

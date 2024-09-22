@@ -3,7 +3,7 @@ import { createScatterPlot } from "./plots/scatterPlot.js";
 import { createHistogram } from "./plots/histogram.js";
 import { createParallelCoordinates } from "./plots/parallelCoordinates.js";
 import { createBarPlot } from "./plots/barPlot.js";
-import {PlotCoordinator} from "./plotCoordinator.js";
+import { PlotCoordinator } from "./plotCoordinator.js";
 
 async function loadCSV(pathToCsv) {
     return await d3.csv(pathToCsv, function (data) {
@@ -11,12 +11,11 @@ async function loadCSV(pathToCsv) {
     });
 }
 
-export async function testPlots(){
+export async function testPlots() {
     // let data = await loadCSV("../test/test_data/debug_dataset.csv");
     let data = await loadCSV("../local_data/athlete_events_1000.csv");
     let pc = new PlotCoordinator("index");
     pc.init(data);
-
 
     let fields = ["Height", "Weight", "Age"];
     for (let [i, f1] of fields.entries()) {
@@ -32,7 +31,9 @@ export async function testPlots(){
 
     let keys = ["Weight", "Height", "Age", "Year"];
     let keyz = "Weight";
-    createParallelCoordinates(keys, keyz, pc.newPlotId(), data, pc, {col: 4, row: 1});
-    createBarPlot("Sex", pc.newPlotId(), data, pc, {col: 4, row: 3});
+    createParallelCoordinates(keys, keyz, pc.newPlotId(), data, pc, {
+        col: 4,
+        row: 1,
+    });
+    createBarPlot("Sex", pc.newPlotId(), data, pc, { col: 4, row: 3 });
 }
-

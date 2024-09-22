@@ -27,7 +27,14 @@ export async function run() {
                 let pc = new PlotCoordinator("Index");
                 pc.init(sample);
                 for (let i = 0; i < plotsNum; i++) {
-                    createScatterPlot("Weight", "Height", pc.newPlotId(),data,pc,{col:1, row:1});
+                    createScatterPlot(
+                        "Weight",
+                        "Height",
+                        pc.newPlotId(),
+                        data,
+                        pc,
+                        { col: 1, row: 1 }
+                    );
                 }
                 pc._BENCHMARK.isActive = true;
                 let selection = [];
@@ -36,24 +43,25 @@ export async function run() {
                 }
 
                 d3.select("#plotsContainer").selectAll(".plot").remove();
-                d3.select("#plotsContainer").selectAll(".plot")
+                d3.select("#plotsContainer")
+                    .selectAll(".plot")
                     .on(".zoom", null)
                     .on(".brush", null)
                     .on("click", null)
-                    .remove();            // Remove the elements
+                    .remove(); // Remove the elements
 
                 pc.updatePlotsView(1, selection);
-                for (let id = 1; id <= pc._idCounter; id++){
+                for (let id = 1; id <= pc._idCounter; id++) {
                     pc.removePlot(id);
                 }
-                deltaPlot+= pc._BENCHMARK.deltaUpdatePlots;
-                deltaIndex+= pc._BENCHMARK.deltaUpdateIndexes;
+                deltaPlot += pc._BENCHMARK.deltaUpdatePlots;
+                deltaIndex += pc._BENCHMARK.deltaUpdateIndexes;
             }
             results.push({
                 entriesNum: entriesNum,
                 plotsNum: plotsNum,
-                deltaPlot: deltaPlot/runs,
-                deltaIndex: deltaIndex/runs,
+                deltaPlot: deltaPlot / runs,
+                deltaIndex: deltaIndex / runs,
             });
         }
     }

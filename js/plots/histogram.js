@@ -1,6 +1,7 @@
 import * as d3 from "d3";
 import throttle from "lodash-es/throttle.js";
 import { createButtons } from "./plotsUtils/plotButtons.js";
+import { customTickFormat } from "./plotsUtils/ticks.js";
 
 export function createHistogram(field, id, data, pc, gridPos) {
     const divId = `histogram_${id}_${field}`;
@@ -13,16 +14,17 @@ export function createHistogram(field, id, data, pc, gridPos) {
 
     const container = d3.select(`#${divId}`);
     const width = container.node().clientWidth;
-    const height = container.node().clientHeight-40;
-    const marginTop = 15;
+    const height = container.node().clientHeight - 40;
+    const marginTop = 10;
     const marginRight = 20;
-    const marginBottom = 25;
-    const marginLeft = 30;
+    const marginBottom = 30;
+    const marginLeft = 40;
 
-    let selectedColor = "#589E4B";
-    let unselectedColor = "grey";
+    // let selectedColor = "#589E4B";
+    let selectedColor = "#465191";
+    let unselectedColor = "#999999";
 
-    let btns  = createButtons(container, pc, id);
+    let btns = createButtons(container, pc, id);
     let setActiveButton = btns.setActiveButton;
 
     // Define x-axis scale
@@ -69,12 +71,12 @@ export function createHistogram(field, id, data, pc, gridPos) {
     // Add x-axis
     svg.append("g")
         .attr("transform", `translate(0,${height - marginBottom})`)
-        .call(d3.axisBottom(x));
+        .call(d3.axisBottom(x).ticks(5).tickFormat(customTickFormat));
 
     // Add y-axis
     svg.append("g")
         .attr("transform", `translate(${marginLeft},0)`)
-        .call(d3.axisLeft(y));
+        .call(d3.axisLeft(y).ticks(7).tickFormat(customTickFormat));
 
     // text
     svg.append("text")
@@ -178,7 +180,7 @@ export function createHistogram(field, id, data, pc, gridPos) {
         pc.updatePlotsView(id, selectRanges);
     }
 
-    const throttledHandleSelection = throttle(handleSelection, 100);
+    const throttledHandleSelection = throttle(handleSelection, 50);
     svg.call(
         d3
             .brushX()

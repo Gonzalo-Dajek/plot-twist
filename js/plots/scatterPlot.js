@@ -1,6 +1,7 @@
 import * as d3 from "d3";
 import throttle from "lodash-es/throttle.js";
 import { createButtons } from "./plotsUtils/plotButtons.js";
+import { customTickFormat } from "./plotsUtils/ticks.js";
 
 export function createScatterPlot(xField, yField, id, data, pc, gridPos) {
     const divId = `scatterPlot_${id}_${xField}_${yField}`;
@@ -17,12 +18,12 @@ export function createScatterPlot(xField, yField, id, data, pc, gridPos) {
     const width = container.node().clientWidth;
     const height = container.node().clientHeight - 40;
 
-    const marginTop = 5;
+    const marginTop = 10;
     const marginRight = 20;
-    const marginBottom = 25;
-    const marginLeft = 30;
+    const marginBottom = 30;
+    const marginLeft = 40;
 
-    let selectedColor = "#589E4B";
+    let selectedColor = "#5C6BC0";
     let unselectedColor = "grey";
 
     let btns = createButtons(container, pc, id);
@@ -56,11 +57,23 @@ export function createScatterPlot(xField, yField, id, data, pc, gridPos) {
         .attr("preserveAspectRatio", "xMidYMid meet")
         .property("value", []);
 
-    // Append the axes.
+// Append the axes.
     svg.append("g")
         .attr("transform", `translate(0,${height - marginBottom})`)
-        .call(d3.axisBottom(x))
-        .call((g) => g.select(".domain").remove())
+        .call(d3.axisBottom(x)
+                .ticks(5)  // Limit to 5 ticks
+
+                .tickFormat(customTickFormat)  // Use the custom tick format
+            // .tickFormat(d3.format(".4s"))  // Format large numbers with abbreviations (e.g., 1k, 1M)
+        )
+        .call((g) => g.select(".domain").remove())  // Remove the axis line
+        .call((g) =>
+            g
+                .selectAll("text")  // Select the existing tick labels
+                // .attr("transform", "rotate(45)")  // Rotate the labels (commented out)
+                .style("text-anchor", "middle")  // Align text to the end for better readability
+                .style("font-size", "10px"),  // Reduce font size if needed
+        )
         .call((g) =>
             g
                 .append("text")
@@ -69,16 +82,18 @@ export function createScatterPlot(xField, yField, id, data, pc, gridPos) {
                 .attr("fill", "#000")
                 .attr("font-weight", "bold")
                 .attr("text-anchor", "end")
-                .text(xField)
+                .text(xField),
         );
 
+
+// Add y-axis
     svg.append("g")
         .attr("transform", `translate(${marginLeft},0)`)
-        .call(d3.axisLeft(y))
-        .call((g) => g.select(".domain").remove())
+        .call(d3.axisLeft(y).ticks(7).tickFormat(customTickFormat))  // Set to 7 ticks with custom formatting
+        .call((g) => g.select(".domain").remove())  // Remove the axis line
         .call((g) =>
             g
-                .select(".tick:last-of-type text")
+                .select(".tick:last-of-type text")  // Clone the last tick label
                 .clone()
                 .attr("x", 4)
                 .attr("text-anchor", "start")
@@ -86,15 +101,6 @@ export function createScatterPlot(xField, yField, id, data, pc, gridPos) {
                 .text(yField)
         );
 
-    // Add x-axis
-    svg.append("g")
-        .attr("transform", `translate(0,${height - marginBottom})`)
-        .call(d3.axisBottom(x));
-
-    // Add y-axis
-    svg.append("g")
-        .attr("transform", `translate(${marginLeft},0)`)
-        .call(d3.axisLeft(y));
 
     // Append the axis lines (grid lines)
     svg.append("g")
@@ -104,14 +110,14 @@ export function createScatterPlot(xField, yField, id, data, pc, gridPos) {
             d3
                 .axisBottom(x)
                 .tickSize(-height + marginTop + marginBottom)
-                .tickFormat("")
+                .tickFormat(""),
         )
         .call((g) => g.select(".domain").remove())
         .call((g) =>
             g
                 .selectAll(".tick line")
                 .style("stroke-width", 0.5) // Thinner lines
-                .style("stroke-opacity", 0.3)
+                .style("stroke-opacity", 0.3),
         ); // Less opacity
 
     svg.append("g")
@@ -121,14 +127,14 @@ export function createScatterPlot(xField, yField, id, data, pc, gridPos) {
             d3
                 .axisLeft(y)
                 .tickSize(-width + marginLeft + marginRight)
-                .tickFormat("")
+                .tickFormat(""),
         )
         .call((g) => g.select(".domain").remove())
         .call((g) =>
             g
                 .selectAll(".tick line")
                 .style("stroke-width", 0.5) // Thinner lines
-                .style("stroke-opacity", 0.3)
+                .style("stroke-opacity", 0.3),
         ); // Less opacity
 
     // Append the dots
@@ -253,7 +259,7 @@ export function createScatterPlot(xField, yField, id, data, pc, gridPos) {
         // console.log(selectRanges);
     }
 
-    const throttledHandleSelection = throttle(handleSelection, 100);
+    const throttledHandleSelection = throttle(handleSelection, 50);
 
     svg.call(
         d3
@@ -262,11 +268,11 @@ export function createScatterPlot(xField, yField, id, data, pc, gridPos) {
                 [marginLeft, marginTop],
                 [width - marginRight, height - marginBottom],
             ])
-            .on("start brush end", throttledHandleSelection)
+            .on("start brush end", throttledHandleSelection),
     );
 
     pc.addPlot(id, function updateScatterPlot() {
-        dot.each(function (d, i) {
+        dot.each(function(d, i) {
             const isSelected = pc.isSelected(i); // Check if index i is in the selection array
 
             d3.select(this)
@@ -294,7 +300,7 @@ export function createScatterPlot(xField, yField, id, data, pc, gridPos) {
         const regression = calculateLinearRegression(
             selectedData,
             xField,
-            yField
+            yField,
         );
 
         // Append the updated regression line within the clipping path
@@ -304,7 +310,7 @@ export function createScatterPlot(xField, yField, id, data, pc, gridPos) {
             .attr("y1", y(regression(xMin)))
             .attr("x2", x(xMax))
             .attr("y2", y(regression(xMax)))
-            .attr("stroke", "green")
+            .attr("stroke", "#465191")
             .attr("stroke-width", 1)
             .attr("clip-path", "url(#clip)"); // Apply the clipping path
 

@@ -35,17 +35,28 @@
     </head>
 
     <body>
+        <div class="top-bar-dummy"></div>
+        <div class="top-bar">
+            <div class="top-bar-inner">
+                <label>Load CSV</label>
+                <input type="file" id="fileInput" class="file-input" />
 
-        <div>
-            <label>Load CSV </label>
-            <input type="file" id="fileInput" />
-            <label>Load Layout </label>
-            <input type="file" id="layoutInput" />
-            <button id="exportLayoutButton">Export Layout</button>
-            <br> <br>
+                <label>Load Layout</label>
+                <input type="file" id="layoutInput" class="file-input" />
+
+                <button id="exportLayoutButton" class="top-bar-button">
+                    Export Layout
+                </button>
+            </div>
         </div>
 
+        <!-- Buttons to modify the variable -->
+        <button id="col">col++</button>
+        <button id="row">row++</button>
+
         <div id="plotsContainer"></div>
+
+
 
         <script type="module" src="/js/main.js"></script>
     </body>

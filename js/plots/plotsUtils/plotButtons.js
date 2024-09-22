@@ -7,7 +7,8 @@ export function createButtons(container, pc, id, addSelectionType = true) {
     // Add the delete button
     buttonDiv
         .append("button")
-        .text("Delete Plot")
+        .text("Delete")
+        .attr("class", "delete-plot")
         .on("click", () => {
             pc.removePlot(id);
             // Remove the entire scatter plot container
@@ -82,7 +83,7 @@ export function createButtons(container, pc, id, addSelectionType = true) {
                 NOTbtn.classed("active", false).classed("disabled", true);
                 ORbtn.classed("active", true).classed("disabled", false);
             }
-            if(type === "OR"){
+            if (type === "OR") {
                 ANDbtn.classed("active", true).classed("disabled", false);
                 NOTbtn.classed("active", true).classed("disabled", false);
                 ORbtn.classed("active", false).classed("disabled", true);

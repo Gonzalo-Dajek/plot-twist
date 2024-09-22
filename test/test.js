@@ -16,7 +16,6 @@ function parseCSVToObject(filePath) {
     });
 }
 
-
 suite("PlotCoordinator", function () {
     const __filename = fileURLToPath(import.meta.url);
     const __dirname = path.dirname(__filename);
@@ -32,8 +31,8 @@ suite("PlotCoordinator", function () {
         let pc = new PlotCoordinator("index");
         pc.init(data);
         let id1 = pc.newPlotId();
-        pc.addPlot(id1, ()=>{});
-        pc.addPlot(pc.newPlotId(), ()=>{});
+        pc.addPlot(id1, () => {});
+        pc.addPlot(pc.newPlotId(), () => {});
 
         let select = [
             {
@@ -49,7 +48,6 @@ suite("PlotCoordinator", function () {
         ];
 
         pc.updatePlotsView(id1, select);
-
 
         assert.equal(1, 1);
     });
