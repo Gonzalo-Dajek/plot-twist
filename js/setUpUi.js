@@ -23,6 +23,10 @@ function adjustBodyStyle() {
 
 export function setUpResize(containerId, grid, pcRef, data) {
 
+    window.addEventListener('resize', function() {
+        adjustBodyStyle();
+    });
+
     document.getElementById("col").addEventListener("click", function() {
 
         grid.col++;
@@ -411,7 +415,7 @@ export function setUpExportLayout(gridSize) {
         // Create a temporary anchor element to trigger the download
         const a = document.createElement("a");
         a.href = url;
-        a.download = "grid_layout.json"; // File name for the downloaded JSON
+        a.download = "layout.json"; // File name for the downloaded JSON
         a.click();
 
         // Clean up the object URL to avoid memory leaks

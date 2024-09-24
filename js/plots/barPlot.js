@@ -126,8 +126,8 @@ export function createBarPlot(field, id, data, pc, gridPos) {
         .attr("y1", (d) => y(d)) // Align with y-axis tick values
         .attr("y2", (d) => y(d)) // Ensure line stays parallel
         .attr("stroke", "grey") // Color of the line
-        .attr("stroke-width", 1)
-        .attr("stroke-dasharray", "4,4"); // Optional: dashed line for better visibility
+        .style("stroke-width", 0.5)
+        .style("stroke-opacity", 0.3);
 
     // Create bars (stacked for selected/unselected)
     const bar = svg
