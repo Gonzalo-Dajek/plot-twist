@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>PlotTwist</title>
+        <meta
+            name="description"
+            content="PlotTwist is a tool for visualizing complex data interactively with multi-view support."
+        />
+
+        <meta
+            property="og:title"
+            content="PlotTwist - Interactive Data Visualization"
+        />
+        <meta property="og:type" content="" />
+        <!-- TODO: fill -->
+        <meta property="og:url" content="" />
+        <!-- TODO: fill -->
+        <meta property="og:image" content="" />
+        <!-- TODO: fill -->
+        <meta
+            property="og:image:alt"
+            content="Screenshot of PlotTwist tool displaying complex data"
+        />
+
+        <link rel="icon" href="/plot-twist/assets/favicon-tl4dpFnO.ico" sizes="any" />
+        <!-- TODO: replace -->
+        <link rel="icon" href="/plot-twist/assets/icon-CrLf0eJB.svg" type="image/svg+xml" />
+        <!-- TODO: replace -->
+        <link rel="apple-touch-icon" href="/plot-twist/assets/icon-ijzhoTP6.png" />
+        <!-- TODO: replace -->
+        <link rel="manifest" href="/plot-twist/assets/site-COK2qUPN.webmanifest" />
+      <script type="module" crossorigin src="/plot-twist/assets/index-Z_AoeUZ6.js"></script>
+      <link rel="stylesheet" crossorigin href="/plot-twist/assets/index-BqKvu6RV.css">
+    </head>
+
+    <body>
+        <div class="top-bar-dummy"></div>
+        <div class="top-bar-fixedRectangle"></div>
+        <div class="top-bar">
+            <div class="top-bar-inner">
+                <span>Load CSV</span>
+                <div class="indentFileUpload">
+                    <label for="fileInput" class="custom-file-upload">Select a CSV File</label>
+                    <span class="file-name" id="fileName1">No file chosen</span>
+                    <input type="file" id="fileInput" class="file-input" />
+                </div>
+
+
+                <span>Load Layout</span>
+                <div class="indentFileUpload">
+                    <label for="layoutInput" class="custom-file-upload">Select a Layout file</label>
+                    <span class="file-name" id="fileName2">No file chosen</span>
+                    <input type="file" id="layoutInput" class="file-input" />
+                </div>
+
+                <button id="exportLayoutButton" class="top-bar-button">
+                    Save Layout
+                </button>
+            </div>
+        </div>
+
+        <div id="grid-container">
+            <div id="plotsContainer"></div>
+            <button id="col">+</button>
+            <button id="row">+</button>
+            <div></div>
+        </div>
+
+
+
+    </body>
+</html>
