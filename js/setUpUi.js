@@ -343,6 +343,7 @@ export function setUpLoadCsv(data, pcRef, gridSize) {
                 data = data.map(row => {
                     const modifiedRow = {};
 
+                    // TODO: handle non ASCII chars
                     // Iterate over each key-value pair in the row
                     for (let key in row) {
                         const modifiedKey = key
@@ -360,6 +361,7 @@ export function setUpLoadCsv(data, pcRef, gridSize) {
 
                 pcRef.pc.init(data);
                 createGridItems("plotsContainer", gridSize, pcRef, data);
+                pcRef.pc.dsName = document.getElementById("fileName1").textContent;
 
                 document.getElementById("col").style.display = "flex";
                 document.getElementById("row").style.display = "flex";

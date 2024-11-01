@@ -3,8 +3,8 @@ export class PlotCoordinator {
     // _entries[index] = {Sex: Male, age: 31, ... , selectedCounter: 0}
     _plots = new Map();
     // _plots.get(id) = {lastIndexesSelected: [2,1,5,7],
-    //                   plotUpdateFunction: howToUpdatePlot}
-    _idCounter = 0;
+    //                   plotUpdateFunction: howToUpdatePlot => {} }
+    _idCounter = 1;
     _entriesSelectCounter;
     _dataStructure;
     _BENCHMARK = {
@@ -12,6 +12,7 @@ export class PlotCoordinator {
         deltaUpdateIndexes: undefined,
         deltaUpdatePlots: undefined,
     };
+    dsName = "prueba";
 
     _benchMark(where) {
         if (this._BENCHMARK.isActive) {
@@ -67,6 +68,7 @@ export class PlotCoordinator {
             this._entriesSelectCounter[i]++;
         }
 
+
         this.updatePlotsView(id, []);
     }
 
@@ -83,7 +85,7 @@ export class PlotCoordinator {
     }
 
     removeAll() {
-        for (let [id, plot] of this._plots.entries()) {
+        for (let plot of this._plots.values()) {
             let indexesSelected = plot.lastIndexesSelected;
             for (let i = 0; i < indexesSelected.length; i++) {
                 this._entriesSelectCounter[indexesSelected[i]]--;
@@ -91,7 +93,6 @@ export class PlotCoordinator {
         }
         this._plots.clear();
     }
-
 
     _isSelectedRange(d, selectionArr, id) {
         const selectType = this._plots.get(id).selectionMode;
@@ -141,39 +142,58 @@ export class PlotCoordinator {
     }
 
     updatePlotsView(id, newSelection) {
-        this._plots.get(id).lastSelectionRange = newSelection;
+            // console.log("UPDATE FROM SERVER")
+            // let lastSelectedIndexes = this._plots.get(id).lastIndexesSelected;
+            //
+            // for (let index of lastSelectedIndexes) {
+            //     this._entriesSelectCounter[index]--;
+            // }
+            // for (let index of newSelection) {
+            //     this._entriesSelectCounter[index]++;
+            // }
+            //
+            // this._plots.get(id).lastIndexesSelected=newSelection;
+            //
+            // for (let [i, plot] of this._plots.entries()) {
+            //     if(i!==0){
+            //         plot.plotUpdateFunction();
+            //     }
+            // }
+            this._plots.get(id).lastSelectionRange = newSelection;
 
-        this._benchMark("preIndexUpdate");
-        let lastSelectedIndexes = this._plots.get(id).lastIndexesSelected;
+            this._benchMark("preIndexUpdate");
+            let lastSelectedIndexes = this._plots.get(id).lastIndexesSelected;
 
-        let newlySelectedIndexes = this._entries
-            .map((d, i) => i)
-            .filter((i) => {
-                let isInRanges = this._isSelectedRange(
-                    this._entries[i],
-                    newSelection,
-                    id
-                );
-                return this._plots.get(id).selectionMode === "AND"
-                    ? isInRanges
-                    : !isInRanges;
-            });
+            let newlySelectedIndexes = this._entries
+                .map((d, i) => i)
+                .filter((i) => {
+                    let isInRanges = this._isSelectedRange(
+                        this._entries[i],
+                        newSelection,
+                        id,
+                    );
+                    return (this._plots.get(id).selectionMode === "AND")
+                        ? isInRanges
+                        : !isInRanges;
+                });
 
-        for (let index of lastSelectedIndexes) {
-            this._entriesSelectCounter[index]--;
-        }
-        for (let index of newlySelectedIndexes) {
-            this._entriesSelectCounter[index]++;
-        }
+            for (let index of lastSelectedIndexes) {
+                this._entriesSelectCounter[index]--;
+            }
+            for (let index of newlySelectedIndexes) {
+                this._entriesSelectCounter[index]++;
+            }
 
-        this._plots.get(id).lastIndexesSelected = newlySelectedIndexes;
-        this._benchMark("postIndexUpdate");
+            this._plots.get(id).lastIndexesSelected = newlySelectedIndexes;
+            this._benchMark("postIndexUpdate");
 
-        this._benchMark("prePlotsUpdate");
-        for (let plot of this._plots.values()) {
-            plot.plotUpdateFunction();
-        }
-        this._benchMark("postPlotsUpdate");
+            this._benchMark("prePlotsUpdate");
+            for (let [i, plot] of this._plots.entries()) {
+                if( (id===0 && i!==0) || (id!==0)){
+                    plot.plotUpdateFunction();
+                }
+            }
+            this._benchMark("postPlotsUpdate");
     }
 
     fields() {
@@ -188,7 +208,7 @@ export class PlotCoordinator {
     }
 
     isSelected(entry) {
-        return this._entriesSelectCounter[entry] === this._plots.size;
+        return this._entriesSelectCounter[entry] === this._plots.size; // && estaSeleccionadoEnServer()
     }
 
     changeSelectionMode(id, selectMode) {

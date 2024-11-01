@@ -138,6 +138,14 @@ export function createScatterPlot(xField, yField, id, data, pc, gridPos) {
         ); // Less opacity
 
     // Append the dots
+    const minRadius = 2.5;
+    const maxRadius = 7;
+
+    const radiusScale = d3.scaleLinear()
+        .domain([0, 500]) // Input range: from 0 to the size of the dataset
+        .range([maxRadius, minRadius]) // Output range: min to max radius
+        .clamp(true); // Ensure values stay within range
+
     const dot = svg
         .append("g")
         .selectAll("circle")
@@ -146,7 +154,7 @@ export function createScatterPlot(xField, yField, id, data, pc, gridPos) {
         .append("circle")
         .attr("cx", (d) => x(Number(d[xField])))
         .attr("cy", (d) => y(Number(d[yField])))
-        .attr("r", 2.5) // radius
+        .attr("r", radiusScale(data.length)) // radius
         .attr("fill", selectedColor) // Dot color
         .attr("fill-opacity", 0.7) // Transparency
         .attr("stroke", "none"); // border
@@ -240,16 +248,16 @@ export function createScatterPlot(xField, yField, id, data, pc, gridPos) {
         } else {
             // selectRanges = [];
             selectRanges = [
-                {
-                    range: null,
-                    xField: xField,
-                    type: "numerical",
-                },
-                {
-                    range: null,
-                    field: yField,
-                    type: "numerical",
-                },
+                // {
+                //     range: null,
+                //     xField: xField,
+                //     type: "numerical",
+                // },
+                // {
+                //     range: null,
+                //     field: yField,
+                //     type: "numerical",
+                // },
             ];
             setActiveButton("AND");
             pc.changeSelectionMode(id, "AND");
@@ -277,7 +285,7 @@ export function createScatterPlot(xField, yField, id, data, pc, gridPos) {
 
             d3.select(this)
                 .style("fill", isSelected ? selectedColor : unselectedColor)
-                .style("r", isSelected ? 2.7 : 1.4)
+                .attr("r", isSelected ? radiusScale(data.length) : (radiusScale(data.length) / 2))
                 .style("fill-opacity", isSelected ? 1 : 1);
 
             if (isSelected) {
