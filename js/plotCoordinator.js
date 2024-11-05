@@ -142,23 +142,6 @@ export class PlotCoordinator {
     }
 
     updatePlotsView(id, newSelection) {
-            // console.log("UPDATE FROM SERVER")
-            // let lastSelectedIndexes = this._plots.get(id).lastIndexesSelected;
-            //
-            // for (let index of lastSelectedIndexes) {
-            //     this._entriesSelectCounter[index]--;
-            // }
-            // for (let index of newSelection) {
-            //     this._entriesSelectCounter[index]++;
-            // }
-            //
-            // this._plots.get(id).lastIndexesSelected=newSelection;
-            //
-            // for (let [i, plot] of this._plots.entries()) {
-            //     if(i!==0){
-            //         plot.plotUpdateFunction();
-            //     }
-            // }
             this._plots.get(id).lastSelectionRange = newSelection;
 
             this._benchMark("preIndexUpdate");
