@@ -39,23 +39,31 @@
         <div class="top-bar-fixedRectangle"></div>
         <div class="top-bar">
             <div class="top-bar-inner">
-                <span>Load CSV</span>
+<!--                <span>Load CSV</span>-->
                 <div class="indentFileUpload">
-                    <label for="fileInput" class="custom-file-upload">Select a CSV File</label>
-                    <span class="file-name" id="fileName1">No file chosen</span>
+                    <label for="fileInput" class="custom-file-upload top-bar-button">
+                        Upload data-set&nbsp;
+                        <img src="public/csv_icon.svg" alt="select CSV" class="csv-icon"/>
+
+                    </label>
+<!--                    <span class="file-name" id="fileName1">No file chosen</span>-->
                     <input type="file" id="fileInput" class="file-input" />
                 </div>
 
 
-                <span>Load Layout</span>
-                <div class="indentFileUpload">
-                    <label for="layoutInput" class="custom-file-upload">Select a Layout file</label>
-                    <span class="file-name" id="fileName2">No file chosen</span>
+<!--                <span>Load Layout</span>-->
+                <div id="loadLayout" class="indentFileUpload">
+                    <label for="layoutInput" class="custom-file-upload top-bar-button">
+                        Load layout&nbsp;
+                        <img src="public/upload_icon.svg" alt="upload layout file" class="csv-icon">
+                    </label>
+<!--                    <span class="file-name" id="fileName2">No file chosen</span>-->
                     <input type="file" id="layoutInput" class="file-input" />
                 </div>
 
                 <button id="exportLayoutButton" class="top-bar-button">
-                    Save Layout
+                    Save Layout&nbsp;
+                    <img src="public/download_icon.svg" class="csv-icon" alt="download layout file">
                 </button>
             </div>
         </div>
@@ -69,38 +77,59 @@
 
 
 <!--        <button id="fetch-button-debug" style="display: none">Get</button>-->
-        <button id="connectBtn">Connect to WebSocket</button>
+<!--        <button id="connectBtn">Connect to WebSocket</button>-->
 
-        <br>
-        <select id="dataSet1">
-            <option value="athlete_events_500.csv">athlete_events_500.csv</option>
-            <option value="athlete_events_1000.csv">athlete_events_1000.csv</option>
-        </select>
+<!--        <br>-->
+<!--        <select id="group">-->
+<!--            <option value="Altura">Altura</option>-->
+<!--            <option value="Peso">Peso</option>-->
+<!--            <option value="Edad">Edad</option>-->
+<!--        </select>-->
 
-        <select id="dataSet2">
-            <option value="athlete_events_500.csv">athlete_events_500.csv</option>
-            <option value="athlete_events_1000.csv">athlete_events_1000.csv</option>
-        </select>
+<!--        <select id="field">-->
+<!--            <option value=""> None </option>-->
+<!--            <option value="Height">Height</option>-->
+<!--            <option value="Weight">Weight</option>-->
+<!--            <option value="Age">Age</option>-->
+<!--        </select>-->
 
-        <select id="field1">
-            <option value="Height">Height</option>
-            <option value="Weight">Weight</option>
-            <option value="Age">Age</option>
-        </select>
+<!--        <br>-->
+<!--        <button id="createGroupBtn">Create group</button>-->
+<!--        <button id="deleteGroupBtn">Delete group</button>-->
+<!--        <button id="updateFieldBtn">update field from group</button>-->
 
-        <select id="field2">
-            <option value="Height">Height</option>
-            <option value="Weight">Weight</option>
-            <option value="Age">Age</option>
-        </select>
+<!--        <p id="output" style="display: none"></p>-->
 
-        <br>
-        <button id="createLinkBtn">Create</button>
-        <button id="deleteLinkBtn">Delete</button>
-        <button id="relinkBtn">relink</button>
-        <button id="unlinkBtn">unlink</button>
+        <div class="group-component">
 
-        <p id="output"></p>
+            <span class="group-title">
+                Cross data-set Field Groups
+            </span>
+
+
+
+            <div id="groups-list">
+<!--                    <div class="groups-item">-->
+<!--                        <button>-->
+<!--                            Delete-->
+<!--                        </button>-->
+<!--                        <span>-->
+<!--                            Altura-->
+<!--                        </span>-->
+<!--                        <select>-->
+<!--                            <option>Height</option>-->
+<!--                        </select>-->
+<!--                    </div>-->
+            </div>
+
+            <div class="add-group-container">
+                <label for="input-group-name">Group: </label>
+                <input type="text" id="input-group-name">
+                <button id="group-name-submit">Add Group</button>
+            </div>
+        </div>
+
+        <button id="slide-menu-btn"><img src="public/list_icon.svg" alt="Group links button">Field Groups</button>
 
         <script type="module" src="/js/main.js"></script>
     </body>

@@ -302,24 +302,25 @@ export function createGridItems(containerId, grid, pcRef, dataSet) {
             createGridCell(container, { col, row }, pcRef, dataSet);
         }
     }
+    adjustBodyStyle();
 }
 
-export function setUpLoadCsv(data, pcRef, gridSize) {
-    document.addEventListener('DOMContentLoaded', function() {
-        // Function to update the file name display
-        function updateFileName(fileInputId, fileNameId) {
-            const fileInput = document.getElementById(fileInputId);
-            const fileNameDisplay = document.getElementById(fileNameId);
-
-            fileInput.addEventListener('change', function() {
-                fileNameDisplay.textContent = this.files.length > 0 ? this.files[0].name : 'No file chosen';
-            });
-        }
-
-        // Initialize the two file inputs with their corresponding display
-        updateFileName('fileInput', 'fileName1');
-        updateFileName("layoutInput", 'fileName2');
-    });
+export function setUpLoadCsv(data, pcRef, gridSize, socketRef, connectFunction) {
+    // document.addEventListener('DOMContentLoaded', function() {
+    //     // Function to update the file name display
+    //     function updateFileName(fileInputId, fileNameId) {
+    //         const fileInput = document.getElementById(fileInputId);
+    //         const fileNameDisplay = document.getElementById(fileNameId);
+    //
+    //         fileInput.addEventListener('change', function() {
+    //             fileNameDisplay.textContent = this.files.length > 0 ? this.files[0].name : 'No file chosen';
+    //         });
+    //     }
+    //
+    //     // Initialize the two file inputs with their corresponding display
+    //     updateFileName('fileInput', 'fileName1');
+    //     updateFileName("layoutInput", 'fileName2');
+    // });
 
     const fileInput = document.getElementById("fileInput");
 
@@ -361,14 +362,20 @@ export function setUpLoadCsv(data, pcRef, gridSize) {
 
                 pcRef.pc.init(data);
                 createGridItems("plotsContainer", gridSize, pcRef, data);
-                pcRef.pc.dsName = document.getElementById("fileName1").textContent;
+                // pcRef.pc.dsName = document.getElementById("fileName1").textContent;
 
                 document.getElementById("col").style.display = "flex";
                 document.getElementById("row").style.display = "flex";
+
+                pcRef.pc.dsName=file.name;
+                connectFunction(socketRef, pcRef);
             };
 
             reader.readAsText(file);
 
+            document.getElementById("slide-menu-btn").style.display="flex";
+            document.getElementById("loadLayout").style.display="flex";
+            document.getElementById("exportLayoutButton").style.display="flex";
 
         } else {
             alert("Please select a CSV file.");

@@ -268,6 +268,7 @@ export function createScatterPlot(xField, yField, id, data, pc, gridPos) {
     }
 
     const throttledHandleSelection = throttle(handleSelection, 50);
+    // const throttledHandleSelection = throttle(handleSelection, Math.max(20, Math.min(data.length/10, 1000)));
 
     svg.call(
         d3

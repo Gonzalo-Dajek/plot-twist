@@ -8,19 +8,264 @@ body {
     align-items: center;
 }
 
+/* LINK GROUPS */
+
+.group-component {
+    background: rgba(255, 255, 255, 0.6);
+    backdrop-filter: blur(10px);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    border-radius: 15px;
+    padding: 10px 10px;
+    display: flex;
+    flex-direction: column;
+    height: 75vh;
+    width: 300px;
+    bottom: 10px;
+
+    position: fixed;
+    left: -320px;
+    transition: left 0.3s ease;
+}
+.group-component.active {
+    left: 10px;
+
+}
+#slide-menu-btn {
+    display: none;
+    position: fixed;
+    bottom: 10px;
+    left: 10px;
+    transition: left 0.3s ease, background-color 0.3s ease, box-shadow 0.3s ease;
+
+    color: #344767;
+
+    padding: 10px 15px;
+    font-size: 14px;
+    font-weight: bold;
+    cursor: pointer;
+    flex-grow: 1;
+    flex-basis: 0;
+    box-sizing: border-box;
+    border-radius: 10px;
+    /*border: none;*/
+    text-align: center;
+    /*display: flex;*/
+    align-items: center;
+    gap: 8px;
+    border: 1px solid rgba(52, 71, 103, 0.4);
+}
+#slide-menu-btn:hover{
+    background-color: #d9d9d9;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+#slide-menu-btn.active{
+    left: 345px;
+}
+.group-title{
+    color: #344767;
+    font-size: 18px;
+    font-weight: bolder;
+    text-align: center;
+    margin-bottom: 10px;
+    flex-shrink: 0;
+}
+
+
+#groups-list{
+    /*flex: 1;*/
+    width: 92%;
+    flex-grow: 1;
+    overflow-y: auto;
+    padding: 10px; /* Inner padding */
+    background-color: rgba(255, 255, 255, 0.7); /* Slightly more opaque for content */
+    border-radius: 8px; /* Rounded corners */
+    border: 1px solid rgba(0, 0, 0, 0.05); /* Very light border for structure */
+    box-shadow:
+            inset 1px 1px 2px rgba(0, 0, 0, 0.03),   /* Softer dark inner shadow */
+            inset -1px -1px 2px rgba(255, 255, 255, 0.95); /* Softer light inner shadow */
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+#groups-list::-webkit-scrollbar {
+    width: 10px; /* Reduced scrollbar width */
+}
+
+#groups-list::-webkit-scrollbar-track {
+    background-color: rgba(230, 230, 230, 0.8); /* Light grey track */
+    border-radius: 8px; /* Rounded corners for the track */
+}
+
+#groups-list::-webkit-scrollbar-thumb {
+    background-color: rgba(150, 150, 150, 0.8); /* Soft grey thumb */
+    border: 2px solid transparent; /* Transparent border for thinner scrollbar */
+    border-radius: 8px; /* Rounded corners */
+    background-clip: padding-box; /* Ensures thumb doesn't overlap with the border */
+}
+
+#groups-list::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(120, 120, 120, 0.8); /* Darker grey on hover */
+}
+
+#groups-list::-webkit-scrollbar-button {
+    display: none; /* Hides the scrollbar arrows */
+}
+.groups-item {
+    display: grid;
+    grid-template-rows: 1fr 1fr;
+    grid-template-columns: 1fr 1fr;
+    gap: 5px; /* Adjust spacing as needed */
+    padding: 10px;
+    border: 1px solid #ccc;
+}
+
+.groups-item span {
+    grid-row: 1 / 2;
+    grid-column: 1 / 2;
+    align-self: center;
+    justify-self: start;
+    font-weight: bold;
+    color: #5C6BC0;
+    padding-left: 7px;
+}
+
+.groups-item button {
+    grid-row: 1 / 2;
+    grid-column: 2 / 3;
+    align-self: center;
+    justify-self: end;
+}
+
+.groups-item select {
+    grid-row: 2 / 3;
+    grid-column: 1 / 3;
+    align-self: end;
+    justify-self: center;
+    width: 100%; /* Adjust width as needed */
+    padding: 10px; /* Adjusted padding */
+    border: 1px solid rgba(221, 221, 221, 0.5); /* Light border */
+    border-radius: 8px; /* Rounded corners */
+    background-color: white; /* Flat white background for select */
+    transition: border-color 0.3s ease; /* Smooth transition for border color */
+}
+.groups-item select:focus{
+    outline: none;
+}
+
+.groups-item{
+    padding: 5px 10px 10px;
+    box-sizing: border-box;
+    align-items: center;
+    background: rgba(247, 247, 247, 0.1);
+    border: 1px solid rgba(221, 221, 221, 0.5); /* Light border */
+    border-radius: 10px; /* Rounded corners */
+    backdrop-filter: blur(10px); /* Frosted glass effect */
+    width: 100%; /* Full width */
+}
+
+.groups-item button{
+    padding: 9px 12px;
+    font-size: 12px;
+    font-weight: bolder;
+    cursor: pointer;
+    flex-grow: 1; /* Each button grows equally */
+    flex-basis: 0; /* Ensures buttons start at equal width */
+    box-sizing: border-box;
+    border-radius: 10px; /* Rounded corners */
+    border: none; /* No border */
+    transition: background-color 0.3s ease, box-shadow 0.3s ease; /* Smooth transitions */
+    text-align: center; /* Ensures text is centered */
+    background-color: #f0f0f0; /* Red background */
+    color: #344767;
+}
+
+.groups-item button:hover {
+    background-color: #d9d9d9; /* Darker red on hover */
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1); /* Soft shadow on hover */
+}
+
+.add-group-container{
+    padding-top: 10px;
+    flex-shrink: 0;
+    font-size: 14px;
+    color: rgba(52, 71, 103, 0.5);
+    font-weight: bold;
+    padding-left: 5px;
+    padding-right: 5px;
+    display: grid;
+    grid-template-columns: 1fr 5fr;
+    grid-template-rows: 1fr 1fr;
+    column-gap: 5px;
+    row-gap: 5px;
+}
+
+
+.add-group-container label {
+    grid-column: 1 / 2;
+    grid-row: 1 / 2;
+    align-self: center;
+    text-align: center;
+}
+
+.add-group-container input {
+    grid-column: 2 / 3;
+    grid-row: 1 / 2;
+    background-color: rgba(255, 255, 255, 0.7);
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 8px;
+    font-size: 14px;
+    color: #344767;
+    outline: none;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+.add-group-container input:focus {
+    border-color: #5C6BC0;
+    box-shadow: 0 0 4px rgba(92, 107, 192, 0.3);
+}
+.add-group-container button {
+    grid-column: 1 / 3;
+    grid-row: 2 / 3;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px;
+    font-size: 13px;
+    font-weight: bold;
+    color: white;
+    border-radius: 10px;
+    border: none;
+    box-shadow: none;
+    cursor: pointer;
+    transition: background-color 0.3s ease, box-shadow 0.3s ease;
+    background-color: #5C6BC0;
+}
+
+.add-group-container button:hover {
+    background-color: #3F51B5;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+
+/* TOP BAR */
+
 .top-bar-fixedRectangle {
     position: fixed;
     top: 0;
     left: 0;
     right: 0;
     width: 100%;
-    height: 63px;
+    height: 68px;
     background-color: rgba(255, 255, 255, 0.4);
     border: 1px solid rgba(0, 0, 0, 0.05);
 }
 
 .top-bar-dummy {
-    height: 63px;
+    height: 68px;
+    /*height: 63px;*/
 }
 
 .top-bar {
@@ -31,7 +276,7 @@ body {
     background: rgba(255, 255, 255, 0);
     box-shadow: none;
     border-radius: 15px;
-    padding: 10px 20px;
+    padding: 10px 10px;
     position: fixed; /* Change to fixed */
     top: 0;
     left: 50%; /* Centering trick */
@@ -53,54 +298,41 @@ body {
     display: flex;
     justify-content: center;
     align-items: center;
-    gap: 5px;
+    gap: 10px;
     white-space: nowrap;
 }
-
-.indentFileUpload{
-    margin-right: 30px;
-    border: none;
-    background-color: rgba(240, 240, 240, 0.6);
-    padding: 8px;
-    border-radius: 8px;
-    width: 300px;
-    text-align: center;
-    box-shadow: inset 2px 2px 4px rgba(0, 0, 0, 0.1), inset -2px -2px 4px rgba(255, 255, 255, 0.5);
-    margin-left: 10px;
-    overflow: hidden;
-    display: flex;
-    flex-direction: row;
-    align-items: center;
+.csv-icon {
+    width: 28px;
+    height: 28px;
 }
 
-.indentFileUpload .file-name{
-    font-family: Arial, sans-serif;
-    font-weight: normal;
-    font-size: 13px;
-    color: grey;
-}
+/*.plot-menu button {*/
+/*    display: flex;*/
+/*    align-items: center; !* Center content vertically *!*/
+/*    justify-content: center; !* Center content horizontally *!*/
+/*    padding: 10px 20px; !* Adjust padding *!*/
+/*    font-size: 14px; !* Font size *!*/
+/*    font-weight: bold; !* Bold text *!*/
+/*    color: white; !* Text color *!*/
+/*    border-radius: 10px; !* Rounded corners *!*/
+/*    border: none; !* No border *!*/
+/*    box-shadow: none; !* No shadow for seamless look *!*/
+/*    cursor: pointer; !* Pointer on hover *!*/
+/*    transition: background-color 0.3s ease, box-shadow 0.3s ease; !* Smooth transitions *!*/
+/*    background-color: #5C6BC0;*/
+/*}*/
 
-.custom-file-upload{
-    content: 'Select File';
-    display: inline-block;
-    background: #5C6BC0; /* Soft Indigo */
-    color: white;
-    font-family: Arial, sans-serif;
-    font-weight: normal;
-    font-size: 13px;
-    padding: 5px 10px;
-    border-radius: 5px;
-    cursor: pointer;
-    margin-right: 10px;
-    transition: background 0.2s ease-in-out;
-}
+/*.plot-menu button:hover {*/
+/*    background-color: #3F51B5; !* Slightly more visible on hover *!*/
+/*    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1); !* Soft shadow on hover *!*/
+/*}*/
 
 .file-input {
     display: none; /* Hide the default file input */
 }
 
 .custom-file-upload:hover{
-    background: #3F51B5; /* Darker Indigo */
+    /*background: #3F51B5; !* Darker Indigo *!*/
 }
 
 .indentFileUpload input[type="file"] {
@@ -111,21 +343,45 @@ body {
     visibility: hidden;
     display: none;
 }
-
-.top-bar-button {
-    background: #5C6BC0; /* Soft Indigo */
-    border: none;
-    padding: 10px 20px;
-    border-radius: 10px;
-    cursor: pointer;
-    color: white;
-    box-shadow: 4px 4px 8px rgba(0, 0, 0, 0.1), -4px -4px 8px rgba(255, 255, 255, 0.7);
-    transition: background 0.2s ease-in-out, box-shadow 0.2s ease-in-out; /* Smooth transition for background and shadow */
+#loadLayout{
+    display: none;
+}
+#exportLayoutButton{
+    display: none;
 }
 
-.top-bar-button:hover {
-    background: #3F51B5; /* Darker Indigo */
-    box-shadow: 4px 4px 12px rgba(0, 0, 0, 0.2), -4px -4px 12px rgba(255, 255, 255, 0.9); /* Optional: increase shadow on hover */
+.top-bar-button {
+    /*display: inline-flex; !* Use inline-flex for buttons *!*/
+    /*align-items: center; !* Center vertically *!*/
+    /*justify-content: center; !* Center horizontally *!*/
+    /*background-color: #f0f0f0; !* Red background *!*/
+    /*color: #344767;*/
+    /*border: none;*/
+    /*cursor: pointer;*/
+    /*padding: 10px 10px;*/
+    /*box-sizing: border-box;*/
+    /*border-radius: 10px; !* Rounded corners *!*/
+    /*transition: background-color 0.3s ease, box-shadow 0.3s ease; !* Smooth transitions *!*/
+    display: flex;
+    align-items: center; /* Center content vertically */
+    justify-content: center; /* Center content horizontally */
+    padding: 10px 15px; /* Adjust padding */
+    font-size: 14px; /* Font size */
+    font-weight: bold; /* Bold text */
+    color: white; /* Text color */
+    border-radius: 10px; /* Rounded corners */
+    border: none; /* No border */
+    box-shadow: none; /* No shadow for seamless look */
+    cursor: pointer; /* Pointer on hover */
+    transition: background-color 0.3s ease, box-shadow 0.3s ease; /* Smooth transitions */
+    background-color: #5C6BC0;
+}
+
+.top-bar-button:hover  {
+    /*background-color: #d9d9d9; !* Darker red on hover *!*/
+    /*box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1); !* Soft shadow on hover *!*/
+    background-color: #3F51B5; /* Slightly more visible on hover */
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1); /* Soft shadow on hover */
 }
 
 /* Plot Container + ColRow Btns*/
@@ -377,13 +633,13 @@ body {
     font-size: 14px;
     font-weight: bold;
     cursor: pointer;
-    flex-grow: 1; /* Each button grows equally */
-    flex-basis: 0; /* Ensures buttons start at equal width */
+    flex-grow: 1;
+    flex-basis: 0;
     box-sizing: border-box;
-    border-radius: 10px; /* Rounded corners */
-    border: none; /* No border */
-    transition: background-color 0.3s ease, box-shadow 0.3s ease; /* Smooth transitions */
-    text-align: center; /* Ensures text is centered */
+    border-radius: 10px;
+    border: none;
+    transition: background-color 0.3s ease, box-shadow 0.3s ease;
+    text-align: center;
 }
 
 
@@ -393,21 +649,21 @@ body {
 }
 
 .create-button:hover {
-    background-color: #3F51B5; /* Slightly more visible on hover */
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1); /* Soft shadow on hover */
+    background-color: #3F51B5;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
 }
 
 .cancel-button {
-    background-color: #f0f0f0; /* Red background */
+    background-color: #f0f0f0;
     color: #344767;
 }
 
 .cancel-button:hover {
-    background-color: #d9d9d9; /* Darker red on hover */
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1); /* Soft shadow on hover */
+    background-color: #d9d9d9;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
 }
 .plot-fields-container::-webkit-scrollbar {
-    width: 10px; /* Reduced scrollbar width */
+    width: 10px;
 }
 
 .plot-fields-container::-webkit-scrollbar-track {
@@ -452,17 +708,17 @@ body {
 
 .plot-menu button {
     display: flex;
-    align-items: center; /* Center content vertically */
-    justify-content: center; /* Center content horizontally */
-    padding: 10px 20px; /* Adjust padding */
-    font-size: 14px; /* Font size */
-    font-weight: bold; /* Bold text */
-    color: white; /* Text color */
-    border-radius: 10px; /* Rounded corners */
-    border: none; /* No border */
-    box-shadow: none; /* No shadow for seamless look */
-    cursor: pointer; /* Pointer on hover */
-    transition: background-color 0.3s ease, box-shadow 0.3s ease; /* Smooth transitions */
+    align-items: center;
+    justify-content: center;
+    padding: 10px 20px;
+    font-size: 14px;
+    font-weight: bold;
+    color: white;
+    border-radius: 10px;
+    border: none;
+    box-shadow: none;
+    cursor: pointer;
+    transition: background-color 0.3s ease, box-shadow 0.3s ease;
     background-color: #5C6BC0;
 }
 
