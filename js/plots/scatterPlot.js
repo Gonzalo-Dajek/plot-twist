@@ -181,50 +181,50 @@ export function createScatterPlot(xField, yField, id, data, pc, gridPos) {
         .attr("opacity", 0.3)
         .attr("stroke-width", 1);
 
-    // // Pearson correlation coefficient
-    // function calculatePearson(selectedData, xField, yField) {
-    //     const xValues = selectedData.map((d) => +d[xField]);
-    //     const yValues = selectedData.map((d) => +d[yField]);
-    //
-    //     const xMean = d3.mean(xValues);
-    //     const yMean = d3.mean(yValues);
-    //
-    //     const numerator = d3.sum(
-    //         xValues.map((x, i) => (x - xMean) * (yValues[i] - yMean))
-    //     );
-    //     const denominator = Math.sqrt(
-    //         d3.sum(xValues.map((x) => Math.pow(x - xMean, 2))) *
-    //             d3.sum(yValues.map((y) => Math.pow(y - yMean, 2)))
-    //     );
-    //
-    //     return numerator / denominator;
-    // }
+    // Pearson correlation coefficient
+    function calculatePearson(selectedData, xField, yField) {
+        const xValues = selectedData.map((d) => +d[xField]);
+        const yValues = selectedData.map((d) => +d[yField]);
 
-    // // Spearman rank correlation coefficient
-    // function calculateSpearman(selectedData, xField, yField) {
-    //     const xValues = selectedData.map((d) => +d[xField]);
-    //     const yValues = selectedData.map((d) => +d[yField]);
-    //
-    //     // Rank the x and y values
-    //     const xRanks = rank(xValues);
-    //     const yRanks = rank(yValues);
-    //
-    //     // Calculate Pearson correlation on the ranks
-    //     return calculatePearson(
-    //         selectedData.map((d, i) => ({
-    //             [xField]: xRanks[i],
-    //             [yField]: yRanks[i],
-    //         })),
-    //         xField,
-    //         yField
-    //     );
-    // }
+        const xMean = d3.mean(xValues);
+        const yMean = d3.mean(yValues);
 
-    // // Helper function to calculate ranks
-    // function rank(values) {
-    //     const sorted = [...values].sort((a, b) => a - b);
-    //     return values.map((v) => sorted.indexOf(v) + 1);
-    // }
+        const numerator = d3.sum(
+            xValues.map((x, i) => (x - xMean) * (yValues[i] - yMean))
+        );
+        const denominator = Math.sqrt(
+            d3.sum(xValues.map((x) => Math.pow(x - xMean, 2))) *
+                d3.sum(yValues.map((y) => Math.pow(y - yMean, 2)))
+        );
+
+        return numerator / denominator;
+    }
+
+    // Spearman rank correlation coefficient
+    function calculateSpearman(selectedData, xField, yField) {
+        const xValues = selectedData.map((d) => +d[xField]);
+        const yValues = selectedData.map((d) => +d[yField]);
+
+        // Rank the x and y values
+        const xRanks = rank(xValues);
+        const yRanks = rank(yValues);
+
+        // Calculate Pearson correlation on the ranks
+        return calculatePearson(
+            selectedData.map((d, i) => ({
+                [xField]: xRanks[i],
+                [yField]: yRanks[i],
+            })),
+            xField,
+            yField
+        );
+    }
+
+    // Helper function to calculate ranks
+    function rank(values) {
+        const sorted = [...values].sort((a, b) => a - b);
+        return values.map((v) => sorted.indexOf(v) + 1);
+    }
 
     // Create the brush behavior.
     function handleSelection({ selection }) {
@@ -329,26 +329,26 @@ export function createScatterPlot(xField, yField, id, data, pc, gridPos) {
 
         svg.selectAll(".correlation-text").remove();
 
-        // // Calculate Pearson and Spearman coefficients
-        // const pearson = calculatePearson(selectedData, xField, yField).toFixed(
-        //     2
-        // );
-        // const spearman = calculateSpearman(
-        //     selectedData,
-        //     xField,
-        //     yField
-        // ).toFixed(2);
-        //
-        // // Add text for Pearson and Spearman coefficients in the top-right corner
-        // svg.append("text")
-        //     .attr("class", "correlation-text")
-        //     .attr("x", width - marginRight)
-        //     .attr("y", marginTop + 10)
-        //     .attr("text-anchor", "end")
-        //     .attr("font-size", "12px")
-        //     .attr("font-weight", "bold")
-        //     .attr("fill", "#000")
-        //     .text(`Pearson: ${pearson}, Spearman: ${spearman}`);
+        // Calculate Pearson and Spearman coefficients
+        const pearson = calculatePearson(selectedData, xField, yField).toFixed(
+            2
+        );
+        const spearman = calculateSpearman(
+            selectedData,
+            xField,
+            yField
+        ).toFixed(2);
+
+        // Add text for Pearson and Spearman coefficients in the top-right corner
+        svg.append("text")
+            .attr("class", "correlation-text")
+            .attr("x", width - marginRight)
+            .attr("y", marginTop + 10)
+            .attr("text-anchor", "end")
+            .attr("font-size", "12px")
+            .attr("font-weight", "bold")
+            .attr("fill", "#000")
+            .text(`Pearson: ${pearson}, Spearman: ${spearman}`);
     }
 
     // Function to calculate linear regression coefficients
