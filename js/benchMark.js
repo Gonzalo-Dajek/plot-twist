@@ -36,7 +36,7 @@ export async function run() {
                         { col: 1, row: 1 }
                     );
                 }
-                pc._BENCHMARK.isActive = true;
+                pc.BENCHMARK.isActive = true;
                 let selection = [];
                 for (let i = 0; i < sample.length / 2; i++) {
                     selection.push(i);
@@ -54,8 +54,8 @@ export async function run() {
                 for (let id = 1; id <= pc._idCounter; id++) {
                     pc.removePlot(id);
                 }
-                deltaPlot += pc._BENCHMARK.deltaUpdatePlots;
-                deltaIndex += pc._BENCHMARK.deltaUpdateIndexes;
+                deltaPlot += pc.BENCHMARK.deltaUpdatePlots;
+                deltaIndex += pc.BENCHMARK.deltaUpdateIndexes;
             }
             results.push({
                 entriesNum: entriesNum,

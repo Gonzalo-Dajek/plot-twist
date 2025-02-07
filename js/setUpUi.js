@@ -358,7 +358,7 @@ export function setUpLoadCsv(data, pcRef, gridSize, socketRef, connectFunction) 
                     return modifiedRow;
                 });
 
-                pcRef.pc = new PlotCoordinator("index");
+                pcRef.pc = new PlotCoordinator();
 
                 pcRef.pc.init(data);
                 createGridItems("plotsContainer", gridSize, pcRef, data);
@@ -444,8 +444,8 @@ function loadLayout(layoutData, pcRef) {
             switch (segments[0]) {
                 case "scatterPlot":
                     createScatterPlot(
+                        segments[1],
                         segments[2],
-                        segments[3],
                         pcRef.pc.newPlotId(),
                         pcRef.pc._entries,
                         pcRef.pc,
@@ -454,8 +454,8 @@ function loadLayout(layoutData, pcRef) {
                     break;
                 case "parallelCoord":
                     createParallelCoordinates(
-                        segments.slice(2),
-                        segments[2],
+                        segments.slice(1),
+                        segments[1],
                         pcRef.pc.newPlotId(),
                         pcRef.pc._entries,
                         pcRef.pc,
@@ -466,13 +466,13 @@ function loadLayout(layoutData, pcRef) {
                     );
                     break;
                 case "histogram":
-                    createHistogram(segments[2], pcRef.pc.newPlotId(), pcRef.pc._entries, pcRef.pc, {
+                    createHistogram(segments[1], pcRef.pc.newPlotId(), pcRef.pc._entries, pcRef.pc, {
                         col: item.col,
                         row: item.row,
                     });
                     break;
                 case "barplot":
-                    createBarPlot(segments[2], pcRef.pc.newPlotId(), pcRef.pc._entries, pcRef.pc, {
+                    createBarPlot(segments[1], pcRef.pc.newPlotId(), pcRef.pc._entries, pcRef.pc, {
                         col: item.col,
                         row: item.row,
                     });

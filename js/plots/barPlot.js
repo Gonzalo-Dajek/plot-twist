@@ -1,9 +1,9 @@
 import * as d3 from "d3";
-import { createButtons } from "./plotsUtils/plotButtons.js";
-import { customTickFormat } from "./plotsUtils/ticks.js";
+import { createButtons } from "./plotsUtils/deleteButton.js";
+import { customTickFormat } from "./plotsUtils/tickFormat.js";
 
 export function createBarPlot(field, id, data, pc, gridPos) {
-    const divId = `barplot_${id}_${field}`;
+    const divId = `barplot_${field}`;
     d3.select("#plotsContainer")
         .append("div")
         .attr("id", divId)
@@ -22,8 +22,7 @@ export function createBarPlot(field, id, data, pc, gridPos) {
 
     let unselectedColor = "grey";
 
-    let btns = createButtons(container, pc, id, false);
-    let setActiveButton = btns.setActiveButton;
+    createButtons(container, pc, id);
 
     // Use the provided categories (allCategories) to ensure all are present on the x-axis
     const categories = Array.from(new Set(data.map((d) => d[field])));
@@ -206,8 +205,6 @@ export function createBarPlot(field, id, data, pc, gridPos) {
     // Handle click event for the background
     function handleBackgroundClick() {
         selectedCategories = [];
-        setActiveButton("AND");
-        pc.changeSelectionMode(id, "AND");
         updateSelection();
     }
 

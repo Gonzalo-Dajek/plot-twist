@@ -13,38 +13,17 @@ import { rangeSet } from "./rangeSet.js";
 
 let pcRef = { pc: undefined };
 let data = [];
-let gridSize = { col: 3, row: 3 };
-// let lsRef = { ls: undefined };
+let defaultGridSize = { col: 3, row: 3 };
 let socketRef = {socket: undefined };
 // testPlots(pcRef, data, gridSize);
 
 setUpTopBarScroll();
-setUpLoadCsv(data, pcRef, gridSize, socketRef, connectToWebSocket);
-setUpExportLayout(gridSize);
-setUpLoadLayout(data, pcRef, gridSize);
-setUpResize("plotsContainer", gridSize, pcRef, data);
+setUpLoadCsv(data, pcRef, defaultGridSize, socketRef, connectToWebSocket);
+setUpExportLayout(defaultGridSize);
+setUpLoadLayout(data, pcRef, defaultGridSize);
+setUpResize("plotsContainer", defaultGridSize, pcRef, data);
 
 // ------------------------------------------------------------------------------
-
-
-
-// async function debugFetch() {
-//     try {
-//         const response = await fetch("http://localhost:5226/hello");
-//
-//         if (response.ok) {
-//             const data = await response.json(); // Parse JSON from response
-//             console.log(data.m); // Log the response data to the console
-//         } else {
-//             console.error("Error fetching data:", response.statusText);
-//         }
-//     } catch (error) {
-//         console.error("Fetch error:", error);
-//     }
-// }
-//
-// // Add event listener to the button
-// document.getElementById("fetch-button-debug").addEventListener("click", debugFetch);
 
 
 function connectToWebSocket(socketRef, pcRef) {

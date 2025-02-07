@@ -1,10 +1,10 @@
 import * as d3 from "d3";
 import throttle from "lodash-es/throttle.js";
-import { createButtons } from "./plotsUtils/plotButtons.js";
-import { customTickFormat } from "./plotsUtils/ticks.js";
+import { createButtons } from "./plotsUtils/deleteButton.js";
+import { customTickFormat } from "./plotsUtils/tickFormat.js";
 
 export function createScatterPlot(xField, yField, id, data, pc, gridPos) {
-    const divId = `scatterPlot_${id}_${xField}_${yField}`;
+    const divId = `scatterPlot_${xField}_${yField}`;
 
     d3.select("#plotsContainer")
         .append("div")
@@ -26,8 +26,7 @@ export function createScatterPlot(xField, yField, id, data, pc, gridPos) {
     let selectedColor = "#5C6BC0";
     let unselectedColor = "hsl(0, 0%, 75%)";
 
-    let btns = createButtons(container, pc, id);
-    let setActiveButton = btns.setActiveButton;
+    createButtons(container, pc, id);
 
     // Create the horizontal (x) scale, positioning N/A values on the left margin.
     const xMax = d3.max(data, (d) => Number(d[xField]));
@@ -259,8 +258,6 @@ export function createScatterPlot(xField, yField, id, data, pc, gridPos) {
                 //     type: "numerical",
                 // },
             ];
-            setActiveButton("AND");
-            pc.changeSelectionMode(id, "AND");
         }
 
         pc.updatePlotsView(id, selectRanges);

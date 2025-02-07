@@ -1,48 +1,69 @@
+
+/**
+ * Responsible for coordinating the brushing between different plots
+ */
 export class PlotCoordinator {
     _entries = [];
-    // _entries[index] = {Sex: Male, age: 31, ... , selectedCounter: 0}
+    /** Stores the parsed csv data. Each entry in _entries is a row from the csv.
+     *
+     * Example: _entries[index] = {Sex: Male, age: 31, ... }
+     */
+
     _plots = new Map();
-    // _plots.get(id) = {lastIndexesSelected: [2,1,5,7],
-    //                   plotUpdateFunction: howToUpdatePlot => {} }
-    _idCounter = 1;
-    _entriesSelectCounter;
-    _dataStructure;
-    _BENCHMARK = {
+    /** Maps each plot ID to an object consisting of:
+     * lastIndexesSelected: An array of indexes representing the last selected entries made by that plot.
+     * plotUpdateFunction: A function that updates the plot based on the current selections by all plots.
+     * lastSelectionRanges: Array of objects, each containing a `[from, to]` range and the corresponding field.
+     *
+     * Example: _plots.get(id) = {
+     *     lastSelectionRanges: [{
+     *          range: [21.5, 41.7],
+     *          field: "Age",
+     *          type: "numerical"
+     *          }, ...],
+     *     lastIndexesSelected: [1, 2, 5, 7],
+     *     plotUpdateFunction: (howToUpdatePlot) => { ... }
+     * }
+     */
+
+    _idCounter = 1; // Unique ID for each new plot
+
+    _entrySelectionTracker = [];
+    /** Tracks how many times each entry is being selected.
+     * An array of integers where each index corresponds to an entry in _entries.
+     * _entrySelectionTracker[entryIndex] stores how many times that entry is currently being selected.
+     * A count increases for each plot selecting the entry and once more if selected by the intersection of all other clients and decreases if no longer selected.
+     */
+
+    dsName = ""; // name of the dataset
+
+    BENCHMARK = {
         isActive: false,
         deltaUpdateIndexes: undefined,
         deltaUpdatePlots: undefined,
     };
-    dsName = "";
 
     _benchMark(where) {
-        if (this._BENCHMARK.isActive) {
+        if (this.BENCHMARK.isActive) {
             let startTime, endTime;
             switch (where) {
                 case "preIndexUpdate":
-                    this._BENCHMARK.updateIndexStart = performance.now();
+                    this.BENCHMARK.updateIndexStart = performance.now();
                     break;
                 case "postIndexUpdate":
-                    startTime = this._BENCHMARK.updateIndexStart;
+                    startTime = this.BENCHMARK.updateIndexStart;
                     endTime = performance.now();
-                    this._BENCHMARK.deltaUpdateIndexes = endTime - startTime;
+                    this.BENCHMARK.deltaUpdateIndexes = endTime - startTime;
                     break;
                 case "prePlotsUpdate":
-                    this._BENCHMARK.updatePlotsStart = performance.now();
+                    this.BENCHMARK.updatePlotsStart = performance.now();
                     break;
                 case "postPlotsUpdate":
-                    startTime = this._BENCHMARK.updatePlotsStart;
+                    startTime = this.BENCHMARK.updatePlotsStart;
                     endTime = performance.now();
-                    this._BENCHMARK.deltaUpdatePlots = endTime - startTime;
+                    this.BENCHMARK.deltaUpdatePlots = endTime - startTime;
                     break;
             }
-        }
-    }
-
-    constructor(type) {
-        if (type) {
-            this._dataStructure = type;
-        } else {
-            console.error("Plot Coordinator type missing");
         }
     }
 
@@ -52,9 +73,7 @@ export class PlotCoordinator {
 
     addPlot(id, updateFunction) {
         this._plots.set(id, {
-            // lastSelection:[],
             lastSelectionRange: [],
-            selectionMode: "AND",
             lastIndexesSelected: [],
             plotUpdateFunction: updateFunction,
         });
@@ -63,19 +82,18 @@ export class PlotCoordinator {
             this._plots.get(id).lastIndexesSelected.push(i);
         }
 
-        let n = this._entriesSelectCounter.length;
-        for (let i = 0; i < n; i++) {
-            this._entriesSelectCounter[i]++;
+        for (let i = 0; i < this._entrySelectionTracker.length; i++) {
+            this._entrySelectionTracker[i]++;
         }
 
-
         this.updatePlotsView(id, []);
+        // an empty selection `[]` implicitly means that all entries are selected (no brush = full selection).
     }
 
     removePlot(id) {
         let indexesSelected = this._plots.get(id).lastIndexesSelected;
         for (let i = 0; i < indexesSelected.length; i++) {
-            this._entriesSelectCounter[indexesSelected[i]]--;
+            this._entrySelectionTracker[indexesSelected[i]]--;
         }
 
         this._plots.delete(id);
@@ -88,15 +106,13 @@ export class PlotCoordinator {
         for (let plot of this._plots.values()) {
             let indexesSelected = plot.lastIndexesSelected;
             for (let i = 0; i < indexesSelected.length; i++) {
-                this._entriesSelectCounter[indexesSelected[i]]--;
+                this._entrySelectionTracker[indexesSelected[i]]--;
             }
         }
         this._plots.clear();
     }
 
-    _isSelectedRange(d, selectionArr, id) {
-        const selectType = this._plots.get(id).selectionMode;
-        let isSelectedTypeNot = false;
+    _isSelectedRange(d, selectionArr) {
         for (let selection of selectionArr) {
             const field = selection.field;
 
@@ -104,23 +120,11 @@ export class PlotCoordinator {
                 if (selection.range) {
                     const from = selection.range[0];
                     const to = selection.range[1];
-                    if (selectType === "NOT") {
-                        if (!(from <= d[field] && d[field] <= to)) {
-                            isSelectedTypeNot = true;
-                        }
-                    }
-                    if (selectType === "AND") {
-                        if (!(from <= d[field] && d[field] <= to)) {
-                            return false;
-                        }
-                    }
-                    if (selectType === "OR") {
-                        if (from <= d[field] && d[field] <= to) {
-                            return false;
-                        }
+                    if (!(from <= d[field] && d[field] <= to)) {
+                        return false;
                     }
                 }
-            } else {
+            } else { // selection.type === "categorical"; ie: string
                 const categories = selection.categories;
                 let isSelected = false;
                 for (let cat of categories) {
@@ -134,46 +138,38 @@ export class PlotCoordinator {
                 }
             }
         }
-        if (selectType === "NOT") {
-            return !isSelectedTypeNot;
-        } else {
-            return true;
-        }
+
+        return true;
     }
 
-    updatePlotsView(id, newSelection) {
-        this._plots.get(id).lastSelectionRange = newSelection;
+    updatePlotsView(sourcePlotId, newSelection) {
+        this._plots.get(sourcePlotId).lastSelectionRange = newSelection;
 
         this._benchMark("preIndexUpdate");
-        let lastSelectedIndexes = this._plots.get(id).lastIndexesSelected;
+        let lastSelectedIndexes = this._plots.get(sourcePlotId).lastIndexesSelected;
 
         let newlySelectedIndexes = this._entries
             .map((d, i) => i)
             .filter((i) => {
-                let isInRanges = this._isSelectedRange(
+                return this._isSelectedRange(
                     this._entries[i],
-                    newSelection,
-                    id,
+                    newSelection
                 );
-                return (this._plots.get(id).selectionMode === "AND")
-                    ? isInRanges
-                    : !isInRanges;
             });
 
         for (let index of lastSelectedIndexes) {
-            this._entriesSelectCounter[index]--;
+            this._entrySelectionTracker[index]--;
         }
         for (let index of newlySelectedIndexes) {
-            this._entriesSelectCounter[index]++;
+            this._entrySelectionTracker[index]++;
         }
 
-        this._plots.get(id).lastIndexesSelected = newlySelectedIndexes;
+        this._plots.get(sourcePlotId).lastIndexesSelected = newlySelectedIndexes;
         this._benchMark("postIndexUpdate");
 
         this._benchMark("prePlotsUpdate");
-        for (let [i, plot] of this._plots.entries()) {
-            if ((id === 0 && i !== 0) || (id !== 0)) {
-                console.log(`Update: ${i}`);
+        for (let [plotToUpdateId, plot] of this._plots.entries()) {
+            if ((sourcePlotId === 0 && plotToUpdateId !== 0) || (sourcePlotId !== 0)) {
                 plot.plotUpdateFunction();
             }
         }
@@ -192,25 +188,16 @@ export class PlotCoordinator {
     }
 
     isSelected(entry) {
-        return this._entriesSelectCounter[entry] === this._plots.size; // && estaSeleccionadoEnServer()
-    }
-
-    changeSelectionMode(id, selectMode) {
-        this._plots.get(id).selectionMode = selectMode;
-        this.updatePlotsView(id, this._plots.get(id).lastSelectionRange);
+        return this._entrySelectionTracker[entry] === this._plots.size;
     }
 
     init(entries) {
         this._entries = entries;
 
         let n = entries.length;
-        if (n === 0) {
-            return;
-        }
-
-        this._entriesSelectCounter = Array(n);
+        this._entrySelectionTracker = Array(n);
         for (let i = 0; i < n; i++) {
-            this._entriesSelectCounter[i] = 0;
+            this._entrySelectionTracker[i] = 0;
         }
     }
 }

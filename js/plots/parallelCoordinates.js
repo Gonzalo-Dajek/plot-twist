@@ -1,10 +1,10 @@
 import * as d3 from "d3";
 import throttle from "lodash-es/throttle.js";
-import { createButtons } from "./plotsUtils/plotButtons.js";
-import { customTickFormat } from "./plotsUtils/ticks.js";
+import { createButtons } from "./plotsUtils/deleteButton.js";
+import { customTickFormat } from "./plotsUtils/tickFormat.js";
 
 export function createParallelCoordinates(keys, keyz, id, data, pc, gridPos) {
-    let divId = `parallelCoord_${id}`;
+    let divId = `parallelCoord`;
     divId = divId + "_" + keys.join("_");
     d3.select("#plotsContainer")
         .append("div")
@@ -26,8 +26,7 @@ export function createParallelCoordinates(keys, keyz, id, data, pc, gridPos) {
 
     const unselectedColor = "grey";
 
-    let btns = createButtons(container, pc, id, true);
-    // let setActiveButton = btns.setActiveButton;
+    createButtons(container, pc, id);
 
     // Create horizontal x scale for each key
     const x = new Map(

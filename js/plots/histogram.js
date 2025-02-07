@@ -1,10 +1,10 @@
 import * as d3 from "d3";
 import throttle from "lodash-es/throttle.js";
-import { createButtons } from "./plotsUtils/plotButtons.js";
-import { customTickFormat } from "./plotsUtils/ticks.js";
+import { createButtons } from "./plotsUtils/deleteButton.js";
+import { customTickFormat } from "./plotsUtils/tickFormat.js";
 
 export function createHistogram(field, id, data, pc, gridPos) {
-    const divId = `histogram_${id}_${field}`;
+    const divId = `histogram_${field}`;
     d3.select("#plotsContainer")
         .append("div")
         .attr("id", divId)
@@ -24,8 +24,7 @@ export function createHistogram(field, id, data, pc, gridPos) {
     let selectedColor = "#465191";
     let unselectedColor = "#c9c9c9";
 
-    let btns = createButtons(container, pc, id);
-    let setActiveButton = btns.setActiveButton;
+    createButtons(container, pc, id);
 
     // Define x-axis scale
     const x = d3
@@ -183,8 +182,6 @@ export function createHistogram(field, id, data, pc, gridPos) {
                     type: "numerical",
                 },
             ];
-            setActiveButton("AND");
-            pc.changeSelectionMode(id, "AND");
         }
 
         pc.updatePlotsView(id, selectRanges);
