@@ -1,3 +1,6 @@
+/* BACKGROUND */
+/* TODO: refactor and clean up CSS*/
+
 body {
     margin: 0;
     font-family: 'Open Sans', sans-serif;
@@ -343,7 +346,7 @@ body {
     visibility: hidden;
     display: none;
 }
-#loadLayout{
+#loadLayoutButton{
     display: none;
 }
 #exportLayoutButton{

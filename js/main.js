@@ -1,30 +1,29 @@
-import {
-    setUpLoadCsv,
-    setUpExportLayout,
-    setUpLoadLayout,
-    setUpTopBarScroll,
-    setUpResize,
-} from "./setUpUi.js";
+import { initializeUI } from "./uiLogic/initUI.js";
+import { rangeSet } from "./core/rangeSet.js";
 // import { testPlots } from "./testingPlots.js";
-import { rangeSet } from "./rangeSet.js";
 
 // import {run} from "./benchMark.js";
 // run();
-
-let pcRef = { pc: undefined };
-let data = [];
-let defaultGridSize = { col: 3, row: 3 };
-let socketRef = {socket: undefined };
 // testPlots(pcRef, data, gridSize);
 
-setUpTopBarScroll();
-setUpLoadCsv(data, pcRef, defaultGridSize, socketRef, connectToWebSocket);
-setUpExportLayout(defaultGridSize);
-setUpLoadLayout(data, pcRef, defaultGridSize);
-setUpResize("plotsContainer", defaultGridSize, pcRef, data);
+let pcRef = { pc: undefined };
+let socketRef = { socket: undefined };
+
+initializeUI(pcRef, socketRef, connectToWebSocket);
+initFieldGroups();
 
 // ------------------------------------------------------------------------------
 
+function initFieldGroups(){
+    document.getElementById("group-name-submit").addEventListener("click", function (){
+        createGroup(socketRef)
+    });
+    document.getElementById("slide-menu-btn").addEventListener("click", function() {
+        document.querySelector(".group-component").classList.toggle("active");
+        document.querySelector("#slide-menu-btn").classList.toggle("active");
+    });
+
+}
 
 function connectToWebSocket(socketRef, pcRef) {
     // Create a WebSocket connection to the C# server
@@ -37,7 +36,7 @@ function connectToWebSocket(socketRef, pcRef) {
             let selection = new rangeSet();
             for (let [id, plot] of pcRef.pc._plots.entries()) {
                 if (id !== 0) {
-                    selection.addSelectionArr(JSON.parse(JSON.stringify(plot.lastSelectionRange)), plot.selectionMode);
+                    selection.addSelectionArr(JSON.parse(JSON.stringify(plot.lastSelectionRange)));
                 }
             }
 
@@ -89,75 +88,7 @@ function connectToWebSocket(socketRef, pcRef) {
         console.error("WebSocket error:", error);
     };
 }
-// document.getElementById("connectBtn").addEventListener("click", connectToWebSocket);
 
-// function getSelectedValues() {
-//     const group = document.getElementById("group").value;
-//     let field = document.getElementById("field").value;
-//     if (field===""){
-//         field = null;
-//     }
-//     return {
-//         group,
-//         field,
-//     }
-// }
-//
-// function createLinkGroup() {
-//     const selectedValues = getSelectedValues();
-//     document.getElementById("output").innerText = `Create ${JSON.stringify(selectedValues)}`;
-//     let message = {
-//         type: "link",
-//         links: [{
-//             group: selectedValues.group,
-//             field: selectedValues.field,
-//             dataSet: pcRef.pc.dsName,
-//             action: "create",
-//         }],
-//     };
-//     socket.send(JSON.stringify(message));
-//     console.log("Sent message: ", message);
-// }
-//
-// function deleteLinkGroup() {
-//     const selectedValues = getSelectedValues();
-//     document.getElementById("output").innerText = `Delete ${JSON.stringify(selectedValues)}`;
-//     let message = {
-//         type: "link",
-//         links: [{
-//             group: selectedValues.group,
-//             field: selectedValues.field,
-//             dataSet: pcRef.pc.dsName,
-//             action: "delete",
-//         }],
-//     };
-//     socket.send(JSON.stringify(message));
-//     console.log("Sent message: ", message);
-// }
-// function updateFieldFromGroup() {
-//     const selectedValues = getSelectedValues();
-//     document.getElementById("output").innerText = `Update field from Group ${JSON.stringify(selectedValues)}`;
-//     let message = {
-//         type: "link",
-//         links: [{
-//             group: selectedValues.group,
-//             field: selectedValues.field,
-//             dataSet: pcRef.pc.dsName,
-//             action: "update",
-//         }],
-//     };
-//     socket.send(JSON.stringify(message));
-//     console.log("Sent message: ", message);
-// }
-
-// document.getElementById("createGroupBtn").addEventListener("click", createLinkGroup);
-// document.getElementById("deleteGroupBtn").addEventListener("click", deleteLinkGroup);
-// document.getElementById("updateFieldBtn").addEventListener("click", updateFieldFromGroup);
-
-
-document.getElementById("group-name-submit").addEventListener("click", function (){
-    createGroup(socketRef)
-});
 function createGroup(socketRef){
     let socket = socketRef.socket;
     let text = document.getElementById("input-group-name").value;
@@ -233,6 +164,7 @@ function deleteGroup(group, socketRef){
     socket.send(JSON.stringify(message));
     console.log("Sent message: ", message);
 }
+
 function updateFieldInGroup(group, value, socketRef){
     let socket = socketRef.socket;
     let message;
@@ -261,7 +193,4 @@ function updateFieldInGroup(group, value, socketRef){
     socket.send(JSON.stringify(message));
     console.log("Sent message: ", message);
 }
-document.getElementById("slide-menu-btn").addEventListener("click", function() {
-    document.querySelector(".group-component").classList.toggle("active");
-    document.querySelector("#slide-menu-btn").classList.toggle("active");
-});
+

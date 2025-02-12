@@ -142,11 +142,11 @@ export class PlotCoordinator {
         return true;
     }
 
-    updatePlotsView(sourcePlotId, newSelection) {
-        this._plots.get(sourcePlotId).lastSelectionRange = newSelection;
+    updatePlotsView(triggeringPlotId, newSelection) {
+        this._plots.get(triggeringPlotId).lastSelectionRange = newSelection;
 
         this._benchMark("preIndexUpdate");
-        let lastSelectedIndexes = this._plots.get(sourcePlotId).lastIndexesSelected;
+        let lastSelectedIndexes = this._plots.get(triggeringPlotId).lastIndexesSelected;
 
         let newlySelectedIndexes = this._entries
             .map((d, i) => i)
@@ -164,12 +164,12 @@ export class PlotCoordinator {
             this._entrySelectionTracker[index]++;
         }
 
-        this._plots.get(sourcePlotId).lastIndexesSelected = newlySelectedIndexes;
+        this._plots.get(triggeringPlotId).lastIndexesSelected = newlySelectedIndexes;
         this._benchMark("postIndexUpdate");
 
         this._benchMark("prePlotsUpdate");
         for (let [plotToUpdateId, plot] of this._plots.entries()) {
-            if ((sourcePlotId === 0 && plotToUpdateId !== 0) || (sourcePlotId !== 0)) {
+            if ((triggeringPlotId === 0 && plotToUpdateId !== 0) || (triggeringPlotId !== 0)) {
                 plot.plotUpdateFunction();
             }
         }
@@ -191,7 +191,12 @@ export class PlotCoordinator {
         return this._entrySelectionTracker[entry] === this._plots.size;
     }
 
-    init(entries) {
+    entries(){
+        return this._entries;
+    }
+
+    init(entries, dsName) {
+        this.dsName = dsName;
         this._entries = entries;
 
         let n = entries.length;

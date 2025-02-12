@@ -1,9 +1,9 @@
 import * as d3 from "d3";
-import { createScatterPlot } from "./plots/scatterPlot.js";
-import { createHistogram } from "./plots/histogram.js";
-import { createParallelCoordinates } from "./plots/parallelCoordinates.js";
-import { createBarPlot } from "./plots/barPlot.js";
-import { createGridItems } from "./setUpUi.js";
+import { createScatterPlot } from "../plots/scatterPlot.js";
+import { createHistogram } from "../plots/histogram.js";
+import { createParallelCoordinates } from "../plots/parallelCoordinates.js";
+import { createBarPlot } from "../plots/barPlot.js";
+import { createGridItems } from "../uiLogic/initUI.js";
 import { PlotCoordinator } from "./plotCoordinator.js";
 
 async function loadCSV(pathToCsv) {

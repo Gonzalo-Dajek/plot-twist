@@ -4,7 +4,7 @@ import { fileURLToPath } from "url";
 import * as fs from "fs";
 import * as path from "path";
 import { parse } from "csv-parse/sync";
-import { PlotCoordinator } from "../js/plotCoordinator.js";
+import { PlotCoordinator } from "../js/core/plotCoordinator.js";
 // import * as plotMain from "../js/main.js";
 // import * as d3 from "d3";
 

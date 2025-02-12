@@ -1,4 +1,4 @@
-import { createScatterPlot } from "./plots/scatterPlot.js";
+import { createScatterPlot } from "../plots/scatterPlot.js";
 import * as d3 from "d3";
 import { PlotCoordinator } from "./plotCoordinator.js";
 
