@@ -1,28 +1,34 @@
 import * as d3 from "d3";
-import { createButtons } from "./plotsUtils/deleteButton.js";
 import { customTickFormat } from "./plotsUtils/tickFormat.js";
 
-export function createBarPlot(field, id, data, pc, gridPos) {
-    const divId = `barplot_${field}`;
-    d3.select("#plotsContainer")
-        .append("div")
-        .attr("id", divId)
-        .attr("class", "plot gridBox")
-        .style("grid-column", gridPos.col)
-        .style("grid-row", gridPos.row);
+export const barPlot = {
+    plotName: "Bar Plot",
+    fields: [
+        {
+            isRequired: true,
+            fieldName: "bin-variable"
+        },
+    ],
+    options: [],
+    height: 1,
+    width: 1,
+    createPlotFunction: createBarPlot,
+};
 
-    const container = d3.select(`#${divId}`);
+export function createBarPlot(fields, options, plotDiv, data, updatePlotsFun, isSelectedFun) {
+    // TODO: change the bar plot so it scrolls and can handle arbitrary amoounts of bars
+    let field = fields.get("bin-variable")
+
+    const container = d3.select(plotDiv);
     const width = container.node().clientWidth;
-    const height = container.node().clientHeight - 40;
-    // const marginTop = 30;
+    const height = container.node().clientHeight;
+
     const marginTop = 10;
     const marginRight = 20;
     const marginBottom = 30;
     const marginLeft = 40;
 
     let unselectedColor = "grey";
-
-    createButtons(container, pc, id);
 
     // Use the provided categories (allCategories) to ensure all are present on the x-axis
     const categories = Array.from(new Set(data.map((d) => d[field])));
@@ -45,7 +51,7 @@ export function createBarPlot(field, id, data, pc, gridPos) {
     data.forEach((d, i) => {
         const bin = bins.find((b) => b.category === d[field]);
         if (bin) {
-            if (pc.isSelected(i)) {
+            if (isSelectedFun(i)) {
                 bin.selected++;
             } else {
                 bin.unselected++;
@@ -60,22 +66,18 @@ export function createBarPlot(field, id, data, pc, gridPos) {
         .range([height - marginBottom, marginTop]);
 
     // Define a color scale for the categories
-    // const colorScale = d3
-    //     .scaleOrdinal(d3.schemeCategory10) // Or any color scheme you prefer
-    //     .domain(categories);
     const categoriesColor = ["Category 1", "Category 2", "Category 3", "Category 4", "Category 5", "Category 6", "Category 7", "Category 8", "Category 9", "Category 10"];
 
     const colorScale = d3.scaleOrdinal()
         .domain(categoriesColor)
         .range(categoriesColor.map((d, i) => d3.hsl(((i + 2) * 360 / categories.length) % 360, 0.44, 0.56).toString()));
 
-
-    // Add svg element
-    const svg = d3
-        .select(`#${divId}`)
+    // Create the SVG container.
+    const svg = container
         .append("svg")
         .attr("viewBox", `0 0 ${width} ${height}`)
-        .attr("preserveAspectRatio", "xMidYMid meet");
+        .attr("preserveAspectRatio", "xMidYMid meet")
+        .property("value", []);
 
     // Add a transparent rectangle to capture clicks on the background
     svg.append("rect")
@@ -95,12 +97,12 @@ export function createBarPlot(field, id, data, pc, gridPos) {
 
     xAxisGroup.selectAll("text").attr("class", "x-axis-label"); // Add a class to each x-axis label
 
-// Add y-axis
+    // Add y-axis
     svg.append("g")
         .attr("transform", `translate(${marginLeft},0)`)
         .call(d3.axisLeft(y).ticks(7).tickFormat(customTickFormat));  // Use custom tick format
 
-// Add text label
+    // Add text label
     svg.append("text")
         .attr("x", width - marginRight)
         .attr("y", marginTop + 5)
@@ -141,11 +143,9 @@ export function createBarPlot(field, id, data, pc, gridPos) {
     bar.append("rect")
         .attr("x", 1)
         .attr("width", x.bandwidth() - 1)
-        .attr("y", (d) => y(d.unselected)) // Start at the top of the unselected area
-        .attr("height", (d) => height - marginBottom - y(d.unselected)) // Height based on unselected count
+        .attr("y", (d) => y(d.unselected))
+        .attr("height", (d) => height - marginBottom - y(d.unselected))
         .attr("fill", unselectedColor)
-        // .attr("stroke", "black") // Grey outline for unselected bars
-        // .attr("stroke-width", 1) // Add a thinner outline for unselected
         .on("click", function(event, d) {
             const clickedCategory = d.category;
 
@@ -161,11 +161,9 @@ export function createBarPlot(field, id, data, pc, gridPos) {
     bar.append("rect")
         .attr("x", 1)
         .attr("width", x.bandwidth() - 1)
-        .attr("y", (d) => y(d.selected + d.unselected)) // Start from the top of selected + unselected
-        .attr("height", (d) => height - marginBottom - y(d.selected)) // Height based on selected count
-        .attr("fill", (d) => colorScale(d.category)) // Use the color scale for selected bars
-        // .attr("stroke", "black") // Grey outline for unselected bars
-        // .attr("stroke-width", 1) // Add a thinner outline for unselected
+        .attr("y", (d) => y(d.selected + d.unselected))
+        .attr("height", (d) => height - marginBottom - y(d.selected))
+        .attr("fill", (d) => colorScale(d.category))
         .on("click", function(event, d) {
             const clickedCategory = d.category;
 
@@ -235,14 +233,11 @@ export function createBarPlot(field, id, data, pc, gridPos) {
             });
 
         // Update the plot view with new selections
-
-        pc.updatePlotsView(id, selected);
+        updatePlotsFun(selected);
     }
 
-    pc.addPlot(id, updateBarPlot);
-
     // Update the bar plot on selection
-    function updateBarPlot() {
+    return function updateBarPlot() {
         bins.forEach((bin) => {
             bin.selected = 0;
             bin.unselected = 0;
@@ -251,10 +246,10 @@ export function createBarPlot(field, id, data, pc, gridPos) {
         data.forEach((d, i) => {
             const bin = bins.find((b) => b.category === d[field]);
             if (bin) {
-                bin.selected = pc.isSelected(i)
+                bin.selected = isSelectedFun(i)
                     ? bin.selected + 1
                     : bin.selected;
-                bin.unselected = !pc.isSelected(i)
+                bin.unselected = !isSelectedFun(i)
                     ? bin.unselected + 1
                     : bin.unselected;
             }

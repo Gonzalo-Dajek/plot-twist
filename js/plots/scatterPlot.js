@@ -1,22 +1,49 @@
 import * as d3 from "d3";
 import throttle from "lodash-es/throttle.js";
-import { createButtons } from "./plotsUtils/deleteButton.js";
 import { customTickFormat } from "./plotsUtils/tickFormat.js";
 
-export function createScatterPlot(xField, yField, id, data, pc, gridPos) {
-    const divId = `scatterPlot_${xField}_${yField}`;
+export const scatterPlot = {
+    plotName: "Scatter Plot",
+    fields: [
+        {
+            isRequired: true,
+            fieldName: "x-axis"
+        },
+        {
+            isRequired: true,
+            fieldName: "y-axis"
+        },
+        // {
+        //     isRequired: false, // TODO: add size
+        //     fieldName: "size"
+        // },
+        // {
+        //     isRequired: false, // TODO: add color
+        //     fieldName: "color"
+        // }
+    ],
+    options: [
+        "linear regression",
+        "Spearman coefficient",
+        "Pearson coefficient",
+    ],
+    height: 1,
+    width: 1,
+    createPlotFunction: createScatterPlot,
+};
 
-    d3.select("#plotsContainer")
-        .append("div")
-        .attr("id", divId)
-        .attr("class", "plot gridBox")
-        .style("grid-column", gridPos.col)
-        .style("grid-row", gridPos.row);
+export function createScatterPlot(fields, options, plotDiv, data, updatePlotsFun, isSelectedFun) {
+    let xField = fields.get("x-axis");
+    let yField = fields.get("y-axis");
+    // let sizeField = fields.get("size");
+    // let colorField = fields.get("color");
+    let isRegressionSelected = options.get("linear regression");
+    let isSpearmanSelected = options.get("Spearman coefficient");
+    let isPearsonSelected = options.get("Pearson coefficient");
 
-    // Specify the chart’s dimensions.
-    const container = d3.select(`#${divId}`);
+    const container = d3.select(plotDiv);
     const width = container.node().clientWidth;
-    const height = container.node().clientHeight - 40;
+    const height = container.node().clientHeight;
 
     const marginTop = 10;
     const marginRight = 20;
@@ -26,9 +53,7 @@ export function createScatterPlot(xField, yField, id, data, pc, gridPos) {
     let selectedColor = "#5C6BC0";
     let unselectedColor = "hsl(0, 0%, 75%)";
 
-    createButtons(container, pc, id);
-
-    // Create the horizontal (x) scale, positioning N/A values on the left margin.
+    // Creates the horizontal scale, null values on the left margin.
     const xMax = d3.max(data, (d) => Number(d[xField]));
     const xMin = d3.min(data, (d) => Number(d[xField]));
     const x = d3
@@ -38,7 +63,7 @@ export function createScatterPlot(xField, yField, id, data, pc, gridPos) {
         .range([marginLeft, width - marginRight])
         .unknown(marginLeft);
 
-    // Create the vertical (y) scale, positioning N/A values on the bottom margin.
+    // Creates the vertical scale, null values on the bottom margin.
     const yMax = d3.max(data, (d) => Number(d[yField]));
     const yMin = d3.min(data, (d) => Number(d[yField]));
     const y = d3
@@ -47,31 +72,28 @@ export function createScatterPlot(xField, yField, id, data, pc, gridPos) {
         .nice()
         .range([height - marginBottom, marginTop])
         .unknown(height - marginBottom);
-    //
+
     // Create the SVG container.
-    const svg = d3
-        .select(`#${divId}`)
+    const svg = container
         .append("svg")
         .attr("viewBox", `0 0 ${width} ${height}`)
         .attr("preserveAspectRatio", "xMidYMid meet")
         .property("value", []);
 
-// Append the axes.
+    // Append the axes.
     svg.append("g")
         .attr("transform", `translate(0,${height - marginBottom})`)
         .call(d3.axisBottom(x)
                 .ticks(5)  // Limit to 5 ticks
-
-                .tickFormat(customTickFormat)  // Use the custom tick format
-            // .tickFormat(d3.format(".4s"))  // Format large numbers with abbreviations (e.g., 1k, 1M)
+                .tickFormat(customTickFormat)
         )
         .call((g) => g.select(".domain").remove())  // Remove the axis line
         .call((g) =>
             g
-                .selectAll("text")  // Select the existing tick labels
-                // .attr("transform", "rotate(45)")  // Rotate the labels (commented out)
-                .style("text-anchor", "middle")  // Align text to the end for better readability
-                .style("font-size", "10px"),  // Reduce font size if needed
+                .selectAll("text")
+                // .attr("transform", "rotate(45)")  // Rotate the labels
+                .style("text-anchor", "middle")
+                .style("font-size", "10px"),
         )
         .call((g) =>
             g
@@ -84,8 +106,7 @@ export function createScatterPlot(xField, yField, id, data, pc, gridPos) {
                 .text(xField),
         );
 
-
-// Add y-axis
+    // Add y-axis
     svg.append("g")
         .attr("transform", `translate(${marginLeft},0)`)
         .call(d3.axisLeft(y).ticks(7).tickFormat(customTickFormat))  // Set to 7 ticks with custom formatting
@@ -100,8 +121,7 @@ export function createScatterPlot(xField, yField, id, data, pc, gridPos) {
                 .text(yField)
         );
 
-
-    // Append the axis lines (grid lines)
+    // Append grid lines
     svg.append("g")
         .attr("class", "grid")
         .attr("transform", `translate(0,${height - marginBottom})`)
@@ -115,10 +135,9 @@ export function createScatterPlot(xField, yField, id, data, pc, gridPos) {
         .call((g) =>
             g
                 .selectAll(".tick line")
-                .style("stroke-width", 0.5) // Thinner lines
+                .style("stroke-width", 0.5)
                 .style("stroke-opacity", 0.3),
-        ); // Less opacity
-
+        );
     svg.append("g")
         .attr("class", "grid")
         .attr("transform", `translate(${marginLeft},0)`)
@@ -132,19 +151,19 @@ export function createScatterPlot(xField, yField, id, data, pc, gridPos) {
         .call((g) =>
             g
                 .selectAll(".tick line")
-                .style("stroke-width", 0.5) // Thinner lines
+                .style("stroke-width", 0.5)
                 .style("stroke-opacity", 0.3),
-        ); // Less opacity
+        );
 
-    // Append the dots
+    // Custom radius depending on the size of the dataset (up to 500)
     const minRadius = 2.5;
     const maxRadius = 7;
-
     const radiusScale = d3.scaleLinear()
-        .domain([0, 500]) // Input range: from 0 to the size of the dataset
-        .range([maxRadius, minRadius]) // Output range: min to max radius
-        .clamp(true); // Ensure values stay within range
+        .domain([0, 500])
+        .range([maxRadius, minRadius])
+        .clamp(true);
 
+    // Append the dots
     const dot = svg
         .append("g")
         .selectAll("circle")
@@ -158,71 +177,126 @@ export function createScatterPlot(xField, yField, id, data, pc, gridPos) {
         .attr("fill-opacity", 0.7) // Transparency
         .attr("stroke", "none"); // border
 
-    // Calculate the linear regression line
-    const regression = calculateLinearRegression(data, xField, yField);
-    // Append the regression line
-    // Define the clipping path
-    svg.append("defs")
-        .append("clipPath")
-        .attr("id", "clip")
-        .append("rect")
-        .attr("width", width - marginLeft - marginRight)
-        .attr("height", height - marginTop - marginBottom)
-        .attr("x", marginLeft)
-        .attr("y", marginTop);
+    if(isRegressionSelected){
+        // Calculate the linear regression line
+        const regression = calculateLinearRegression(data, xField, yField);
+        // Define the clipping path
+        svg.append("defs")
+            .append("clipPath")
+            .attr("id", "clip")
+            .append("rect")
+            .attr("width", width - marginLeft - marginRight)
+            .attr("height", height - marginTop - marginBottom)
+            .attr("x", marginLeft)
+            .attr("y", marginTop);
 
-    svg.append("line")
-        .attr("x1", x(xMin))
-        .attr("y1", y(regression(xMin)))
-        .attr("x2", x(xMax))
-        .attr("y2", y(regression(xMax)))
-        .attr("stroke", "black")
-        .attr("opacity", 0.3)
-        .attr("stroke-width", 1);
-
-    // Pearson correlation coefficient
-    function calculatePearson(selectedData, xField, yField) {
-        const xValues = selectedData.map((d) => +d[xField]);
-        const yValues = selectedData.map((d) => +d[yField]);
-
-        const xMean = d3.mean(xValues);
-        const yMean = d3.mean(yValues);
-
-        const numerator = d3.sum(
-            xValues.map((x, i) => (x - xMean) * (yValues[i] - yMean))
-        );
-        const denominator = Math.sqrt(
-            d3.sum(xValues.map((x) => Math.pow(x - xMean, 2))) *
-                d3.sum(yValues.map((y) => Math.pow(y - yMean, 2)))
-        );
-
-        return numerator / denominator;
+        // Append the regression line
+        svg.append("line")
+            .attr("x1", x(xMin))
+            .attr("y1", y(regression(xMin)))
+            .attr("x2", x(xMax))
+            .attr("y2", y(regression(xMax)))
+            .attr("stroke", "black")
+            .attr("opacity", 0.3)
+            .attr("stroke-width", 1);
     }
 
-    // Spearman rank correlation coefficient
-    function calculateSpearman(selectedData, xField, yField) {
-        const xValues = selectedData.map((d) => +d[xField]);
-        const yValues = selectedData.map((d) => +d[yField]);
+    const throttledHandleSelection = throttle(handleSelection, 50);
+    // const throttledHandleSelection = throttle(handleSelection, Math.max(20, Math.min(data.length/10, 1000)));
 
-        // Rank the x and y values
-        const xRanks = rank(xValues);
-        const yRanks = rank(yValues);
+    svg.call(
+        d3
+            .brush()
+            .extent([
+                [marginLeft, marginTop],
+                [width - marginRight, height - marginBottom],
+            ])
+            .on("start brush end", throttledHandleSelection),
+    );
 
-        // Calculate Pearson correlation on the ranks
-        return calculatePearson(
-            selectedData.map((d, i) => ({
-                [xField]: xRanks[i],
-                [yField]: yRanks[i],
-            })),
-            xField,
-            yField
-        );
+    // Function to update the regression line
+    function updateRegressionLine(selectedData) {
+        svg.selectAll(".regression-line").remove();
+
+        if (selectedData.length < 2) {
+            return;
+        }
+
+        // Recalculate the linear regression
+        if(isRegressionSelected){
+            const regression = calculateLinearRegression(
+                selectedData,
+                xField,
+                yField,
+            );
+
+            // Append the updated regression line within the clipping path
+            svg.append("line")
+                .attr("class", "regression-line")
+                .attr("x1", x(xMin))
+                .attr("y1", y(regression(xMin)))
+                .attr("x2", x(xMax))
+                .attr("y2", y(regression(xMax)))
+                .attr("stroke", "#465191")
+                .attr("stroke-width", 1)
+                .attr("clip-path", "url(#clip)");
+        }
     }
 
-    // Helper function to calculate ranks
-    function rank(values) {
-        const sorted = [...values].sort((a, b) => a - b);
-        return values.map((v) => sorted.indexOf(v) + 1);
+    function updateCoefficients(selectedData) {
+        svg.selectAll(".correlation-text").remove();
+        // Calculate Pearson and Spearman coefficients
+        let pearson;
+        if(isPearsonSelected){
+            pearson = calculatePearson(selectedData, xField, yField).toFixed(
+                2
+            );
+        }
+
+        let spearman
+        if(isSpearmanSelected){
+            spearman = calculateSpearman(
+                selectedData,
+                xField,
+                yField
+            ).toFixed(2);
+        }
+
+        // text for Pearson and Spearman coefficients in the top-right corner
+        const correlationText = svg.append("text")
+            .attr("class", "correlation-text")
+            .attr("x", width - marginRight)
+            .attr("y", marginTop + 10)
+            .attr("text-anchor", "end")
+            .attr("font-size", "12px")
+            .attr("font-weight", "bold")
+            .attr("fill", "#000");
+
+        const colorScale = d3.scaleLinear()
+            .domain([-1, 0, 1])
+            .range(["red", "grey", "green"]);
+
+        if (isPearsonSelected) {
+            correlationText.append("tspan")
+                .attr("x", width - marginRight)
+                .attr("dy", "0em") // First line at the starting position
+                .text("Pearson: ");
+
+            correlationText.append("tspan")
+                .attr("fill", colorScale(pearson))
+                .text(pearson);
+        }
+
+        if (isSpearmanSelected) {
+            correlationText.append("tspan")
+                .attr("x", width - marginRight)
+                .attr("dy", isPearsonSelected ? "1.2em" : "0em") // Move down if Pearson is also selected
+                .text("Spearman: ");
+
+            correlationText.append("tspan")
+                .attr("fill", colorScale(spearman))
+                .text(spearman);
+        }
     }
 
     // Create the brush behavior.
@@ -245,130 +319,98 @@ export function createScatterPlot(xField, yField, id, data, pc, gridPos) {
                 },
             ];
         } else {
-            // selectRanges = [];
-            selectRanges = [
-                // {
-                //     range: null,
-                //     xField: xField,
-                //     type: "numerical",
-                // },
-                // {
-                //     range: null,
-                //     field: yField,
-                //     type: "numerical",
-                // },
-            ];
+            selectRanges = [];
         }
 
-        pc.updatePlotsView(id, selectRanges);
-        // console.log(selectRanges);
+        updatePlotsFun(selectRanges);
     }
 
-    const throttledHandleSelection = throttle(handleSelection, 50);
-    // const throttledHandleSelection = throttle(handleSelection, Math.max(20, Math.min(data.length/10, 1000)));
-
-    svg.call(
-        d3
-            .brush()
-            .extent([
-                [marginLeft, marginTop],
-                [width - marginRight, height - marginBottom],
-            ])
-            .on("start brush end", throttledHandleSelection),
-    );
-
-    pc.addPlot(id, function updateScatterPlot() {
+    return () => {
         dot.each(function(d, i) {
-            const isSelected = pc.isSelected(i); // Check if index i is in the selection array
+            const isSelected = isSelectedFun(i);
 
             d3.select(this)
                 .style("fill", isSelected ? selectedColor : unselectedColor)
                 .attr("r", isSelected ? radiusScale(data.length) : (radiusScale(data.length) / 2))
-                .style("fill-opacity", isSelected ? 1 : 1);
+                .style("fill-opacity", isSelected ? 1 : 1)
+                // .style("r", isSelected ? 2.5 : 1.2);
 
             if (isSelected) {
                 d3.select(this).raise();  // Bring selected dots to the top
             }
-            // .style("r", isSelected ? 2.5 : 1.2);
         });
 
-        const selectedData = data.filter((d, i) => pc.isSelected(i));
+        const selectedData = data.filter((d, i) => isSelectedFun(i));
         updateRegressionLine(selectedData);
+        updateCoefficients(selectedData);
+    }
+}
+
+// Pearson correlation coefficient
+function calculatePearson(selectedData, xField, yField) {
+    const xValues = selectedData.map((d) => +d[xField]);
+    const yValues = selectedData.map((d) => +d[yField]);
+
+    const xMean = d3.mean(xValues);
+    const yMean = d3.mean(yValues);
+
+    const numerator = d3.sum(
+        xValues.map((x, i) => (x - xMean) * (yValues[i] - yMean))
+    );
+    const denominator = Math.sqrt(
+        d3.sum(xValues.map((x) => Math.pow(x - xMean, 2))) *
+        d3.sum(yValues.map((y) => Math.pow(y - yMean, 2)))
+    );
+
+    return numerator / denominator;
+}
+
+// calculates linear regression coefficients
+function calculateLinearRegression(data, xField, yField) {
+    const n = data.length;
+    let sumX = 0,
+        sumY = 0,
+        sumXY = 0,
+        sumX2 = 0;
+
+    data.forEach((d) => {
+        const xVal = Number(d[xField]);
+        const yVal = Number(d[yField]);
+        sumX += xVal;
+        sumY += yVal;
+        sumXY += xVal * yVal;
+        sumX2 += xVal * xVal;
     });
 
-    // Function to update the regression line
-    function updateRegressionLine(selectedData) {
-        // Remove the old regression line
-        svg.selectAll(".regression-line").remove();
+    const slope = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX);
+    const intercept = (sumY - slope * sumX) / n;
 
-        // Check if there's enough data to compute a regression
-        if (selectedData.length < 2) {
-            return; // No regression if fewer than 2 points are selected
-        }
+    // Return the regression function
+    return (x) => slope * x + intercept;
+}
 
-        // Recalculate the linear regression
-        const regression = calculateLinearRegression(
-            selectedData,
-            xField,
-            yField,
-        );
+// Spearman rank correlation coefficient
+function calculateSpearman(selectedData, xField, yField) {
+    const xValues = selectedData.map((d) => +d[xField]);
+    const yValues = selectedData.map((d) => +d[yField]);
 
-        // Append the updated regression line within the clipping path
-        svg.append("line")
-            .attr("class", "regression-line") // Add a class for easy reference
-            .attr("x1", x(xMin))
-            .attr("y1", y(regression(xMin)))
-            .attr("x2", x(xMax))
-            .attr("y2", y(regression(xMax)))
-            .attr("stroke", "#465191")
-            .attr("stroke-width", 1)
-            .attr("clip-path", "url(#clip)"); // Apply the clipping path
+    // Rank the x and y values
+    const xRanks = rank(xValues);
+    const yRanks = rank(yValues);
 
-        svg.selectAll(".correlation-text").remove();
+    // Calculate Pearson correlation on the ranks
+    return calculatePearson(
+        selectedData.map((d, i) => ({
+            [xField]: xRanks[i],
+            [yField]: yRanks[i],
+        })),
+        xField,
+        yField
+    );
+}
 
-        // Calculate Pearson and Spearman coefficients
-        const pearson = calculatePearson(selectedData, xField, yField).toFixed(
-            2
-        );
-        const spearman = calculateSpearman(
-            selectedData,
-            xField,
-            yField
-        ).toFixed(2);
-
-        // Add text for Pearson and Spearman coefficients in the top-right corner
-        svg.append("text")
-            .attr("class", "correlation-text")
-            .attr("x", width - marginRight)
-            .attr("y", marginTop + 10)
-            .attr("text-anchor", "end")
-            .attr("font-size", "12px")
-            .attr("font-weight", "bold")
-            .attr("fill", "#000")
-            .text(`Pearson: ${pearson}, Spearman: ${spearman}`);
-    }
-
-    // Function to calculate linear regression coefficients
-    function calculateLinearRegression(data, xField, yField) {
-        const n = data.length;
-        let sumX = 0,
-            sumY = 0,
-            sumXY = 0,
-            sumX2 = 0;
-
-        data.forEach((d) => {
-            const xVal = Number(d[xField]);
-            const yVal = Number(d[yField]);
-            sumX += xVal;
-            sumY += yVal;
-            sumXY += xVal * yVal;
-            sumX2 += xVal * xVal;
-        });
-
-        const slope = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX);
-        const intercept = (sumY - slope * sumX) / n;
-
-        // Return the regression function
-        return (x) => slope * x + intercept;
-    }
+// calculates ranks
+function rank(values) {
+    const sorted = [...values].sort((a, b) => a - b);
+    return values.map((v) => sorted.indexOf(v) + 1);
 }

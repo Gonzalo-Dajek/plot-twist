@@ -1,7 +1,7 @@
+
 /**
  * initializes the sticky top bar scroll effect
  */
-
 export function initTopBarScroll() {
 
     const topBar = document.querySelector(".top-bar-fixedRectangle");

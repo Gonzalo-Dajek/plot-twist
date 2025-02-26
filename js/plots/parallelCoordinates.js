@@ -1,32 +1,67 @@
 import * as d3 from "d3";
 import throttle from "lodash-es/throttle.js";
-import { createButtons } from "./plotsUtils/deleteButton.js";
 import { customTickFormat } from "./plotsUtils/tickFormat.js";
 
-export function createParallelCoordinates(keys, keyz, id, data, pc, gridPos) {
-    let divId = `parallelCoord`;
-    divId = divId + "_" + keys.join("_");
-    d3.select("#plotsContainer")
-        .append("div")
-        .attr("id", divId)
-        .attr("class", "plot gridRectangle")
-        .style("grid-column", gridPos.col)
-        .style("grid-row", `${gridPos.row} / span 2`);
+export const parallelCoordinates = {
+    plotName: "Parallel Coordinates",
+    fields: [
+        {
+            isRequired: true,
+            fieldName: "1st axis"
+        },
+        {
+            isRequired: true,
+            fieldName: "2nd axis"
+        },
+        {
+            isRequired: false,
+            fieldName: "3rd axis"
+        },
+        {
+            isRequired: false,
+            fieldName: "4th axis"
+        },
+        {
+            isRequired: false,
+            fieldName: "5th axis"
+        },
+        {
+            isRequired: false,
+            fieldName: "6th axis"
+        },
+        {
+            isRequired: false,
+            fieldName: "7th axis"
+        },
+        {
+            isRequired: false,
+            fieldName: "8th axis"
+        }
+    ],
+    options: [],
+    height: 2,
+    width: 1,
+    createPlotFunction: createParallelCoordinates,
+};
 
-    // Specify chart dimensions
-    const container = d3.select(`#${divId}`);
+export function createParallelCoordinates(fields, options, plotDiv, data, updatePlotsFun, isSelectedFun){
+
+    const keys = parallelCoordinates.fields
+        .map(field => fields.get(field.fieldName))
+        .filter(value => value !== "");
+
+    const keyz = fields.get("1st axis")
+
+    const container = d3.select(plotDiv);
     const width = container.node().clientWidth;
-    const height = container.node().clientHeight-40;
-    // const height = keys.length * 120;
-    // const height = 596 - 40;
+    const height = container.node().clientHeight;
+
     const marginTop = 20;
     const marginRight = 15;
     const marginBottom = 30;
     const marginLeft = 15;
 
     const unselectedColor = "grey";
-
-    createButtons(container, pc, id);
 
     // Create horizontal x scale for each key
     const x = new Map(
@@ -49,30 +84,16 @@ export function createParallelCoordinates(keys, keyz, id, data, pc, gridPos) {
     const color = d3
         .scaleSequential()
         .domain(d3.extent(data, (d) => Number(d[keyz])))
-        // .interpolator(d3.interpolateRgb.gamma(1.6)("purple", "orange"));
         .interpolator(
-            // d3.interpolateRdYlGn
             d3.interpolateViridis
-            // d3.interpolateRgb.gamma(0.7)(selectedColorSecondary, selectedColor)
-            // d3.interpolateHclLong("purple", "orange")
-            // d3.scaleLinear()
-            //     .domain([0, 0.2, 0.4, 0.6, 0.8, 1])
-            //     .range([
-            //         "rgba(98, 0, 238, 0.8)", // Bold Purple
-            //         "rgba(0, 153, 255, 0.8)", // Bright Blue
-            //         "rgba(255, 165, 0, 0.8)", // Vivid Orange
-            //         "rgba(0, 255, 128, 0.8)", // Bright Mint
-            //         "rgba(128, 0, 128, 0.8)", // Strong Purple
-            //         "rgba(255, 20, 147, 0.8)"  // Deep Pink
-            //     ])
         );
 
-    // Create the SVG container
-    const svg = d3
-        .select(`#${divId}`)
+    // Create the SVG container.
+    const svg = container
         .append("svg")
         .attr("viewBox", `0 0 ${width} ${height}`)
-        .attr("preserveAspectRatio", "xMidYMid meet");
+        .attr("preserveAspectRatio", "xMidYMid meet")
+        .property("value", []);
 
     // Line generator function
     const line = d3
@@ -82,10 +103,10 @@ export function createParallelCoordinates(keys, keyz, id, data, pc, gridPos) {
         .y(([key]) => y(key));
 
     // Append lines
-    const path = svg
+    svg
         .append("g")
         .attr("fill", "none")
-        .attr("class", `data-paths${id}`)
+        .attr("class", `data-paths`)
         .attr("stroke-width", 1.5)
         .attr("stroke-opacity", 0.4)
         .selectAll("path")
@@ -139,33 +160,17 @@ export function createParallelCoordinates(keys, keyz, id, data, pc, gridPos) {
                 selection.map(x.get(fieldSelected).invert)
             );
         }
-        // let selected = [];
-        // path.each(function (d, i) {
-        //     const active = Array.from(selectionsFromAxis).every(
-        //         ([key, [min, max]]) => d[key] >= min && d[key] <= max
-        //     );
-        //
-        //     if (active) {
-        //         d3.select(this).raise();
-        //         // selected.push(d); // selected entry
-        //         selected.push(i);
-        //     }
-        // });
 
-        // Convert selectionsFromAxis to desired structure
         const selectRanges = Array.from(
             selectionsFromAxis,
             ([field, [min, max]]) => ({
                 range: [min, max],
                 field: field,
-                type: "numerical", // Assuming all are numerical for this example
+                type: "numerical",
             })
         );
 
-        // You can use selectRanges here as needed
-        // console.log(selectRanges);
-
-        pc.updatePlotsView(id, selectRanges);
+        updatePlotsFun(selectRanges);
     }
 
     const throttledHandleSelection = throttle(handleSelection, 50);
@@ -181,12 +186,12 @@ export function createParallelCoordinates(keys, keyz, id, data, pc, gridPos) {
 
     axes.call(brush);
 
-    pc.addPlot(id, function () {
-        svg.selectAll(`.data-paths${id} path`)
+    return function () {
+        svg.selectAll(`.data-paths path`)
             .attr("stroke", (d, i) =>
-                pc.isSelected(i) ? color(d[keyz]) : unselectedColor
+                isSelectedFun(i) ? color(d[keyz]) : unselectedColor
             )
-            .attr("stroke-width", (d, i) => (pc.isSelected(i) ? 1.3 : 0.3))
-            .attr("stroke-opacity", (d, i) => (pc.isSelected(i) ? 0.7 : 0.05));
-    });
+            .attr("stroke-width", (d, i) => (isSelectedFun(i) ? 1.3 : 0.3))
+            .attr("stroke-opacity", (d, i) => (isSelectedFun(i) ? 0.7 : 0.05));
+    }
 }

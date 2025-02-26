@@ -3,8 +3,8 @@ import { createScatterPlot } from "../plots/scatterPlot.js";
 import { createHistogram } from "../plots/histogram.js";
 import { createParallelCoordinates } from "../plots/parallelCoordinates.js";
 import { createBarPlot } from "../plots/barPlot.js";
-import { createGridItems } from "../uiLogic/initUI.js";
 import { PlotCoordinator } from "./plotCoordinator.js";
+import { createEmptyGrid } from "../uiLogic/gridUtils.js";
 
 async function loadCSV(pathToCsv) {
     return await d3.csv(pathToCsv);
@@ -34,7 +34,7 @@ export async function testPlots(pcRef, data, gridSize) {
     // gridSize.col = pcRef.pc.fields().length;
     // gridSize.row = pcRef.pc.fields().length;
 
-    // createGridItems("plotsContainer", gridSize, pcRef, data);
+    // createEmptyGrid("plotsContainer", gridSize, pcRef, data);
 
     // document.getElementById("col").style.display = "flex";
     // document.getElementById("row").style.display = "flex";
@@ -52,7 +52,7 @@ export async function testPlots(pcRef, data, gridSize) {
 
     gridSize.col = 4;
     gridSize.row = 3;
-    createGridItems("plotsContainer", gridSize, pcRef, data);
+    createEmptyGrid("plotsContainer", gridSize, pcRef, data);
     let keys = ["Weight", "Height", "Age"];
     let keyz = "Weight";
     createParallelCoordinates(keys, keyz, pcRef.pc.newPlotId(), data, pcRef.pc, {
