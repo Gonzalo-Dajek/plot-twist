@@ -1,26 +1,36 @@
-// import { testPlots } from "./testingPlots.js";
-// import {run} from "./benchMark.js";
-// run();
-// testPlots(pcRef, data, gridSize);
-
-import { initializeUI } from "./uiLogic/initUI.js";
 import { scatterPlot } from "./plots/scatterPlot.js";
 import { parallelCoordinates } from "./plots/parallelCoordinates.js";
 import { histogram } from "./plots/histogram.js";
 import { barPlot } from "./plots/barPlot.js";
+import { initializeUI } from "./uiLogic/initUI.js";
+import { benchMark } from "./core/benchMark.js";
 
-let plots = [
-    scatterPlot,
-    histogram,
-    barPlot,
-    parallelCoordinates,
-];
+async function run(){
+    let plots = [
+        scatterPlot,
+        histogram,
+        barPlot,
+        parallelCoordinates,
+    ];
 
-// TODO: loadLayout not breaking connection to websocket
+    let url = "ws://localhost:5226/";
 
-let url = "ws://localhost:5226/"
+    // TODO: fix top bar in small resolutions
+    // TODO: make initial size of layout dependant on resolution
+    // TODO: make svg favicon and logo
+    // TODO: load DEMO button
+    // TODO: make GitHub pretty with instructions
+    // TODO: test multiple clients
+    // TODO: consider pathological data distribution
+    // TODO: default values with variation on the input
 
-initializeUI(plots, url);
+    const BENCHMARK = true;
+    if(BENCHMARK){
+        await benchMark(plots, url, 1);
+    }else{
+        initializeUI(plots, url);
+    }
+}
 
-
+run();
 

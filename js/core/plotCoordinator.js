@@ -103,13 +103,19 @@ export class PlotCoordinator {
     }
 
     removeAll() {
-        for (let plot of this._plots.values()) {
+        let keepWebSocket = this._plots.get(0);
+
+        for (let [key, plot] of this._plots.entries()) {
+            if (key === 0) continue;
+
             let indexesSelected = plot.lastIndexesSelected;
             for (let i = 0; i < indexesSelected.length; i++) {
                 this._entrySelectionTracker[indexesSelected[i]]--;
             }
         }
+
         this._plots.clear();
+        this._plots.set(0, keepWebSocket);
     }
 
     _isSelectedRange(d, selectionArr) {
@@ -170,6 +176,7 @@ export class PlotCoordinator {
         this._benchMark("prePlotsUpdate");
         for (let [plotToUpdateId, plot] of this._plots.entries()) {
             if ((triggeringPlotId === 0 && plotToUpdateId !== 0) || (triggeringPlotId !== 0)) {
+                if(triggeringPlotId === -1 && plotToUpdateId === 0) continue; // id === -1 is designated for benchmarking purposes
                 plot.plotUpdateFunction();
             }
         }

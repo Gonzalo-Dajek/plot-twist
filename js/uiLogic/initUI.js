@@ -1,6 +1,7 @@
 import { csvParse } from "d3";
 import { PlotCoordinator } from "../core/plotCoordinator.js";
 import { initTopBarScroll } from "./topBarScroll.js";
+import { connectToWebSocket, initFieldGroups } from "./fieldGroups.js";
 import {
     adjustBodyStyle,
     createEmptyGrid,
@@ -8,7 +9,6 @@ import {
     getGridDimensions,
     loadLayout,
 } from "./gridUtils.js";
-import { connectToWebSocket, initFieldGroups } from "./fieldGroups.js";
 
 /**
  * initializes all the ui components
@@ -85,30 +85,26 @@ export function initLoadLayout(pcRef, plots) {
             const reader = new FileReader();
 
             reader.onload = (event) => {
+                let parsedData;
                 try {
-                    let parsedData = JSON.parse(event.target.result);
-
-                    const container = document.getElementById("plotsContainer");
-
-                    while (container.firstChild) {
-                        container.removeChild(container.firstChild);
-                    }
-
-                    let gridSize = { col: 3, row: 3 };
-                    gridSize.col = parsedData[0].col;
-                    gridSize.row = parsedData[0].row;
-
-                    pcRef.pc.removeAll();
-
-                    createEmptyGrid(gridSize, pcRef);
-                    loadLayout(parsedData, pcRef, plots);
-                    adjustBodyStyle();
+                    parsedData = JSON.parse(event.target.result);
                 } catch (error) {
                     console.error("Error parsing JSON:", error);
                     alert(
                         "Invalid JSON file. Please select a valid JSON file.",
                     );
                 }
+
+                const container = document.getElementById("plotsContainer");
+
+                while (container.firstChild) {
+                    container.removeChild(container.firstChild);
+                }
+
+                pcRef.pc.removeAll();
+
+                loadLayout(parsedData, pcRef, plots);
+                adjustBodyStyle();
             };
 
             reader.readAsText(file);
@@ -195,7 +191,6 @@ export function initLoadCsv(pcRef, socketRef, url, plots) {
 
             reader.readAsText(file);
 
-            document.getElementById("slide-menu-btn").style.display = "flex";
             document.getElementById("loadLayoutButton").style.display = "flex";
             document.getElementById("exportLayoutButton").style.display = "flex";
 

@@ -4,6 +4,7 @@ export function initFieldGroups(pcRef, socketRef) {
     document.getElementById("group-name-submit").addEventListener("click", function() {
         createGroup(socketRef, pcRef);
     });
+
     document.getElementById("slide-menu-btn").addEventListener("click", function() {
         document.querySelector(".group-component").classList.toggle("active");
         document.querySelector("#slide-menu-btn").classList.toggle("active");
@@ -12,12 +13,14 @@ export function initFieldGroups(pcRef, socketRef) {
 }
 
 export function connectToWebSocket(socketRef, pcRef, url) {
+
     // Create a WebSocket connection to the backend
-    socketRef.socket = new WebSocket(url);
+
+    socketRef.socket = new WebSocket(url); // todo: handle error gracefully
     let socket = socketRef.socket;
 
     socket.onopen = function() {
-        console.log("WebSocket is open now.");
+        // console.log("WebSocket is open now.");
         pcRef.pc.addPlot(0, () => {
             let selection = new rangeSet();
             for (let [id, plot] of pcRef.pc._plots.entries()) {
@@ -32,7 +35,7 @@ export function connectToWebSocket(socketRef, pcRef, url) {
             };
 
             socket.send(JSON.stringify(message));
-            console.log("Sent message:", message);
+            // console.log("Sent message:", message);
         });
 
         const message = {
@@ -41,37 +44,35 @@ export function connectToWebSocket(socketRef, pcRef, url) {
         };
 
         socket.send(JSON.stringify(message));
+
+        document.getElementById("slide-menu-btn").style.display = "flex";
     };
 
     // When a message is received
     socket.onmessage = function(event) {
         const receivedData = JSON.parse(event.data);
-        // const output = document.getElementById("output");
-        // output.innerText = `Received: ${receivedData.content}\n`;
 
-        // console.log(receivedData)
         switch (receivedData.type) {
             case "selection":
-                console.log("Message from server:", receivedData);
+                // console.log("Message from server:", receivedData);
                 pcRef.pc.updatePlotsView(0, receivedData.range ?? []);
                 break;
             case "link":
-                console.log(receivedData);
                 populateGroups(receivedData.links, pcRef.pc.fields(), socketRef, pcRef);
                 break;
         }
-
     };
 
     // When the connection is closed
     socket.onclose = function() {
         console.log("WebSocket connection closed");
-        document.getElementById("sendBtn").disabled = true;
+        // document.getElementById("sendBtn").disabled = true;
     };
 
     // Handle connection errors
-    socket.onerror = function(error) {
-        console.error("WebSocket error:", error);
+    socket.onerror = function( error ) {
+        pcRef.pc.addPlot(0, ()=>{});
+        console.log("WebSocket error:", error);
     };
 }
 
@@ -79,7 +80,6 @@ function createGroup(socketRef, pcRef) {
     let socket = socketRef.socket;
     let text = document.getElementById("input-group-name").value;
     if (text !== "") {
-        // console.log(text);
         let message = {
             type: "link",
             links: [{
@@ -95,7 +95,7 @@ function createGroup(socketRef, pcRef) {
     document.getElementById("input-group-name").value = "";
 }
 
-function populateGroups(groupsArray, listOfFields, socketRef, pcRef) {
+export function populateGroups(groupsArray, listOfFields, socketRef, pcRef) {
     const groupsListDiv = document.getElementById("groups-list");
     groupsListDiv.innerHTML = ""; // Clear existing content
 
@@ -131,7 +131,6 @@ function populateGroups(groupsArray, listOfFields, socketRef, pcRef) {
         dropdown.onchange = (event) => updateFieldInGroup(obj.group, event.target.value, socketRef, pcRef);
         groupDiv.appendChild(dropdown);
 
-        // Append the constructed groupDiv to groupsListDiv
         groupsListDiv.appendChild(groupDiv);
     });
 }

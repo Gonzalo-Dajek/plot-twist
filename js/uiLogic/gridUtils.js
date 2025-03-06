@@ -1,4 +1,10 @@
 export function loadLayout(layoutData, pcRef, plots) {
+    let gridSize = { col: 3, row: 3 };
+    gridSize.col = layoutData[0].col;
+    gridSize.row = layoutData[0].row;
+
+    createEmptyGrid(pcRef, plots, gridSize);
+
     if (layoutData[1]) {
         layoutData[1].forEach((item) => {
             plots.forEach((plot) => {
@@ -84,12 +90,7 @@ function createPlot(selectedPlot, pcRef, gridPos, selectedFields, selectedCheckB
     pcRef.pc.addPlot(id, updateFunction);
 }
 
-function createFieldSelectionMenu(
-    selectedPlot,
-    pcRef,
-    gridPos,
-    plotTypes
-) {
+function createFieldSelectionMenu(selectedPlot, pcRef, gridPos, plotTypes) {
     let col = gridPos.col;
     let row = gridPos.row;
     const gridCell = document.getElementById(`grid-cell-${col}-${row}`);
@@ -266,7 +267,7 @@ export function createEmptyGridCell({ col, row }, pcRef, plots) {
 /**
  * creates the default plot-less 3x3 grid
  */
-export function createEmptyGrid(pcRef, plots, gridDimensions = { col: 3, row: 3 }) {
+export function createEmptyGrid(pcRef, plots, gridDimensions = { col: 3, row: 2 }) {
 
     const containerId = "plotsContainer";
     const container = document.getElementById(containerId);
