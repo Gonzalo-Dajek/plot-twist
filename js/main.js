@@ -5,7 +5,7 @@ import { barPlot } from "./plots/barPlot.js";
 import { initializeUI } from "./uiLogic/initUI.js";
 import { benchMark } from "./core/benchMark.js";
 
-async function run(){
+function run(){
     let plots = [
         scatterPlot,
         histogram,
@@ -20,13 +20,13 @@ async function run(){
     // TODO: make svg favicon and logo
     // TODO: load DEMO button
     // TODO: make GitHub pretty with instructions
-    // TODO: test multiple clients
-    // TODO: consider pathological data distribution
     // TODO: default values with variation on the input
+    // TODO: add introductory text before loadCSV
+    // TODO: add canBePlacedPlot condition
 
     const BENCHMARK = true;
     if(BENCHMARK){
-        await benchMark(plots, url, 1);
+        benchMark(plots, url, 1).then();
     }else{
         initializeUI(plots, url);
     }

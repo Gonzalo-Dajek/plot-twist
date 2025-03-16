@@ -149,7 +149,7 @@ export class PlotCoordinator {
     }
 
     updatePlotsView(triggeringPlotId, newSelection) {
-        this._plots.get(triggeringPlotId).lastSelectionRange = newSelection;
+        this._plots.get(triggeringPlotId).lastSelectionRange = newSelection; // TODO: debug here
 
         this._benchMark("preIndexUpdate");
         let lastSelectedIndexes = this._plots.get(triggeringPlotId).lastIndexesSelected;
