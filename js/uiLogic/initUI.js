@@ -2,6 +2,7 @@ import { csvParse } from "d3";
 import { PlotCoordinator } from "../core/plotCoordinator.js";
 import { initTopBarScroll } from "./topBarScroll.js";
 import { connectToWebSocket, initFieldGroups } from "./fieldGroups.js";
+import { demoData, demoLayout } from "./demoLayout.js";
 import {
     adjustBodyStyle,
     createEmptyGrid,
@@ -22,6 +23,7 @@ export function initializeUI(plots, url) {
     initGridResizing(pcRef, plots);
     initFieldGroups(pcRef, socketRef);
     initLoadCsv(pcRef, socketRef, url, plots);
+    initLoadDemo(pcRef, socketRef, url, plots);
 }
 
 /**
@@ -185,8 +187,11 @@ export function initLoadCsv(pcRef, socketRef, url, plots) {
 
                 document.getElementById("col").style.display = "flex";
                 document.getElementById("row").style.display = "flex";
+                document.getElementById("loadDemo").style.display = "none";
 
                 connectToWebSocket(socketRef, pcRef, url);
+
+                adjustBodyStyle();
             };
 
             reader.readAsText(file);
@@ -198,4 +203,33 @@ export function initLoadCsv(pcRef, socketRef, url, plots) {
             alert("Please select a CSV file.");
         }
     });
+}
+
+/**
+ * initializes the load demo button
+ */
+export function initLoadDemo(pcRef, socketRef, url, plots){
+
+    function loadDemo()  {
+        let data = demoData;
+
+        pcRef.pc = new PlotCoordinator();
+
+        pcRef.pc.init(data, "demo");
+
+        createEmptyGrid(pcRef, plots);
+        document.getElementById("col").style.display = "flex";
+        document.getElementById("row").style.display = "flex";
+        document.getElementById("loadDemo").style.display = "none";
+        connectToWebSocket(socketRef, pcRef, url);
+        adjustBodyStyle();
+
+        loadLayout(demoLayout,pcRef, plots);
+        document.getElementById("loadLayoutButton").style.display = "flex";
+        document.getElementById("exportLayoutButton").style.display = "flex";
+    }
+
+    document
+        .getElementById("loadDemo")
+        .addEventListener("click", loadDemo);
 }

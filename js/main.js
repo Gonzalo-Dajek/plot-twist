@@ -15,16 +15,13 @@ function run(){
 
     let url = "ws://localhost:5226/";
 
-    // TODO: fix top bar in small resolutions
-    // TODO: make initial size of layout dependant on resolution
+    // TODO: add categorical and numerical data distinction in the ui
     // TODO: make svg favicon and logo
-    // TODO: load DEMO button
     // TODO: make GitHub pretty with instructions
-    // TODO: default values with variation on the input
     // TODO: add introductory text before loadCSV
     // TODO: add canBePlacedPlot condition
 
-    const BENCHMARK = true;
+    const BENCHMARK = false;
     if(BENCHMARK){
         benchMark(plots, url, 1).then();
     }else{

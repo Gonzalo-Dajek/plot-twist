@@ -1,12 +1,62 @@
-
-body {
+/** { outline: 1px solid red; }*/
+html, body{
     margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+}
+
+body{
     font-family: 'Open Sans', sans-serif;
     background-color: #f7f7f7;
     color: #344767;
-    display: flex;
     flex-direction: column;
     align-items: center;
+    min-height: 100vh;
+    overflow-x: auto;
+    overflow-y: auto;
+}
+
+/**
+* Style for offline mode
+ */
+.offline-mode-msg {
+    position: fixed;
+    bottom: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: #e53935;
+    color: white;
+    padding: 10px 15px;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: bold;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: background-color 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+    box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+    transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    z-index: 100;
+}
+
+.offline-mode-msg:hover {
+    background-color: #ef5350;
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+    transform: translateX(-50%) translateY(-2px);
+}
+
+.close-button {
+    display: flex;
+    align-items: center;
+}
+
+.close-icon {
+    width: 20px;
+    height: 20px;
+    margin-left: 10px;
+    cursor: pointer;
 }
 
 /**
@@ -107,9 +157,32 @@ body {
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
 }
 
+@media (max-width: 768px) {
+    .custom-file-upload,
+    .top-bar-button {
+        font-size: 0;
+    }
+
+    .csv-icon {
+        width: 24px;
+        height: 24px;
+    }
+}
+
+@media (min-width: 769px) {
+    .custom-file-upload,
+    .top-bar-button {
+        font-size: initial;
+    }
+}
+
 /**
 * Style for the empty Grid
 */
+#app-view{
+    box-sizing: border-box;
+}
+
 #grid-container {
     display: grid;
     grid-template-columns: auto auto;
@@ -119,6 +192,8 @@ body {
     height: fit-content;
     align-items: center;
     justify-items: center;
+    overflow-y: hidden;
+    overflow-x: hidden;
 }
 
 #plotsContainer {
@@ -130,6 +205,8 @@ body {
     background-color: #f7f7f7;
     width: fit-content;
     height: fit-content;
+    max-width: 100%;
+    max-height: 100%;
 }
 
 #col, #row {

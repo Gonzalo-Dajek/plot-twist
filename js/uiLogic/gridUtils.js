@@ -3,6 +3,12 @@ export function loadLayout(layoutData, pcRef, plots) {
     gridSize.col = layoutData[0].col;
     gridSize.row = layoutData[0].row;
 
+    const container = document.getElementById("plotsContainer");
+
+    while (container.firstChild) {
+        container.removeChild(container.firstChild);
+    }
+
     createEmptyGrid(pcRef, plots, gridSize);
 
     if (layoutData[1]) {
@@ -267,10 +273,18 @@ export function createEmptyGridCell({ col, row }, pcRef, plots) {
 /**
  * creates the default plot-less 3x3 grid
  */
-export function createEmptyGrid(pcRef, plots, gridDimensions = { col: 3, row: 2 }) {
+export function createEmptyGrid(pcRef, plots, gridDimensions = { col: -1, row: -1 }) {
 
     const containerId = "plotsContainer";
     const container = document.getElementById(containerId);
+
+    const defaultCol = Math.max(1, Math.floor(window.innerWidth / 350));
+    const defaultRow = Math.max(1,Math.floor(window.innerHeight / 350));
+
+    if(gridDimensions.col===-1 && gridDimensions.row===-1){
+        gridDimensions.col = defaultCol;
+        gridDimensions.row = defaultRow;
+    }
 
     container.style.gridTemplateColumns = `repeat(${gridDimensions.col}, 350px)`;
     container.style.gridTemplateRows = `repeat(${gridDimensions.row}, 350px)`;
@@ -293,10 +307,19 @@ export function adjustBodyStyle() {
     const body = document.body;
 
     const contentRect = content.getBoundingClientRect();
-    if (contentRect.width > window.innerWidth) {
+    const appView = document.querySelector("#app-view");
+
+    if(contentRect.height + 60 > window.innerHeight){
+        appView.style.paddingTop = "68px";
+    }else{
+        appView.style.paddingTop = "0px";
+    }
+
+    if (contentRect.width + 20 >= window.innerWidth) {
         body.style.display = "block";
         body.style.flexDirection = "";
         body.style.alignItems = "";
+        appView.style.paddingTop = "0px";
     } else {
         body.style.display = "flex";
         body.style.flexDirection = "column";

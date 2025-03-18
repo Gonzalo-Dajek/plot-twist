@@ -9,18 +9,14 @@ export function initFieldGroups(pcRef, socketRef) {
         document.querySelector(".group-component").classList.toggle("active");
         document.querySelector("#slide-menu-btn").classList.toggle("active");
     });
-
 }
 
 export function connectToWebSocket(socketRef, pcRef, url) {
 
-    // Create a WebSocket connection to the backend
-
-    socketRef.socket = new WebSocket(url); // todo: handle error gracefully
+    socketRef.socket = new WebSocket(url);
     let socket = socketRef.socket;
 
     socket.onopen = function() {
-        // console.log("WebSocket is open now.");
         pcRef.pc.addPlot(0, () => {
             let selection = new rangeSet();
             for (let [id, plot] of pcRef.pc._plots.entries()) {
@@ -65,15 +61,39 @@ export function connectToWebSocket(socketRef, pcRef, url) {
 
     // When the connection is closed
     socket.onclose = function() {
-        console.log("WebSocket connection closed");
-        // document.getElementById("sendBtn").disabled = true;
+        // console.log("WebSocket connection closed");
     };
 
     // Handle connection errors
     socket.onerror = function( error ) {
-        pcRef.pc.addPlot(0, ()=>{});
         console.log("WebSocket error:", error);
+        console.log("The tool is currently in offline mode");
+        pcRef.pc.addPlot(0, ()=> {});
+        showOfflineMessage()
     };
+}
+
+function showOfflineMessage() {
+    const messageDiv = document.createElement("div");
+    messageDiv.id = "offline-message";
+    messageDiv.className = "offline-mode-msg";
+    messageDiv.textContent = "The tool is running in offline mode";
+
+    const closeButton = document.createElement("span");
+    closeButton.className = "close-button";
+
+    const icon = document.createElement("img");
+    icon.src = "assets/delete_icon.svg";
+    icon.alt = "Close";
+    icon.className = "close-icon";
+
+    icon.onclick = function() {
+        messageDiv.remove();
+    };
+
+    closeButton.appendChild(icon);
+    messageDiv.appendChild(closeButton);
+    document.body.appendChild(messageDiv);
 }
 
 function createGroup(socketRef, pcRef) {
