@@ -7,7 +7,8 @@ export const histogram = {
     fields: [
         {
             isRequired: true,
-            fieldName: "bin-variable"
+            fieldName: "bin-variable",
+            fieldType: "numerical",
         },
     ],
     options: [],
@@ -16,8 +17,9 @@ export const histogram = {
     createPlotFunction: createHistogram,
 };
 
+// TODO: fix dissapearing bars on either side of the plot with certain amounts of data
 export function createHistogram(fields, options, plotDiv, data, updatePlotsFun, isSelectedFun) {
-    // TODO: fix dissapearing bars on either side of the plot with certain amounts of data
+
     let field = fields.get("bin-variable")
 
     const container = d3.select(plotDiv);

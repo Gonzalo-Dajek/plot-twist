@@ -7,20 +7,14 @@ export const scatterPlot = {
     fields: [
         {
             isRequired: true,
+            fieldType: "numerical",
             fieldName: "x-axis"
         },
         {
             isRequired: true,
+            fieldType: "neither",
             fieldName: "y-axis"
         },
-        // {
-        //     isRequired: false, // TODO: add size
-        //     fieldName: "size"
-        // },
-        // {
-        //     isRequired: false, // TODO: add color
-        //     fieldName: "color"
-        // }
     ],
     options: [
         "linear regression",
@@ -35,6 +29,7 @@ export const scatterPlot = {
 export function createScatterPlot(fields, options, plotDiv, data, updatePlotsFun, isSelectedFun) {
     let xField = fields.get("x-axis");
     let yField = fields.get("y-axis");
+
     // let sizeField = fields.get("size");
     // let colorField = fields.get("color");
     let isRegressionSelected = options.get("linear regression");

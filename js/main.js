@@ -15,11 +15,9 @@ function run(){
 
     let url = "ws://localhost:5226/";
 
-    // TODO: add categorical and numerical data distinction in the ui
     // TODO: make svg favicon and logo
     // TODO: make GitHub pretty with instructions
     // TODO: add introductory text before loadCSV
-    // TODO: add canBePlacedPlot condition
 
     const BENCHMARK = false;
     if(BENCHMARK){

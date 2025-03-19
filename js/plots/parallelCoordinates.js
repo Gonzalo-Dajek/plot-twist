@@ -6,34 +6,42 @@ export const parallelCoordinates = {
     plotName: "Parallel Coordinates",
     fields: [
         {
+            fieldType: "numerical",
             isRequired: true,
             fieldName: "1st axis"
         },
         {
+            fieldType: "numerical",
             isRequired: true,
             fieldName: "2nd axis"
         },
         {
+            fieldType: "numerical",
             isRequired: false,
             fieldName: "3rd axis"
         },
         {
+            fieldType: "numerical",
             isRequired: false,
             fieldName: "4th axis"
         },
         {
+            fieldType: "numerical",
             isRequired: false,
             fieldName: "5th axis"
         },
         {
+            fieldType: "numerical",
             isRequired: false,
             fieldName: "6th axis"
         },
         {
+            fieldType: "numerical",
             isRequired: false,
             fieldName: "7th axis"
         },
         {
+            fieldType: "numerical",
             isRequired: false,
             fieldName: "8th axis"
         }

@@ -69,15 +69,22 @@ export function connectToWebSocket(socketRef, pcRef, url) {
         console.log("WebSocket error:", error);
         console.log("The tool is currently in offline mode");
         pcRef.pc.addPlot(0, ()=> {});
-        showOfflineMessage()
+        showOffErrorMsg("The tool is running in offline mode")
     };
 }
 
-function showOfflineMessage() {
+export function showOffErrorMsg(errorMsg) {
+    let containerDiv = document.querySelector(".error-msg-container");
+
+    if (!containerDiv) {
+        containerDiv = document.createElement("div");
+        containerDiv.className = "error-msg-container";
+        document.body.appendChild(containerDiv);
+    }
+
     const messageDiv = document.createElement("div");
-    messageDiv.id = "offline-message";
-    messageDiv.className = "offline-mode-msg";
-    messageDiv.textContent = "The tool is running in offline mode";
+    messageDiv.className = "error-msg";
+    messageDiv.textContent = errorMsg;
 
     const closeButton = document.createElement("span");
     closeButton.className = "close-button";
@@ -87,13 +94,13 @@ function showOfflineMessage() {
     icon.alt = "Close";
     icon.className = "close-icon";
 
-    icon.onclick = function() {
+    icon.onclick = function () {
         messageDiv.remove();
     };
 
     closeButton.appendChild(icon);
     messageDiv.appendChild(closeButton);
-    document.body.appendChild(messageDiv);
+    containerDiv.appendChild(messageDiv);
 }
 
 function createGroup(socketRef, pcRef) {

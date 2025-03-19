@@ -18,13 +18,24 @@ body{
 }
 
 /**
-* Style for offline mode
+* Style for error msg
  */
-.offline-mode-msg {
+
+/* Container for all error messages */
+.error-msg-container {
     position: fixed;
     bottom: 10px;
     left: 50%;
     transform: translateX(-50%);
+    display: flex;
+    flex-direction: column-reverse;
+    align-items: center;
+    gap: 10px;
+    z-index: 100;
+    pointer-events: none;
+}
+
+.error-msg {
     background-color: #e53935;
     color: white;
     padding: 10px 15px;
@@ -38,18 +49,19 @@ body{
     display: flex;
     align-items: center;
     justify-content: space-between;
-    z-index: 100;
+    pointer-events: auto;
 }
 
-.offline-mode-msg:hover {
+.error-msg:hover {
     background-color: #ef5350;
     box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
-    transform: translateX(-50%) translateY(-2px);
+    transform: translateY(-2px);
 }
 
 .close-button {
     display: flex;
     align-items: center;
+    pointer-events: auto;
 }
 
 .close-icon {

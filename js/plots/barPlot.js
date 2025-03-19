@@ -6,7 +6,8 @@ export const barPlot = {
     fields: [
         {
             isRequired: true,
-            fieldName: "bin-variable"
+            fieldName: "bin-variable",
+            fieldType: "categorical",
         },
     ],
     options: [],
@@ -15,8 +16,9 @@ export const barPlot = {
     createPlotFunction: createBarPlot,
 };
 
+// TODO: change the bar plot so it scrolls and can handle arbitrary amoounts of bars
 export function createBarPlot(fields, options, plotDiv, data, updatePlotsFun, isSelectedFun) {
-    // TODO: change the bar plot so it scrolls and can handle arbitrary amoounts of bars
+
     let field = fields.get("bin-variable")
 
     const container = d3.select(plotDiv);

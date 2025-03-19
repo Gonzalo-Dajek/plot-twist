@@ -1,3 +1,6 @@
+import { showOffErrorMsg } from "./fieldGroups.js";
+import { analyzeFieldType } from "../plots/plotsUtils/fieldTypeCheck.js";
+
 export function loadLayout(layoutData, pcRef, plots) {
     let gridSize = { col: 3, row: 3 };
     gridSize.col = layoutData[0].col;
@@ -96,6 +99,46 @@ function createPlot(selectedPlot, pcRef, gridPos, selectedFields, selectedCheckB
     pcRef.pc.addPlot(id, updateFunction);
 }
 
+function createPlotWithErrorHandling(selectedPlot, pcRef, gridPos, plotTypes, selectedFields, selectedCheckBoxes) {
+
+    let gridDimensions = getGridDimensions();
+    let rows = gridDimensions.row;
+    let cols = gridDimensions.col;
+
+    const gridData = getGridElementsInfo();
+
+    let plotWidth = selectedPlot.width;
+    let plotHeight = selectedPlot.height;
+
+    let canBePlaced = true;
+
+    for (let r = gridPos.row; r < gridPos.row + plotHeight; r++) {
+        for (let c = gridPos.col; c < gridPos.col + plotWidth; c++) {
+            // check if it fits within grid boundaries
+            if (r > rows || c > cols) {
+                canBePlaced = false;
+                break;
+            }
+
+            // check there is no overlap with existing plots
+            if (gridData.some(plot =>
+                plot.row <= r && r < plot.row + (plotTypes.find(p => p.plotName === plot.type)?.height || 1) &&
+                plot.col <= c && c < plot.col + (plotTypes.find(p => p.plotName === plot.type)?.width || 1)
+            )) {
+                canBePlaced = false;
+                break;
+            }
+        }
+        if (!canBePlaced) break;
+    }
+
+    if(canBePlaced){
+        createPlot(selectedPlot, pcRef, gridPos, selectedFields, selectedCheckBoxes);
+    }else {
+        showOffErrorMsg(`The plot doesn't fit`);
+    }
+}
+
 function createFieldSelectionMenu(selectedPlot, pcRef, gridPos, plotTypes) {
     let col = gridPos.col;
     let row = gridPos.row;
@@ -123,10 +166,24 @@ function createFieldSelectionMenu(selectedPlot, pcRef, gridPos, plotTypes) {
         }
 
         pcRef.pc.fields().forEach((field) => {
-            const option = document.createElement("option");
-            option.value = field;
-            option.text = field;
-            selectField.appendChild(option);
+            const data = pcRef.pc.entries();
+            const { isCategorical, isNumerical } = analyzeFieldType(data, field);
+
+            let isValidField = false;
+            if (selectedPlot.fields[i].fieldType === "numerical") {
+                isValidField = isNumerical;
+            } else if (selectedPlot.fields[i].fieldType === "categorical") {
+                isValidField = isCategorical;
+            }else{
+                isValidField = true;
+            }
+
+            if (isValidField) {
+                const option = document.createElement("option");
+                option.value = field;
+                option.text = field;
+                selectField.appendChild(option);
+            }
         });
 
         // Add label and select field
@@ -178,10 +235,8 @@ function createFieldSelectionMenu(selectedPlot, pcRef, gridPos, plotTypes) {
     const createButton = document.createElement("button");
     createButton.textContent = "Create";
 
-    createButton.addEventListener("click", ()=>{
-        // TODO: if the dimensions allows it else alert("cannot do that")
-        createPlot(selectedPlot, pcRef, gridPos, selectedFields, selectedCheckBoxes);
-    });
+    createButton.addEventListener("click",
+        () => {createPlotWithErrorHandling(selectedPlot, pcRef, gridPos, plotTypes, selectedFields, selectedCheckBoxes)});
 
     createButton.classList.add("plot-button", "create-plot-button");
 
@@ -338,4 +393,27 @@ export function getGridDimensions() {
     const rows = styles.getPropertyValue("grid-template-rows").split(" ").length;
 
     return { col: cols, row: rows };
+}
+
+/**
+ * Returns an array with the info of all the plots currently in the grid and their positions
+ */
+export function getGridElementsInfo() {
+    const container = document.getElementById("plotsContainer");
+    const elements = container.getElementsByClassName("plotAndDeleteButton-container");
+    const gridInfoArray = [];
+
+    for (const element of elements) {
+        const jsonData = JSON.parse(element.getAttribute("data-json"));
+
+        gridInfoArray.push({
+            type: jsonData.plotName,
+            col: jsonData.col,
+            row: jsonData.row,
+            fields: jsonData.fields,
+            options: jsonData.options,
+        });
+    }
+
+    return gridInfoArray;
 }

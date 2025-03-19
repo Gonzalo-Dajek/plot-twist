@@ -8,6 +8,7 @@ import {
     createEmptyGrid,
     createEmptyGridCell,
     getGridDimensions,
+    getGridElementsInfo,
     loadLayout,
 } from "./gridUtils.js";
 
@@ -30,26 +31,6 @@ export function initializeUI(plots, url) {
  * initializes the export layout to file button functionality
  */
 export function initExportLayout() {
-
-    function getGridElementsInfo() {
-        const container = document.getElementById("plotsContainer");
-        const elements = container.getElementsByClassName("plotAndDeleteButton-container");
-        const gridInfoArray = [];
-
-        for (const element of elements) {
-            const jsonData = JSON.parse(element.getAttribute("data-json"));
-
-            gridInfoArray.push({
-                type: jsonData.plotName,
-                col: jsonData.col,
-                row: jsonData.row,
-                fields: jsonData.fields,
-                options: jsonData.options,
-            });
-        }
-
-        return gridInfoArray;
-    }
 
     function exportLayout() {
         let gridSize = getGridDimensions();

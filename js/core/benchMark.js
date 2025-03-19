@@ -738,8 +738,6 @@ export async function benchMark(plots, url, clientId) {
             await wait(1000);
         }
         // TODO: add sanity checks
-        // console.log("Current benchMark config: ");
-        console.log(cfg);
 
         const data = createData(cfg.entriesAmount, cfg.numColumnsAmount, cfg.catColumnsAmount, cfg.dataDistribution);
         const table = dataToTable(data, cfg.catColumnsAmount);
@@ -786,6 +784,8 @@ export async function benchMark(plots, url, clientId) {
         }
 
         await waitForStartTrigger(socketRef, pcRef, clientId, cfg);
+
+        console.log(cfg);
 
         if (clientId <= cfg.numberOfClientBrushing) {
             await brushBackAndForth(
