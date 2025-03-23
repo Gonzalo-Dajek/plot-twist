@@ -11,7 +11,7 @@ local_data
 node_modules
 test/test_data
 test/output
-dist
+#dist
 dist-ssr
 *.local
 
