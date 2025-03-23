@@ -14,7 +14,7 @@ function run(){
     ];
 
     // let url = "ws://localhost:5226/";
-    let url = "ws://192.168.1.9:5226/";
+    let url = "wss://192.168.1.9:5226/";
 
     // TODO: make svg favicon and logo
     // TODO: make GitHub pretty with instructions
