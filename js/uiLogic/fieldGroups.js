@@ -1,4 +1,5 @@
 import { rangeSet } from "../core/rangeSet.js";
+import throttle from "lodash-es/throttle.js";
 
 export function initFieldGroups(pcRef, socketRef) {
     document.getElementById("group-name-submit").addEventListener("click", function() {
@@ -48,10 +49,14 @@ export function connectToWebSocket(socketRef, pcRef, url) {
     socket.onmessage = function(event) {
         const receivedData = JSON.parse(event.data);
 
+        const throttledUpdate = throttle((range) => {
+            pcRef.pc.updatePlotsView(0, range);
+        }, 50);
+
+        // console.log("Message from server:", receivedData);
         switch (receivedData.type) {
             case "selection":
-                // console.log("Message from server:", receivedData);
-                pcRef.pc.updatePlotsView(0, receivedData.range ?? []);
+                throttledUpdate(receivedData.range ?? [])
                 break;
             case "link":
                 populateGroups(receivedData.links, pcRef.pc.fields(), socketRef, pcRef);

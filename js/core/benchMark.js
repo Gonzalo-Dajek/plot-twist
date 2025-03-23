@@ -5,6 +5,7 @@ import { adjustBodyStyle, loadLayout } from "../uiLogic/gridUtils.js";
 import { PlotCoordinator } from "./plotCoordinator.js";
 import { rangeSet } from "./rangeSet.js";
 import * as d3 from "d3-random";
+import throttle from "lodash-es/throttle.js";
 
 function resetLayout() {
     // also removes all event listeners
@@ -24,6 +25,16 @@ function resetLayout() {
                     <input type="file" id="fileInput" class="file-input" />
                 </div>
 
+                <button id="loadDemo" class="top-bar-button">
+                    Load Demo&nbsp;
+                    <img src="assets/launch_icon.svg" class="csv-icon" alt="load demo">
+                </button>
+
+                <button id="exportLayoutButton" class="top-bar-button">
+                    Save Layout&nbsp;
+                    <img src="assets/download_icon.svg" class="csv-icon" alt="download layout file">
+                </button>
+
                 <div id="loadLayoutButton" class="indentFileUpload">
                     <label for="layoutInput" class="custom-file-upload top-bar-button">
                         Load layout&nbsp;
@@ -32,20 +43,19 @@ function resetLayout() {
                     <input type="file" id="layoutInput" class="file-input" />
                 </div>
 
-                <button id="exportLayoutButton" class="top-bar-button">
-                    Save Layout&nbsp;
-                    <img src="assets/download_icon.svg" class="csv-icon" alt="download layout file">
-                </button>
-
             </div>
         </div>
 
-        <div id="grid-container">
-            <div id="plotsContainer"></div>
-            <button id="col">+</button>
-            <button id="row">+</button>
-            <div></div>
+
+        <div id="app-view">
+            <div id="grid-container">
+                <div id="plotsContainer"></div>
+                <button id="col">+</button>
+                <button id="row">+</button>
+                <div></div>
+            </div>
         </div>
+
 
         <div class="group-component">
             <span class="group-title">
@@ -65,6 +75,8 @@ function resetLayout() {
             <img src="assets/list_icon.svg" alt="Group links button">
             Field Groups
         </button>
+
+        <script type="module" src="/js/main.js"></script>
     `;
 
     document.body.replaceWith(freshBody);
@@ -200,11 +212,16 @@ function setUpLayout(data, pcRef, plots, url, layoutData, socketRef, dataSetNum,
         socket.onmessage = function(event) {
             const receivedData = JSON.parse(event.data);
             let message;
-
+            let throttledUpdatePlotsView;
             switch (receivedData.type) {
                 case "selection":
                     // console.log("Message from server:", receivedData);
-                    pcRef.pc.updatePlotsView(0, receivedData.range ?? []);
+
+                    throttledUpdatePlotsView = throttle((data) => {
+                        pcRef.pc.updatePlotsView(0, data);
+                    }, 100);
+
+                    throttledUpdatePlotsView(receivedData.range ?? []);
                     break;
                 case "link":
                     populateGroups(receivedData.links, pcRef.pc.fields(), socketRef, pcRef);
@@ -223,6 +240,10 @@ function setUpLayout(data, pcRef, plots, url, layoutData, socketRef, dataSetNum,
                     break;
             }
         };
+
+        socket.onerror = function(e){
+            console.log(e);
+        }
     } else {
         document.getElementById("slide-menu-btn").style.display = "flex";
     }
@@ -241,20 +262,20 @@ function createLayout(plotAmounts, numFields) {
 
             if (row === col) {
                 // Diagonal: Histogram
-                layout[1].push({
-                    type: "Histogram",
-                    col: col + 1,
-                    row: row + 1,
-                    fields: [{ fieldName: "bin-variable", fieldSelected: `field${col}` }],
-                    options: [],
-                });
-                plotCount++;
+                // layout[1].push({
+                //     type: "Histogram",
+                //     col: col + 1,
+                //     row: row + 1,
+                //     fields: [{ fieldName: "bin-variable", fieldSelected: `field${col}` }],
+                //     options: [],
+                // });
+                // plotCount++;
             } else if (row < col) {
                 // Upper triangle: Scatter Plot
                 layout[1].push({
                     type: "Scatter Plot",
-                    col: col + 1,
-                    row: row + 1,
+                    col: col,
+                    row: row+1,
                     fields: [
                         { fieldName: "x-axis", fieldSelected: `field${row}` },
                         { fieldName: "y-axis", fieldSelected: `field${col}` },
@@ -537,11 +558,12 @@ function waitForStartTrigger(socketRef, pcRef, clientId) {
                 // console.log(config);
                 socketRef.socket.onmessage = function(event) {
                     const receivedData = JSON.parse(event.data);
-
+                    let throttledReceivedBrushTimings;
                     let message;
                     switch (receivedData.type) {
                         case "selection":
-                            receivedBrushTimings(pcRef, socketRef, receivedData, clientId);
+                            throttledReceivedBrushTimings = throttle(receivedBrushTimings, 50);
+                            throttledReceivedBrushTimings(pcRef, socketRef, receivedData, clientId);
                             break;
                         case "link":
                             populateGroups(receivedData.links, pcRef.pc.fields(), socketRef, pcRef);
@@ -575,16 +597,17 @@ function waitForEndTrigger(socketRef, pcRef, clientId) {
         function handler(event) {
             const receivedData = JSON.parse(event.data);
             if (receivedData.type === "BenchMark" && receivedData.benchMark.action === "end") {
-                console.log("BenchMark Ended");
+                console.log("   BenchMark Ended");
                 socket.removeEventListener("message", handler);
 
                 socketRef.socket.onmessage = function(event) {
                     const receivedData = JSON.parse(event.data);
                     let message;
-
+                    let throttledReceivedBrushTimings;
                     switch (receivedData.type) {
                         case "selection":
-                            receivedBrushTimings(pcRef, socketRef, receivedData, clientId);
+                            throttledReceivedBrushTimings = throttle(receivedBrushTimings, 50);
+                            throttledReceivedBrushTimings(pcRef, socketRef, receivedData, clientId);
                             break;
                         case "link":
                             populateGroups(receivedData.links, pcRef.pc.fields(), socketRef, pcRef);
@@ -673,7 +696,6 @@ function generateConfigs(config, stepsConfig, stepSizes = {}) {
 
 export async function benchMark(plots, url, clientId) {
     // TODO: test multiple clients
-    // TODO: change brushing speed and make it have sensible measures
 
     const baseConfig = {
         plotsAmount: 6,
@@ -685,7 +707,7 @@ export async function benchMark(plots, url, clientId) {
         numFieldGroupsAmount: 2,
         catFieldGroupsAmount: 1,
         brushSize: 0.50,
-        stepSize: 0.15,
+        stepSize: 0.20, // =~ (1/stepSize)*50 ms
         numberOfClientBrushing: 3,
         numberOfDataSets: 3,
         dataDistribution: "evenly distributed",
@@ -705,7 +727,7 @@ export async function benchMark(plots, url, clientId) {
         numFieldGroupsAmount: 1,
         catFieldGroupsAmount: 1,
         brushSize: 0.05,
-        stepSize: 0.02,
+        stepSize: 0.05,
         numberOfClientBrushing: 1,
         numberOfDataSets: 1,
     };
@@ -720,7 +742,7 @@ export async function benchMark(plots, url, clientId) {
         numFieldGroupsAmount: 2,
         catFieldGroupsAmount: 1,
         brushSize: 5,
-        stepSize: 5,
+        stepSize: 3,
         numberOfClientBrushing: 2,
         numberOfDataSets: 2,
     };
@@ -730,14 +752,26 @@ export async function benchMark(plots, url, clientId) {
     const isMainClient = clientId === 1;
     const modifiedConfigs = generateConfigs(baseConfig, stepsAmounts, stepSizes);
 
-    for (const cfg of modifiedConfigs) {
-        // {
-        //     let cfg = baseConfig;
+    for (let i = 0; i < modifiedConfigs.length; i++) {
+        const cfg = modifiedConfigs[i];
+        const percentage = ((i + 1) / modifiedConfigs.length) * 100;
+        console.log(`(${i+1} / ${modifiedConfigs.length}): ${percentage.toFixed(2)}%`);
+    //     {
+    //         let cfg = baseConfig;
+
 
         if (isMainClient && !firstTimeInit) {
             await wait(1000);
         }
-        // TODO: add sanity checks
+
+        const isValidConfig = cfg.numColumnsAmount > cfg.numDimensionsSelected &&
+            cfg.numColumnsAmount > cfg.numFieldGroupsAmount &&
+            cfg.catColumnsAmount > cfg.catDimensionsSelected &&
+            cfg.catColumnsAmount > cfg.catFieldGroupsAmount;
+        if(!isValidConfig){
+            console.error("INVALID CONFIG: ");
+            console.error(cfg);
+        }
 
         const data = createData(cfg.entriesAmount, cfg.numColumnsAmount, cfg.catColumnsAmount, cfg.dataDistribution);
         const table = dataToTable(data, cfg.catColumnsAmount);
