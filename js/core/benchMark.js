@@ -711,7 +711,7 @@ export async function benchMark(plots, url, clientId) {
         numberOfClientBrushing: 3,
         numberOfDataSets: 3,
         dataDistribution: "evenly distributed",
-        testDuration: 5,
+        testDuration: 180,
         dataSetNum: null,
         clientId,
     };
