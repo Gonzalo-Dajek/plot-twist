@@ -4,7 +4,7 @@
     "description": "PlotTwist is a tool for visualizing complex data interactively with multi-view support.",
     "icons": [
         {
-            "src": "public/icon.png",
+            "src": "assets/icon.png",
             "type": "image/png",
             "sizes": "192x192"
         }

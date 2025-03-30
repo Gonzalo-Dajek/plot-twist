@@ -12,7 +12,7 @@ export const scatterPlot = {
         },
         {
             isRequired: true,
-            fieldType: "neither",
+            fieldType: "numerical",
             fieldName: "y-axis"
         },
     ],

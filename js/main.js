@@ -13,18 +13,18 @@ function run(){
         parallelCoordinates,
     ];
 
-    let url = "ws://localhost:5226/";
-    // let url = "ws://192.168.1.9:5226/";
+    // let url = "ws://localhost:5226/";
+    let url = "ws://192.168.1.9:5226/";
 
     // TODO: make svg favicon and logo
     // TODO: make GitHub pretty with instructions
     // TODO: add introductory text before loadCSV
     // TODO: fix close error button in firefox
+    // TODO: fix throttle
 
     const BENCHMARK = true;
     if(BENCHMARK){
         let clientId = prompt("Enter clientId:", "");
-        alert(clientId);
         benchMark(plots, url, Number(clientId)).then();
     }else{
         initializeUI(plots, url);

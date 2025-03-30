@@ -697,6 +697,7 @@ function generateConfigs(config, stepsConfig, stepSizes = {}) {
 export async function benchMark(plots, url, clientId) {
     // TODO: test multiple clients
 
+    // TODO: brused dimensions selected
     const baseConfig = {
         plotsAmount: 6,
         numColumnsAmount: 30,
@@ -711,7 +712,7 @@ export async function benchMark(plots, url, clientId) {
         numberOfClientBrushing: 3,
         numberOfDataSets: 3,
         dataDistribution: "evenly distributed",
-        testDuration: 180,
+        testDuration: 0.05, // TODO: 90
         dataSetNum: null,
         clientId,
     };
@@ -761,7 +762,7 @@ export async function benchMark(plots, url, clientId) {
 
 
         if (isMainClient && !firstTimeInit) {
-            await wait(1000);
+            await wait(60000);
         }
 
         const isValidConfig = cfg.numColumnsAmount > cfg.numDimensionsSelected &&
@@ -842,7 +843,7 @@ export async function benchMark(plots, url, clientId) {
                 deleteFieldGroups(socketRef, cfg.numFieldGroupsAmount, cfg.catFieldGroupsAmount, dataSetNum);
             }
 
-            await wait(1000);
+            await wait(60000);
             sendEndTrigger(socketRef);
         }
 

@@ -50,13 +50,17 @@ export function connectToWebSocket(socketRef, pcRef, url) {
         const receivedData = JSON.parse(event.data);
 
         const throttledUpdate = throttle((range) => {
+            console.log(range);
             pcRef.pc.updatePlotsView(0, range);
         }, 50);
 
         // console.log("Message from server:", receivedData);
         switch (receivedData.type) {
             case "selection":
+                // console.log(receivedData.range);
                 throttledUpdate(receivedData.range ?? [])
+                // pcRef.pc.updatePlotsView(0, receivedData.range ?? []);
+
                 break;
             case "link":
                 populateGroups(receivedData.links, pcRef.pc.fields(), socketRef, pcRef);
