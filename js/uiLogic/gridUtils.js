@@ -89,7 +89,7 @@ function createPlot(selectedPlot, pcRef, gridPos, selectedFields, selectedCheckB
         innerPlotContainer,
         pcRef.pc.entries(),
         (selection)=> {
-            pcRef.pc.updatePlotsView(id, selection);
+            pcRef.pc.throttledUpdatePlotsView(id, selection);
         },
         (entry) => {
             return pcRef.pc.isSelected(entry);

@@ -25,6 +25,7 @@
         "lint-and-format": "peslint --fix . --ignore-pattern \\\"dist/*\\\" && rettier --write .",
         "dev": "vite",
         "build": "vite build",
+        "buildAndPreview": "vite build ; vite preview",
         "deploy": "gh-pages -d dist",
         "preview": "vite preview"
     },

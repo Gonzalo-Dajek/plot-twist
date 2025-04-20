@@ -1,5 +1,6 @@
 import { rangeSet } from "../core/rangeSet.js";
 import throttle from "lodash-es/throttle.js";
+import deleteIcon from '../../assets/delete_icon.svg';
 
 export function initFieldGroups(pcRef, socketRef) {
     document.getElementById("group-name-submit").addEventListener("click", function() {
@@ -49,17 +50,10 @@ export function connectToWebSocket(socketRef, pcRef, url) {
     socket.onmessage = function(event) {
         const receivedData = JSON.parse(event.data);
 
-        const throttledUpdate = throttle((range) => {
-            console.log(range);
-            pcRef.pc.updatePlotsView(0, range);
-        }, 50);
-
         // console.log("Message from server:", receivedData);
         switch (receivedData.type) {
             case "selection":
-                // console.log(receivedData.range);
-                throttledUpdate(receivedData.range ?? [])
-                // pcRef.pc.updatePlotsView(0, receivedData.range ?? []);
+                pcRef.pc.throttledUpdatePlotsView(0, receivedData.range ?? []);
 
                 break;
             case "link":
@@ -99,7 +93,7 @@ export function showOffErrorMsg(errorMsg) {
     closeButton.className = "close-button";
 
     const icon = document.createElement("img");
-    icon.src = "assets/delete_icon.svg";
+    icon.src = deleteIcon;
     icon.alt = "Close";
     icon.className = "close-icon";
 

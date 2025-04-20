@@ -1,3 +1,4 @@
+import throttle from "lodash-es/throttle.js";
 
 /**
  * Responsible for coordinating the brushing between different plots
@@ -147,6 +148,8 @@ export class PlotCoordinator {
 
         return true;
     }
+
+    throttledUpdatePlotsView = throttle(this.updatePlotsView, 50);
 
     updatePlotsView(triggeringPlotId, newSelection) {
         this._plots.get(triggeringPlotId).lastSelectionRange = newSelection;
