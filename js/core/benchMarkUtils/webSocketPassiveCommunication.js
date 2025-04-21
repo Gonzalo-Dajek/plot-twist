@@ -1,7 +1,54 @@
 import throttle from "lodash-es/throttle.js";
 import { populateGroups } from "../../uiLogic/fieldGroups.js";
 
-function handleReceivedBrush(pcRef, socketRef, receivedData, clientId) {
+export function createSocketMessageHandler({
+                                               pcRef,
+                                               socketRef,
+                                               clientId,
+                                               receivedBrushThrottle,
+                                               pingThrottle = 50,
+                                           }) {
+    const socket = socketRef.socket;
+
+    const throttledReceivedBrushTimings = throttle(
+        (receivedData) => {
+            handleReceivedBrush(pcRef, socketRef, receivedData, clientId);
+        },
+        receivedBrushThrottle
+    );
+
+    const throttledReceivedPing = throttle((receivedData) => {
+        const message = {
+            type: "BenchMark",
+            benchMark: {
+                action: "ping",
+                clientId: clientId,
+                timeSent: receivedData.benchMark.timeSent,
+                pingType: receivedData.benchMark.pingType,
+            },
+        };
+        socket.send(JSON.stringify(message));
+    }, pingThrottle);
+
+    return function(event) {
+        const receivedData = JSON.parse(event.data);
+
+        switch (receivedData.type) {
+            case "selection":
+                throttledReceivedBrushTimings(receivedData);
+                break;
+            case "link":
+                populateGroups(receivedData.links, pcRef.pc.fields(), socketRef, pcRef);
+                break;
+            case "ping":
+                throttledReceivedPing(receivedData);
+                break;
+        }
+    };
+}
+
+
+export function handleReceivedBrush(pcRef, socketRef, receivedData, clientId) {
     pcRef.pc.throttledUpdatePlotsView(0, receivedData.range ?? []);
     let timeToUpdatePlots = pcRef.pc.BENCHMARK.deltaUpdatePlots;
     let timeToProcessBrushLocally = pcRef.pc.BENCHMARK.deltaUpdateIndexes;
@@ -22,44 +69,29 @@ function handleReceivedBrush(pcRef, socketRef, receivedData, clientId) {
 }
 
 export function waitForStartTrigger(socketRef, pcRef, clientId, receivedBrushThrottle) {
-    let socket = socketRef.socket;
+    const socket = socketRef.socket;
+    const onMessageFun = createSocketMessageHandler({
+        pcRef,
+        socketRef,
+        clientId,
+        receivedBrushThrottle,
+    });
+
     return new Promise((resolve) => {
         function handler(event) {
             const receivedData = JSON.parse(event.data);
+
             if (receivedData.type === "BenchMark" && receivedData.benchMark.action === "start") {
                 console.log("BenchMark Started");
                 socket.removeEventListener("message", handler);
 
-                socketRef.socket.onmessage = function(event) {
-                    const receivedData = JSON.parse(event.data);
-                    let throttledReceivedBrushTimings;
-                    let message;
-                    switch (receivedData.type) {
-                        case "selection":
-                            throttledReceivedBrushTimings = throttle(handleReceivedBrush, receivedBrushThrottle);
-                            throttledReceivedBrushTimings(pcRef, socketRef, receivedData, clientId);
-                            break;
-                        case "link":
-                            populateGroups(receivedData.links, pcRef.pc.fields(), socketRef, pcRef);
-                            break;
-                        case "ping":
-                            message = {
-                                type: "BenchMark",
-                                benchMark: {
-                                    action: "ping",
-                                    clientId: clientId,
-                                    timeSent: receivedData.benchMark.timeSent,
-                                    pingType: receivedData.benchMark.pingType,
-                                },
-                            };
-                            socket.send(JSON.stringify(message));
-                            break;
-                    }
-                };
+                socketRef.socket.onmessage = onMessageFun;
+
                 resolve(receivedData);
             }
         }
-        socket.addEventListener("message", handler);
+
+        socket.onmessage = handler;
     });
 }
 
@@ -84,7 +116,7 @@ export function waitForEndTrigger(socketRef, pcRef) {
                 resolve(receivedData);
             }
         }
-        socket.addEventListener("message", handler);
+        socket.onmessage = handler;
     });
 }
 

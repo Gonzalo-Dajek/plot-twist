@@ -57,11 +57,20 @@ export async function brushBackAndForth(
     brushSize,
     socketRef,
     clientId,
-    timeBetween
+    timeBetween,
+    isStaggered,
+    numberOfClientBrushing
 ) {
     let startPos = 0.2;
     let endPos = 0.8;
     let x = startPos;
+
+    // Compute when this client should start brushing if staggered
+    let startStep = 0;
+    if (isStaggered) {
+        const stepFraction = (numberOfClientBrushing - clientId) / numberOfClientBrushing;
+        startStep = Math.floor(steps * stepFraction);
+    }
 
     let forward = true;
     let brushId = 0;
@@ -69,7 +78,7 @@ export async function brushBackAndForth(
         // Move step
         if (forward) {
             x += stepSize;
-            if (x >= endPos) forward = false; // Switch direction if reaching the end
+            if (x >= endPos) forward = false;
         } else {
             x -= stepSize;
             if (x <= startPos) forward = true;
@@ -77,17 +86,21 @@ export async function brushBackAndForth(
 
         let startTime = performance.now();
 
-        let a = x - brushSize / 2;
-        let b = x + brushSize / 2;
-        let selection = createSelection(
-            a,
-            b,
-            numDimensionsSelected,
-            catDimensionsSelected
-        );
-        pcRef.pc.throttledUpdatePlotsView(id, selection);
+        let didBrush = false;
 
-        sendBrushTimings(pcRef, socketRef, selection, clientId, brushId);
+        if (!isStaggered || i >= startStep) {
+            let a = x - brushSize / 2;
+            let b = x + brushSize / 2;
+            let selection = createSelection(
+                a,
+                b,
+                numDimensionsSelected,
+                catDimensionsSelected
+            );
+            pcRef.pc.updatePlotsView(id, selection);
+            sendBrushTimings(pcRef, socketRef, selection, clientId, brushId);
+            didBrush = true;
+        }
 
         let elapsed = performance.now() - startTime;
         let remainingTime = Math.max(timeBetween - elapsed, 0);
@@ -96,7 +109,7 @@ export async function brushBackAndForth(
             await new Promise((resolve) => setTimeout(resolve, remainingTime));
         }
 
-        brushId++;
+        if (didBrush) brushId++;
     }
 
     pcRef.pc.updatePlotsView(id, []);

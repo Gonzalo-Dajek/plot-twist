@@ -10,9 +10,11 @@ import { brushBackAndForth } from "./benchMarkUtils/brushing.js";
 export async function benchMark(plots, url, clientId) {
 
     // BASE CASE------------------------------------------------------------------------------------------------------//
-    let timeBetween = 20;
-    let waitBetweenTestDuration = 500;
-    let receivedBrushThrottle = 200;
+    let timeBetween = 40;
+    let waitBetweenTestDuration = 200;
+    let receivedBrushThrottle = 50;
+    let isStaggered = false;
+    let testDuration = 1000;
     const baseConfig = {
         dataDistribution: "evenly distributed",
         plotsAmount: 4,
@@ -27,7 +29,7 @@ export async function benchMark(plots, url, clientId) {
         stepSize: 0.04,
         numberOfClientBrushing: 2,
         numberOfDataSets: 2,
-        testDuration: 20,
+        testDuration: testDuration,
         dataSetNum: null,
         clientId,
     };
@@ -39,17 +41,20 @@ export async function benchMark(plots, url, clientId) {
 
     // BENCHMARK CONFIGS HERE-----------------------------------------------------------------------------------------//
     let modifiedConfigs;
+    // modifiedConfigs = [{ ...baseConfig }];
     // modifiedConfigs = layout.generateConfigsSinglePlot(baseConfig);
     // modifiedConfigs = layout.generateConfigsPassFailMatrix(baseConfig);
     // modifiedConfigs = layout.generateConfigsBrushSizeAndTypeOfData(baseConfig)
     // modifiedConfigs = layout.generateConfigsAmountOfEntries(baseConfig);
     // modifiedConfigs = layout.generateConfigsBrushSizeVsStepSize(baseConfig);
+    // modifiedConfigs = layout.generateConfigsStaggeredBrushingEventWith4Clients(baseConfig)
+    // isStaggered = true;
+    modifiedConfigs = layout.generateConfigsForEventAnalysis2Clients(baseConfig)
     // [isCustomLayoutSelected, layoutData] = layout.singleScatterLayout();
 
-    modifiedConfigs = [{ ...baseConfig }];
 
     // modifiedConfigs.splice(0, 57)
-    // modifiedConfigs.unshift(modifiedConfigs[0], modifiedConfigs[0]);
+    // modifiedConfigs.unshift(modifiedConfigs[0]);
     // BENCHMARK CONFIGS HERE-----------------------------------------------------------------------------------------//
 
     let socketRef;
@@ -131,10 +136,10 @@ export async function benchMark(plots, url, clientId) {
         }
 
         // when the start trigger is received start brushing back and forth (if it is an active client)
-        await waitForStartTrigger(socketRef, pcRef, clientId, cfg, receivedBrushThrottle);
+        await waitForStartTrigger(socketRef, pcRef, clientId, receivedBrushThrottle);
         if (clientId <= cfg.numberOfClientBrushing) {
             await brushBackAndForth(
-                ((cfg.testDuration * 1000) / timeBetween) * 0.75,
+                ((cfg.testDuration * 1000) / timeBetween) * 0.60,
                 cfg.stepSize,
                 cfg.numDimensionsSelected,
                 cfg.catDimensionsSelected,
@@ -143,7 +148,9 @@ export async function benchMark(plots, url, clientId) {
                 cfg.brushSize,
                 socketRef,
                 clientId,
-                timeBetween
+                timeBetween,
+                isStaggered,
+                cfg.numberOfClientBrushing
             );
         }
 

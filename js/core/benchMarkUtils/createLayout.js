@@ -171,6 +171,22 @@ export function generateConfigsAmountOfEntries(config) {
     return configs;
 }
 
+export function generateConfigsForEventAnalysis2Clients(config) {
+    const configs = [{ ...config }];
+
+    configs[0].numberOfClientBrushing = 1;
+
+    return configs;
+}
+
+export function generateConfigsStaggeredBrushingEventWith4Clients(config) {
+    const configs = [{ ...config }];
+
+    configs[0].numberOfClientBrushing = 4;
+
+    return configs;
+}
+
 export function singleScatterLayout() {
     let x = 0;
     let y = 1;

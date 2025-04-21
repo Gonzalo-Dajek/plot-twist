@@ -1,12 +1,23 @@
 import { initTopBarScroll } from "../../uiLogic/topBarScroll.js";
 import { initExportLayout, initGridResizing, initLoadCsv, initLoadLayout } from "../../uiLogic/initUI.js";
-import { initFieldGroups, populateGroups } from "../../uiLogic/fieldGroups.js";
+import { initFieldGroups } from "../../uiLogic/fieldGroups.js";
 import { PlotCoordinator } from "../plotCoordinator.js";
 import { rangeSet } from "../rangeSet.js";
-import throttle from "lodash-es/throttle.js";
 import { adjustBodyStyle, loadLayout } from "../../uiLogic/gridUtils.js";
+import { createSocketMessageHandler } from "./webSocketPassiveCommunication.js";
 
-export function benchMarkSetUp(data, pcRef, plots, url, layoutData, socketRef, dataSetNum, firstTimeInit, clientId, receivedBrushThrottle) {
+export function benchMarkSetUp(
+    data,
+    pcRef,
+    plots,
+    url,
+    layoutData,
+    socketRef,
+    dataSetNum,
+    firstTimeInit,
+    clientId,
+    receivedBrushThrottle
+) {
     initTopBarScroll();
     initExportLayout();
     initLoadLayout(pcRef, plots);
@@ -29,11 +40,11 @@ export function benchMarkSetUp(data, pcRef, plots, url, layoutData, socketRef, d
 
     if (firstTimeInit) {
         socketRef.socket = new WebSocket(url);
-        let socket = socketRef.socket;
+        const socket = socketRef.socket;
 
         socket.onopen = function() {
             pcRef.pc.addPlot(0, () => {
-                let selection = new rangeSet();
+                const selection = new rangeSet();
                 for (let [id, plot] of pcRef.pc._plots.entries()) {
                     if (id !== 0) {
                         selection.addSelectionArr(JSON.parse(JSON.stringify(plot.lastSelectionRange)));
@@ -51,40 +62,16 @@ export function benchMarkSetUp(data, pcRef, plots, url, layoutData, socketRef, d
             document.getElementById("slide-menu-btn").style.display = "flex";
         };
 
-        socket.onmessage = function(event) {
-            const receivedData = JSON.parse(event.data);
-            let message;
-            let throttledUpdatePlotsView;
-            switch (receivedData.type) {
-                case "selection":
+        socket.onmessage = createSocketMessageHandler({
+            pcRef,
+            socketRef,
+            clientId,
+            receivedBrushThrottle,
+        });
 
-                    throttledUpdatePlotsView = throttle((data) => {
-                        pcRef.pc.updatePlotsView(0, data);
-                    }, receivedBrushThrottle);
-
-                    throttledUpdatePlotsView(receivedData.range ?? []);
-                    break;
-                case "link":
-                    populateGroups(receivedData.links, pcRef.pc.fields(), socketRef, pcRef);
-                    break;
-                case "ping":
-                    message = {
-                        type: "BenchMark",
-                        benchMark: {
-                            action: "ping",
-                            clientId: clientId,
-                            timeSent: receivedData.benchMark.timeSent,
-                            pingType: receivedData.benchMark.pingType,
-                        },
-                    };
-                    socket.send(JSON.stringify(message));
-                    break;
-            }
-        };
-
-        socket.onerror = function(e){
+        socket.onerror = function(e) {
             console.log(e);
-        }
+        };
     } else {
         document.getElementById("slide-menu-btn").style.display = "flex";
     }
