@@ -10,11 +10,11 @@ import { brushBackAndForth } from "./benchMarkUtils/brushing.js";
 export async function benchMark(plots, url, clientId) {
 
     // BASE CASE------------------------------------------------------------------------------------------------------//
-    let timeBetween = 40;
-    let waitBetweenTestDuration = 200;
+    let timeBetween = 50;
+    let waitBetweenTestDuration = 1000;
     let receivedBrushThrottle = 50;
     let isStaggered = false;
-    let testDuration = 1000;
+    let testDuration = 40;
     const baseConfig = {
         dataDistribution: "evenly distributed",
         plotsAmount: 4,

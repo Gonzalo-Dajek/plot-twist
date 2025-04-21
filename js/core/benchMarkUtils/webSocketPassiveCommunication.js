@@ -91,7 +91,7 @@ export function waitForStartTrigger(socketRef, pcRef, clientId, receivedBrushThr
             }
         }
 
-        socket.onmessage = handler;
+        socket.addEventListener("message", handler);
     });
 }
 
