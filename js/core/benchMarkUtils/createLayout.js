@@ -179,6 +179,15 @@ export function generateConfigsForEventAnalysis2Clients(config) {
     return configs;
 }
 
+export function generateConfigsBigIntervalBetweenBrushes(config) {
+    const configs = [{ ...config }];
+
+    configs[0].numberOfClientBrushing = 1;
+
+    return configs;
+}
+
+
 export function generateConfigsStaggeredBrushingEventWith4Clients(config) {
     const configs = [{ ...config }];
 

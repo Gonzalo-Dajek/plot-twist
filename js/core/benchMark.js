@@ -7,14 +7,16 @@ import { sendEndTrigger, sendStartTrigger, waitForEndTrigger, waitForStartTrigge
 import { createFieldGroups, deleteFieldGroups, sendClientInfo, setupSelectionBroadcast } from "./benchMarkUtils/webSocketActiveCommunication.js";
 import { brushBackAndForth } from "./benchMarkUtils/brushing.js";
 
-export async function benchMark(plots, url, clientId) {
+export async function benchMark(plots, url) {
+    let clientId = prompt("Enter clientId:", "");
+    clientId = Number(clientId);
 
     // BASE CASE------------------------------------------------------------------------------------------------------//
     let timeBetween = 50;
     let waitBetweenTestDuration = 1000;
-    let receivedBrushThrottle = 50;
+    let receivedBrushThrottle = 100;
     let isStaggered = false;
-    let testDuration = 40;
+    let testDuration = 40; // 40
     const baseConfig = {
         dataDistribution: "evenly distributed",
         plotsAmount: 4,
@@ -49,7 +51,9 @@ export async function benchMark(plots, url, clientId) {
     // modifiedConfigs = layout.generateConfigsBrushSizeVsStepSize(baseConfig);
     // modifiedConfigs = layout.generateConfigsStaggeredBrushingEventWith4Clients(baseConfig)
     // isStaggered = true;
-    modifiedConfigs = layout.generateConfigsForEventAnalysis2Clients(baseConfig)
+    // modifiedConfigs = layout.generateConfigsForEventAnalysis2Clients(baseConfig)
+    modifiedConfigs = layout.generateConfigsBigIntervalBetweenBrushes(baseConfig);
+    timeBetween = 600;
     // [isCustomLayoutSelected, layoutData] = layout.singleScatterLayout();
 
 
@@ -137,6 +141,10 @@ export async function benchMark(plots, url, clientId) {
 
         // when the start trigger is received start brushing back and forth (if it is an active client)
         await waitForStartTrigger(socketRef, pcRef, clientId, receivedBrushThrottle);
+        if(isMainClient){
+            // startPinging(socketRef); // TODO:
+        }
+
         if (clientId <= cfg.numberOfClientBrushing) {
             await brushBackAndForth(
                 ((cfg.testDuration * 1000) / timeBetween) * 0.60,
@@ -156,6 +164,8 @@ export async function benchMark(plots, url, clientId) {
 
         // have the main client clean up and send the end trigger
         if (isMainClient) {
+            // stopPinging(socketRef); // TODO:
+
             for (
                 let dataSetNum = 0;
                 dataSetNum < cfg.numberOfDataSets;

@@ -16,7 +16,7 @@ function run(){
     // let url = "ws://localhost:5226/";
     let url = "ws://192.168.1.9:5226/";
 
-    // TODO: add brush id to trace from who it belongs?
+    // TODO: add throttle to the server
 
     // TODO: make svg favicon and logo
     // TODO: make GitHub pretty with instructions
@@ -36,8 +36,7 @@ function run(){
 
     const BENCHMARK = true;
     if(BENCHMARK){
-        let clientId = prompt("Enter clientId:", "");
-        benchMark(plots, url, Number(clientId)).then();
+        benchMark(plots, url).then();
     }else{
         initializeUI(plots, url);
     }

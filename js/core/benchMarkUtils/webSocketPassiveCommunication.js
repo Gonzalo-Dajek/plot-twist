@@ -2,35 +2,19 @@ import throttle from "lodash-es/throttle.js";
 import { populateGroups } from "../../uiLogic/fieldGroups.js";
 
 export function createSocketMessageHandler({
-                                               pcRef,
-                                               socketRef,
-                                               clientId,
-                                               receivedBrushThrottle,
-                                               pingThrottle = 50,
-                                           }) {
-    const socket = socketRef.socket;
+    pcRef,
+    socketRef,
+    clientId,
+    receivedBrushThrottle,
+    pingThrottle = 50,
+}) {
+    // const socket = socketRef.socket; // TODO:
 
-    const throttledReceivedBrushTimings = throttle(
-        (receivedData) => {
-            handleReceivedBrush(pcRef, socketRef, receivedData, clientId);
-        },
-        receivedBrushThrottle
-    );
+    const throttledReceivedBrushTimings = throttle((receivedData) => {
+        handleReceivedBrush(pcRef, socketRef, receivedData, clientId);
+    }, receivedBrushThrottle);
 
-    const throttledReceivedPing = throttle((receivedData) => {
-        const message = {
-            type: "BenchMark",
-            benchMark: {
-                action: "ping",
-                clientId: clientId,
-                timeSent: receivedData.benchMark.timeSent,
-                pingType: receivedData.benchMark.pingType,
-            },
-        };
-        socket.send(JSON.stringify(message));
-    }, pingThrottle);
-
-    return function(event) {
+    return function (event) {
         const receivedData = JSON.parse(event.data);
 
         switch (receivedData.type) {
@@ -38,15 +22,16 @@ export function createSocketMessageHandler({
                 throttledReceivedBrushTimings(receivedData);
                 break;
             case "link":
-                populateGroups(receivedData.links, pcRef.pc.fields(), socketRef, pcRef);
-                break;
-            case "ping":
-                throttledReceivedPing(receivedData);
+                populateGroups(
+                    receivedData.links,
+                    pcRef.pc.fields(),
+                    socketRef,
+                    pcRef
+                );
                 break;
         }
     };
 }
-
 
 export function handleReceivedBrush(pcRef, socketRef, receivedData, clientId) {
     pcRef.pc.throttledUpdatePlotsView(0, receivedData.range ?? []);
@@ -68,8 +53,14 @@ export function handleReceivedBrush(pcRef, socketRef, receivedData, clientId) {
     socket.send(JSON.stringify(message));
 }
 
-export function waitForStartTrigger(socketRef, pcRef, clientId, receivedBrushThrottle) {
+export function waitForStartTrigger(
+    socketRef,
+    pcRef,
+    clientId,
+    receivedBrushThrottle
+) {
     const socket = socketRef.socket;
+    // (A) build your long‑lived handler exactly once:
     const onMessageFun = createSocketMessageHandler({
         pcRef,
         socketRef,
@@ -78,20 +69,23 @@ export function waitForStartTrigger(socketRef, pcRef, clientId, receivedBrushThr
     });
 
     return new Promise((resolve) => {
-        function handler(event) {
-            const receivedData = JSON.parse(event.data);
-
-            if (receivedData.type === "BenchMark" && receivedData.benchMark.action === "start") {
+        // (B) listen only for the “start” message:
+        function startHandler(evt) {
+            const data = JSON.parse(evt.data);
+            if (
+                data.type === "BenchMark" &&
+                data.benchMark.action === "start"
+            ) {
                 console.log("BenchMark Started");
-                socket.removeEventListener("message", handler);
-
-                socketRef.socket.onmessage = onMessageFun;
-
-                resolve(receivedData);
+                // (C) tear down the “start” watcher
+                socket.removeEventListener("message", startHandler);
+                // (D) install your real handler
+                socket.addEventListener("message", onMessageFun);
+                resolve(data);
             }
         }
 
-        socket.addEventListener("message", handler);
+        socket.addEventListener("message", startHandler);
     });
 }
 
@@ -100,15 +94,23 @@ export function waitForEndTrigger(socketRef, pcRef) {
     return new Promise((resolve) => {
         function handler(event) {
             const receivedData = JSON.parse(event.data);
-            if (receivedData.type === "BenchMark" && receivedData.benchMark.action === "end") {
+            if (
+                receivedData.type === "BenchMark" &&
+                receivedData.benchMark.action === "end"
+            ) {
                 console.log("   BenchMark Ended");
                 socket.removeEventListener("message", handler);
 
-                socketRef.socket.onmessage = function(event) {
+                socketRef.socket.onmessage = function (event) {
                     const receivedData = JSON.parse(event.data);
                     switch (receivedData.type) {
                         case "link":
-                            populateGroups(receivedData.links, pcRef.pc.fields(), socketRef, pcRef);
+                            populateGroups(
+                                receivedData.links,
+                                pcRef.pc.fields(),
+                                socketRef,
+                                pcRef
+                            );
                             break;
                     }
                 };
@@ -116,53 +118,10 @@ export function waitForEndTrigger(socketRef, pcRef) {
                 resolve(receivedData);
             }
         }
-        socket.onmessage = handler;
+
+        socket.addEventListener("message", handler);
     });
 }
-
-// export function waitForEndTrigger(socketRef, pcRef, clientId) {
-//     let socket = socketRef.socket;
-//     return new Promise((resolve) => {
-//         function handler(event) {
-//             const receivedData = JSON.parse(event.data);
-//             if (receivedData.type === "BenchMark" && receivedData.benchMark.action === "end") {
-//                 console.log("   BenchMark Ended");
-//                 socket.removeEventListener("message", handler);
-//
-//                 socketRef.socket.onmessage = function(event) {
-//                     const receivedData = JSON.parse(event.data);
-//                     let message;
-//                     let throttledReceivedBrushTimings;
-//                     switch (receivedData.type) {
-//                         case "selection":
-//                             throttledReceivedBrushTimings = throttle(handleReceivedBrush, 50);
-//                             throttledReceivedBrushTimings(pcRef, socketRef, receivedData, clientId);
-//                             break;
-//                         case "link":
-//                             populateGroups(receivedData.links, pcRef.pc.fields(), socketRef, pcRef);
-//                             break;
-//                         case "ping":
-//                             message = {
-//                                 type: "BenchMark",
-//                                 benchMark: {
-//                                     action: "ping",
-//                                     clientId: clientId,
-//                                     timeSent: receivedData.benchMark.timeSent,
-//                                     pingType: receivedData.benchMark.pingType,
-//                                 },
-//                             };
-//                             socket.send(JSON.stringify(message));
-//                             break;
-//                     }
-//                 };
-//
-//                 resolve(receivedData);
-//             }
-//         }
-//
-//         socket.addEventListener("message", handler);
-//     });
-// }
 
 export function sendEndTrigger(socketRef) {
     let socket = socketRef.socket;
@@ -197,9 +156,13 @@ export function sendStartTrigger(socketRef) {
         if (socket.readyState === WebSocket.OPEN) {
             sendLinkGroups();
         } else {
-            socket.addEventListener("open", () => {
-                sendLinkGroups();
-            }, { once: true });
+            socket.addEventListener(
+                "open",
+                () => {
+                    sendLinkGroups();
+                },
+                { once: true }
+            );
         }
     });
 }

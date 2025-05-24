@@ -151,6 +151,8 @@ export class PlotCoordinator {
 
     throttledUpdatePlotsView = throttle(this.updatePlotsView, 50);
 
+
+
     updatePlotsView(triggeringPlotId, newSelection) {
         this._plots.get(triggeringPlotId).lastSelectionRange = newSelection;
 
