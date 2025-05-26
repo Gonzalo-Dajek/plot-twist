@@ -6,6 +6,25 @@ import * as layout from "./benchMarkUtils/createLayout.js";
 import { sendEndTrigger, sendStartTrigger, waitForEndTrigger, waitForStartTrigger } from "./benchMarkUtils/webSocketPassiveCommunication.js";
 import { createFieldGroups, deleteFieldGroups, sendClientInfo, setupSelectionBroadcast } from "./benchMarkUtils/webSocketActiveCommunication.js";
 import { brushBackAndForth } from "./benchMarkUtils/brushing.js";
+import { loadLayout } from "../uiLogic/gridUtils.js";
+
+// TODO: add throttle to the server
+
+// TODO: make svg favicon and logo
+// TODO: make GitHub pretty with instructions
+// TODO: put some practical use cases in the description
+// TODO: example usage
+// TODO: add gif
+// TODO: sales pitch
+// TODO: add introductory text before loadCSV
+// TODO: add iris dataset
+// TODO: fix scatter plot dot size so it is smaller
+// TODO: fix labels so they are always on top and properly placed
+// TODO: clean plots code
+
+// TODO: test backend install instructions
+// TODO: add delta to the backend benchmarking
+// TODO: close port
 
 export async function benchMark(plots, url) {
     let clientId = prompt("Enter clientId:", "");
@@ -14,9 +33,9 @@ export async function benchMark(plots, url) {
     // BASE CASE------------------------------------------------------------------------------------------------------//
     let timeBetween = 50;
     let waitBetweenTestDuration = 1000;
-    let receivedBrushThrottle = 100;
+    let receivedBrushThrottle = 150;
     let isStaggered = false;
-    let testDuration = 40; // 40
+    let testDuration = 500; // 40
     const baseConfig = {
         dataDistribution: "evenly distributed",
         plotsAmount: 4,
@@ -53,12 +72,15 @@ export async function benchMark(plots, url) {
     // isStaggered = true;
     // modifiedConfigs = layout.generateConfigsForEventAnalysis2Clients(baseConfig)
     modifiedConfigs = layout.generateConfigsBigIntervalBetweenBrushes(baseConfig);
-    timeBetween = 600;
+    timeBetween = 500;
     // [isCustomLayoutSelected, layoutData] = layout.singleScatterLayout();
 
 
     // modifiedConfigs.splice(0, 57)
     // modifiedConfigs.unshift(modifiedConfigs[0]);
+    // modifiedConfigs.unshift(modifiedConfigs[0]);
+    // modifiedConfigs.unshift(modifiedConfigs[0]);
+
     // BENCHMARK CONFIGS HERE-----------------------------------------------------------------------------------------//
 
     let socketRef;
@@ -118,13 +140,13 @@ export async function benchMark(plots, url) {
 
         // set up message sending when a brush selection is made
         if (!firstTimeInit) {
-            setupSelectionBroadcast(pcRef, socketRef);
+            setupSelectionBroadcast(pcRef, socketRef, clientId);
         }
+        loadLayout(layoutData, pcRef, plots);
 
         // set up dummy plot to have the benchmark make selections
         pcRef.pc.BENCHMARK.isActive = true;
-        let id = -1;
-        pcRef.pc.addPlot(id, () => {});
+        pcRef.pc.addPlot(-1, () => {});
 
         // have the main client make all the field groups
         if (isMainClient) {
@@ -141,9 +163,6 @@ export async function benchMark(plots, url) {
 
         // when the start trigger is received start brushing back and forth (if it is an active client)
         await waitForStartTrigger(socketRef, pcRef, clientId, receivedBrushThrottle);
-        if(isMainClient){
-            // startPinging(socketRef); // TODO:
-        }
 
         if (clientId <= cfg.numberOfClientBrushing) {
             await brushBackAndForth(
@@ -152,7 +171,6 @@ export async function benchMark(plots, url) {
                 cfg.numDimensionsSelected,
                 cfg.catDimensionsSelected,
                 pcRef,
-                id,
                 cfg.brushSize,
                 socketRef,
                 clientId,
@@ -164,8 +182,6 @@ export async function benchMark(plots, url) {
 
         // have the main client clean up and send the end trigger
         if (isMainClient) {
-            // stopPinging(socketRef); // TODO:
-
             for (
                 let dataSetNum = 0;
                 dataSetNum < cfg.numberOfDataSets;

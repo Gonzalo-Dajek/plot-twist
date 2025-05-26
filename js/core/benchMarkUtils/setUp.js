@@ -5,6 +5,7 @@ import { PlotCoordinator } from "../plotCoordinator.js";
 import { rangeSet } from "../rangeSet.js";
 import { adjustBodyStyle, loadLayout } from "../../uiLogic/gridUtils.js";
 import { createSocketMessageHandler } from "./webSocketPassiveCommunication.js";
+import { setupSelectionBroadcast } from "./webSocketActiveCommunication.js";
 
 export function benchMarkSetUp(
     data,
@@ -43,22 +44,7 @@ export function benchMarkSetUp(
         const socket = socketRef.socket;
 
         socket.onopen = function() {
-            pcRef.pc.addPlot(0, () => {
-                const selection = new rangeSet();
-                for (let [id, plot] of pcRef.pc._plots.entries()) {
-                    if (id !== 0) {
-                        selection.addSelectionArr(JSON.parse(JSON.stringify(plot.lastSelectionRange)));
-                    }
-                }
-
-                const message = {
-                    type: "selection",
-                    range: selection.toArr(),
-                };
-
-                socket.send(JSON.stringify(message));
-            });
-
+            setupSelectionBroadcast(pcRef, socketRef, clientId);
             document.getElementById("slide-menu-btn").style.display = "flex";
         };
 
@@ -76,6 +62,5 @@ export function benchMarkSetUp(
         document.getElementById("slide-menu-btn").style.display = "flex";
     }
 
-    loadLayout(layoutData, pcRef, plots);
     adjustBodyStyle();
 }

@@ -151,8 +151,6 @@ export class PlotCoordinator {
 
     throttledUpdatePlotsView = throttle(this.updatePlotsView, 50);
 
-
-
     updatePlotsView(triggeringPlotId, newSelection) {
         this._plots.get(triggeringPlotId).lastSelectionRange = newSelection;
 
@@ -179,13 +177,39 @@ export class PlotCoordinator {
         this._benchMark("postIndexUpdate");
 
         this._benchMark("prePlotsUpdate");
+
         for (let [plotToUpdateId, plot] of this._plots.entries()) {
             if ((triggeringPlotId === 0 && plotToUpdateId !== 0) || (triggeringPlotId !== 0)) {
-                if(triggeringPlotId === -1 && plotToUpdateId === 0) continue; // id === -1 is designated for benchmarking purposes
+                // if(triggeringPlotId === -1 && plotToUpdateId === 0) continue; // id === -1 is designated for benchmarking purposes
                 plot.plotUpdateFunction();
             }
         }
         this._benchMark("postPlotsUpdate");
+
+        // if (this.BENCHMARK.isActive) {
+        //     for (let [plotToUpdateId, plotToUpdate] of this._plots.entries()) {
+        //         if ((triggeringPlotId === 0 && plotToUpdateId !== 0) || (triggeringPlotId !== 0)) {
+        //             if(triggeringPlotId === -1 && plotToUpdateId === 0) continue; // id === -1 is designated for benchmarking purposes
+        //             if(triggeringPlotId === 0) continue;
+        //             plotToUpdate.plotUpdateFunction();
+        //         }
+        //     }
+        //
+        //     this._benchMark("postPlotsUpdate");
+        //     if (triggeringPlotId !== -1) {
+        //         this._plots.get(0).plotUpdateFunction();
+        //     }
+        // } else {
+        //     this._plots.get(0).plotUpdateFunction();
+        //
+        //     for (let [plotToUpdateId, plotToUpdate] of this._plots.entries()) {
+        //         if ((triggeringPlotId === 0 && plotToUpdateId !== 0) || (triggeringPlotId !== 0)) {
+        //             if(triggeringPlotId === 0) continue;
+        //             plotToUpdate.plotUpdateFunction();
+        //         }
+        //     }
+        //     this._benchMark("postPlotsUpdate");
+        // }
     }
 
     fields() {

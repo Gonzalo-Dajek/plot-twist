@@ -16,27 +16,13 @@ function createSelection(a, b, numFields, catFields) {
     return [...numericalSelections, ...categoricalSelections];
 }
 
-function sendBrushTimings(pcRef, socketRef, selection, clientId, brushId) {
-    let timeToUpdatePlots = pcRef.pc.BENCHMARK.deltaUpdatePlots;
-    let timeToProcessBrushLocally = pcRef.pc.BENCHMARK.deltaUpdateIndexes;
-
+function sendDoBrush(pcRef, socketRef, selection, clientId, brushId) {
     let reducedSelection = new rangeSet();
-    for (let [id, plot] of pcRef.pc._plots.entries()) {
-        if (id !== 0) {
-            reducedSelection.addSelectionArr(
-                JSON.parse(JSON.stringify(plot.lastSelectionRange))
-            );
-        }
-    }
     reducedSelection.addSelectionArr(JSON.parse(JSON.stringify(selection)));
-
     let message = {
         type: "BenchMark",
         benchMark: {
-            action: "brush",
-            timeToProcessBrushLocally: timeToProcessBrushLocally,
-            timeToUpdatePlots: timeToUpdatePlots,
-            timeSent: Date.now(),
+            action: "doBrush",
             range: reducedSelection.toArr(),
             clientId: clientId,
             brushId: brushId,
@@ -45,6 +31,8 @@ function sendBrushTimings(pcRef, socketRef, selection, clientId, brushId) {
 
     let socket = socketRef.socket;
     socket.send(JSON.stringify(message));
+    console.log(">>SendDoBrush: ");
+    console.log(message);
 }
 
 export async function brushBackAndForth(
@@ -53,7 +41,6 @@ export async function brushBackAndForth(
     numDimensionsSelected,
     catDimensionsSelected,
     pcRef,
-    id,
     brushSize,
     socketRef,
     clientId,
@@ -84,9 +71,6 @@ export async function brushBackAndForth(
             if (x <= startPos) forward = true;
         }
 
-        let startTime = performance.now();
-
-        let didBrush = false;
 
         if (!isStaggered || i >= startStep) {
             let a = x - brushSize / 2;
@@ -97,21 +81,12 @@ export async function brushBackAndForth(
                 numDimensionsSelected,
                 catDimensionsSelected
             );
-            pcRef.pc.updatePlotsView(id, selection);
-            sendBrushTimings(pcRef, socketRef, selection, clientId, brushId);
-            didBrush = true;
+            sendDoBrush(pcRef, socketRef, selection, clientId, brushId);
         }
 
-        let elapsed = performance.now() - startTime;
-        let remainingTime = Math.max(timeBetween - elapsed, 0);
-
-        if (remainingTime > 0) {
-            await new Promise((resolve) => setTimeout(resolve, remainingTime));
-        }
-
-        if (didBrush) brushId++;
+        brushId++;
+        await new Promise((resolve) => setTimeout(resolve, timeBetween));
     }
 
-    pcRef.pc.updatePlotsView(id, []);
-    sendBrushTimings(pcRef, socketRef, [], clientId, brushId);
+    sendDoBrush(pcRef, socketRef, [], clientId, brushId);
 }

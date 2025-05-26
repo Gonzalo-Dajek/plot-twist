@@ -16,24 +16,6 @@ function run(){
     // let url = "ws://localhost:5226/";
     let url = "ws://192.168.1.9:5226/";
 
-    // TODO: add throttle to the server
-
-    // TODO: make svg favicon and logo
-    // TODO: make GitHub pretty with instructions
-        // TODO: put some practical use cases in the description
-        // TODO: example usage
-        // TODO: add gif
-        // TODO: sales pitch
-    // TODO: add introductory text before loadCSV
-    // TODO: add iris dataset
-    // TODO: fix scatter plot dot size so it is smaller
-    // TODO: fix labels so they are always on top and properly placed
-    // TODO: clean plots code
-
-    // TODO: test backend install instructions
-    // TODO: add delta to the backend benchmarking
-    // TODO: close port
-
     const BENCHMARK = true;
     if(BENCHMARK){
         benchMark(plots, url).then();

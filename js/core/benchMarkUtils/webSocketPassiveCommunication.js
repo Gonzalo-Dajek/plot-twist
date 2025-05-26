@@ -1,27 +1,18 @@
 import throttle from "lodash-es/throttle.js";
 import { populateGroups } from "../../uiLogic/fieldGroups.js";
+import { rangeSet } from "../rangeSet.js";
 
 export function createSocketMessageHandler({
     pcRef,
     socketRef,
     clientId,
-    receivedBrushThrottle,
-    pingThrottle = 50,
+    throttle_ms,
 }) {
-    // const socket = socketRef.socket; // TODO:
-
-    const throttledReceivedBrushTimings = throttle((receivedData) => {
-        handleReceivedBrush(pcRef, socketRef, receivedData, clientId);
-    }, receivedBrushThrottle);
-
-    return function (event) {
+    return function onSocketMessage(event) {
         const receivedData = JSON.parse(event.data);
 
         switch (receivedData.type) {
-            case "selection":
-                throttledReceivedBrushTimings(receivedData);
-                break;
-            case "link":
+            case 'link':
                 populateGroups(
                     receivedData.links,
                     pcRef.pc.fields(),
@@ -29,12 +20,36 @@ export function createSocketMessageHandler({
                     pcRef
                 );
                 break;
+
+            case 'BenchMark':
+                {
+                    const bm = receivedData.benchMark;
+                    switch (bm.action) {
+                        case 'doBrushClient':
+                            handleReceivedDoBrush(pcRef, socketRef, bm, clientId);
+                            break;
+                        case 'translatedBrushClient':
+                            handleReceivedTranslatedBrushClient(
+                                pcRef,
+                                socketRef,
+                                bm,
+                                clientId
+                            );
+                            break;
+                    }
+                }
+                break;
         }
     };
 }
 
-export function handleReceivedBrush(pcRef, socketRef, receivedData, clientId) {
-    pcRef.pc.throttledUpdatePlotsView(0, receivedData.range ?? []);
+
+export function handleReceivedTranslatedBrushClient(pcRef, socketRef, receivedData, clientId) {
+    // alert(receivedData.type);
+    console.log("  <<< translatedBrush:");
+    console.log(receivedData);
+    pcRef.pc.updatePlotsView(-1, receivedData.range ?? []);
+
     let timeToUpdatePlots = pcRef.pc.BENCHMARK.deltaUpdatePlots;
     let timeToProcessBrushLocally = pcRef.pc.BENCHMARK.deltaUpdateIndexes;
 
@@ -44,13 +59,55 @@ export function handleReceivedBrush(pcRef, socketRef, receivedData, clientId) {
             action: "receivedBrush",
             timeToProcessBrushLocally: timeToProcessBrushLocally,
             timeToUpdatePlots: timeToUpdatePlots,
-            timeReceived: Date.now(),
+            timeSent: receivedData.timeSent,
+            brushId: receivedData.brushId,
+            clientId: clientId,
+            brushClientId: receivedData.clientId,
+        },
+    };
+
+    let socket = socketRef.socket;
+    socket.send(JSON.stringify(message));
+    console.log(">>receivedBrush:"); // TODO: here maybe
+    console.log(message);
+}
+
+export function handleReceivedDoBrush(pcRef, socketRef, receivedData, clientId) {
+    console.log("  <<< doBrushClient:");
+    console.log(receivedData);
+
+    pcRef.pc.updatePlotsView(-1, receivedData.range ?? []);
+
+    let timeToUpdatePlots = pcRef.pc.BENCHMARK.deltaUpdatePlots;
+    let timeToProcessBrushLocally = pcRef.pc.BENCHMARK.deltaUpdateIndexes;
+
+    let reducedSelection = new rangeSet();
+    for (let [id, plot] of pcRef.pc._plots.entries()) {
+        if (id !== 0) {
+            reducedSelection.addSelectionArr(
+                JSON.parse(JSON.stringify(plot.lastSelectionRange))
+            );
+        }
+    }
+    // reducedSelection.addSelectionArr(JSON.parse(JSON.stringify(receivedData.range)));
+
+    let message = {
+        type: "BenchMark",
+        benchMark: {
+            action: "brushed",
+            timeToProcessBrushLocally: timeToProcessBrushLocally,
+            timeToUpdatePlots: timeToUpdatePlots,
+            range: reducedSelection.toArr(),
+            timeSent: receivedData.timeSent,
+            brushId: receivedData.brushId,
             clientId: clientId,
         },
     };
 
     let socket = socketRef.socket;
     socket.send(JSON.stringify(message));
+    console.log(">>brushed: ");
+    console.log(message);
 }
 
 export function waitForStartTrigger(
@@ -61,12 +118,12 @@ export function waitForStartTrigger(
 ) {
     const socket = socketRef.socket;
     // (A) build your long‑lived handler exactly once:
-    const onMessageFun = createSocketMessageHandler({
-        pcRef,
-        socketRef,
-        clientId,
-        receivedBrushThrottle,
-    });
+    // const onMessageFun = createSocketMessageHandler({
+    //     pcRef,
+    //     socketRef,
+    //     clientId,
+    //     receivedBrushThrottle,
+    // });
 
     return new Promise((resolve) => {
         // (B) listen only for the “start” message:
@@ -80,7 +137,7 @@ export function waitForStartTrigger(
                 // (C) tear down the “start” watcher
                 socket.removeEventListener("message", startHandler);
                 // (D) install your real handler
-                socket.addEventListener("message", onMessageFun);
+                // socket.addEventListener("message", onMessageFun);
                 resolve(data);
             }
         }
@@ -134,6 +191,7 @@ export function sendEndTrigger(socketRef) {
     };
 
     socket.send(JSON.stringify(message));
+    console.log(">>END");
 }
 
 export function sendStartTrigger(socketRef) {
@@ -149,6 +207,7 @@ export function sendStartTrigger(socketRef) {
             };
 
             socket.send(JSON.stringify(message));
+            console.log(">>START");
 
             resolve();
         }
