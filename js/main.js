@@ -14,7 +14,9 @@ function run(){
     ];
 
     // let url = "ws://localhost:5226/";
-    let url = "ws://192.168.1.9:5226/";
+    // let url = "ws://192.168.1.9:5226/";
+    let url = "ws://192.168.1.27:5226/";
+
 
     const BENCHMARK = true;
     if(BENCHMARK){
