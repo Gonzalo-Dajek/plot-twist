@@ -2,8 +2,7 @@ import { initTopBarScroll } from "../../uiLogic/topBarScroll.js";
 import { initExportLayout, initGridResizing, initLoadCsv, initLoadLayout } from "../../uiLogic/initUI.js";
 import { initFieldGroups } from "../../uiLogic/fieldGroups.js";
 import { PlotCoordinator } from "../plotCoordinator.js";
-import { rangeSet } from "../rangeSet.js";
-import { adjustBodyStyle, loadLayout } from "../../uiLogic/gridUtils.js";
+import { adjustBodyStyle} from "../../uiLogic/gridUtils.js";
 import { createSocketMessageHandler } from "./webSocketPassiveCommunication.js";
 import { setupSelectionBroadcast } from "./webSocketActiveCommunication.js";
 
@@ -17,7 +16,7 @@ export function benchMarkSetUp(
     dataSetNum,
     firstTimeInit,
     clientId,
-    receivedBrushThrottle
+    brushIdRef
 ) {
     initTopBarScroll();
     initExportLayout();
@@ -39,21 +38,14 @@ export function benchMarkSetUp(
     document.getElementById("loadLayoutButton").style.display = "flex";
     document.getElementById("exportLayoutButton").style.display = "flex";
 
-    if (firstTimeInit) {
+    if(firstTimeInit){
         socketRef.socket = new WebSocket(url);
         const socket = socketRef.socket;
 
         socket.onopen = function() {
-            setupSelectionBroadcast(pcRef, socketRef, clientId);
+            setupSelectionBroadcast(pcRef, socketRef, clientId, brushIdRef);
             document.getElementById("slide-menu-btn").style.display = "flex";
         };
-
-        socket.onmessage = createSocketMessageHandler({
-            pcRef,
-            socketRef,
-            clientId,
-            receivedBrushThrottle,
-        });
 
         socket.onerror = function(e) {
             console.log(e);
@@ -61,6 +53,10 @@ export function benchMarkSetUp(
     } else {
         document.getElementById("slide-menu-btn").style.display = "flex";
     }
+    socketRef.socket.onmessage = createSocketMessageHandler({
+        pcRef,
+        socketRef
+    });
 
     adjustBodyStyle();
 }

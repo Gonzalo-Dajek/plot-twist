@@ -13,12 +13,10 @@ function run(){
         parallelCoordinates,
     ];
 
-    // let url = "ws://localhost:5226/";
-    // let url = "ws://192.168.1.9:5226/";
-    let url = "ws://192.168.1.27:5226/";
+    let ip = "192.168.1.9";
+    let url = `ws://${ip}:5226/`;
 
-
-    const BENCHMARK = true;
+    const BENCHMARK = false;
     if(BENCHMARK){
         benchMark(plots, url).then();
     }else{

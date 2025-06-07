@@ -1,31 +1,30 @@
 import { rangeSet } from "../rangeSet.js";
 
-export function setupSelectionBroadcast(pcRef, socketRef, clientId) {
+export function setupSelectionBroadcast(pcRef, socketRef, clientId, brushIdRef) {
     pcRef.pc.addPlot(0, () => {
-        // let selection = new rangeSet();
-        // for (let [id, plot] of pcRef.pc._plots.entries()) {
-        //     if (id !== 0) {
-        //         selection.addSelectionArr(JSON.parse(JSON.stringify(plot.lastSelectionRange)));
-        //     }
-        // }
-        //
-        // let timeToUpdatePlots = pcRef.pc.BENCHMARK.deltaUpdatePlots;
-        // let timeToProcessBrushLocally = pcRef.pc.BENCHMARK.deltaUpdateIndexes;
-        //
-        // let message = {
-        //     type: "BenchMark",
-        //     benchMark: {
-        //         action: "selectionMade",
-        //         range: selection.toArr(),
-        //         timeToProcessBrushLocally: timeToProcessBrushLocally,
-        //         timeToUpdatePlots: timeToUpdatePlots,
-        //         brushId: -1, // TODO: add brushID
-        //         timeSent: -1,
-        //         clientId: clientId,
-        //     },
+        let selection = new rangeSet();
+        for (let [id, plot] of pcRef.pc._plots.entries()) {
+            if (id !== 0) {
+                selection.addSelectionArr(JSON.parse(JSON.stringify(plot.lastSelectionRange)));
+            }
+        }
+
+        // const message = {
+        //     type: "selection",
+        //     range: selection.toArr(),
         // };
-        //
-        // socketRef.socket.send(JSON.stringify(message));
+
+        let message = {
+            type: "BenchMark",
+            benchMark: {
+                action: "processBrushInServer",
+                range: selection.toArr(),
+                clientId: clientId,
+                brushId: brushIdRef.brushId,
+            },
+        };
+
+        socketRef.socket.send(JSON.stringify(message));
     });
 }
 

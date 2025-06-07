@@ -176,40 +176,21 @@ export class PlotCoordinator {
         this._plots.get(triggeringPlotId).lastIndexesSelected = newlySelectedIndexes;
         this._benchMark("postIndexUpdate");
 
-        this._benchMark("prePlotsUpdate");
+        // the id 0 is reserved for server communication, and the id -1 for benchmarking purposes
+        if(triggeringPlotId !== 0){
+            // the selection is sent to the server before updating the rest of the plots
+            this._plots.get(0)?.plotUpdateFunction();
+        }
+        this._plots.get(-1)?.plotUpdateFunction("postIndex", triggeringPlotId!==0);
 
+        this._benchMark("prePlotsUpdate");
         for (let [plotToUpdateId, plot] of this._plots.entries()) {
-            if ((triggeringPlotId === 0 && plotToUpdateId !== 0) || (triggeringPlotId !== 0)) {
-                // if(triggeringPlotId === -1 && plotToUpdateId === 0) continue; // id === -1 is designated for benchmarking purposes
-                plot.plotUpdateFunction();
-            }
+            if (plotToUpdateId === 0 || plotToUpdateId === -1) continue;
+            plot.plotUpdateFunction();
         }
         this._benchMark("postPlotsUpdate");
 
-        // if (this.BENCHMARK.isActive) {
-        //     for (let [plotToUpdateId, plotToUpdate] of this._plots.entries()) {
-        //         if ((triggeringPlotId === 0 && plotToUpdateId !== 0) || (triggeringPlotId !== 0)) {
-        //             if(triggeringPlotId === -1 && plotToUpdateId === 0) continue; // id === -1 is designated for benchmarking purposes
-        //             if(triggeringPlotId === 0) continue;
-        //             plotToUpdate.plotUpdateFunction();
-        //         }
-        //     }
-        //
-        //     this._benchMark("postPlotsUpdate");
-        //     if (triggeringPlotId !== -1) {
-        //         this._plots.get(0).plotUpdateFunction();
-        //     }
-        // } else {
-        //     this._plots.get(0).plotUpdateFunction();
-        //
-        //     for (let [plotToUpdateId, plotToUpdate] of this._plots.entries()) {
-        //         if ((triggeringPlotId === 0 && plotToUpdateId !== 0) || (triggeringPlotId !== 0)) {
-        //             if(triggeringPlotId === 0) continue;
-        //             plotToUpdate.plotUpdateFunction();
-        //         }
-        //     }
-        //     this._benchMark("postPlotsUpdate");
-        // }
+        this._plots.get(-1)?.plotUpdateFunction("postPlots", triggeringPlotId!==0);
     }
 
     fields() {

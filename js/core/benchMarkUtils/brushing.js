@@ -1,4 +1,3 @@
-import { rangeSet } from "../rangeSet.js";
 
 function createSelection(a, b, numFields, catFields) {
     const numericalSelections = Array.from({ length: numFields }, (_, i) => ({
@@ -14,25 +13,6 @@ function createSelection(a, b, numFields, catFields) {
     }));
 
     return [...numericalSelections, ...categoricalSelections];
-}
-
-function sendDoBrush(pcRef, socketRef, selection, clientId, brushId) {
-    let reducedSelection = new rangeSet();
-    reducedSelection.addSelectionArr(JSON.parse(JSON.stringify(selection)));
-    let message = {
-        type: "BenchMark",
-        benchMark: {
-            action: "doBrush",
-            range: reducedSelection.toArr(),
-            clientId: clientId,
-            brushId: brushId,
-        },
-    };
-
-    let socket = socketRef.socket;
-    socket.send(JSON.stringify(message));
-    console.log(">>SendDoBrush: ");
-    console.log(message);
 }
 
 export async function brushBackAndForth(
@@ -60,7 +40,6 @@ export async function brushBackAndForth(
     }
 
     let forward = true;
-    let brushId = 0;
     for (let i = 0; i < steps; i++) {
         // Move step
         if (forward) {
@@ -81,12 +60,12 @@ export async function brushBackAndForth(
                 numDimensionsSelected,
                 catDimensionsSelected
             );
-            sendDoBrush(pcRef, socketRef, selection, clientId, brushId);
+
+            pcRef.pc.updatePlotsView(-1, selection);
         }
 
-        brushId++;
         await new Promise((resolve) => setTimeout(resolve, timeBetween));
     }
 
-    sendDoBrush(pcRef, socketRef, [], clientId, brushId);
+    pcRef.pc.updatePlotsView(-1, []);
 }

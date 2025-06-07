@@ -3,12 +3,22 @@ import { createData, dataToTable } from "./benchMarkUtils/dataCreation.js";
 import { benchMarkSetUp } from "./benchMarkUtils/setUp.js";
 import { logTimingInfo, validateConfig, wait } from "./benchMarkUtils/miscUtils.js";
 import * as layout from "./benchMarkUtils/createLayout.js";
-import { sendEndTrigger, sendStartTrigger, waitForEndTrigger, waitForStartTrigger } from "./benchMarkUtils/webSocketPassiveCommunication.js";
+import {
+    sendBenchMarkTimings,
+    sendEndTrigger,
+    sendStartTrigger,
+    waitForEndTrigger,
+    waitForStartTrigger,
+} from "./benchMarkUtils/webSocketPassiveCommunication.js";
 import { createFieldGroups, deleteFieldGroups, sendClientInfo, setupSelectionBroadcast } from "./benchMarkUtils/webSocketActiveCommunication.js";
 import { brushBackAndForth } from "./benchMarkUtils/brushing.js";
 import { loadLayout } from "../uiLogic/gridUtils.js";
 
-// TODO: add throttle to the server
+// TODO: change the benchmarking timing events to simple ACKs -
+// TODO: add serve node functionality -
+// TODO: add throttle to the server -
+// TODO: make presentation -
+// TODO: add basic custom complex function functionality -
 
 // TODO: make svg favicon and logo
 // TODO: make GitHub pretty with instructions
@@ -23,7 +33,6 @@ import { loadLayout } from "../uiLogic/gridUtils.js";
 // TODO: clean plots code
 
 // TODO: test backend install instructions
-// TODO: add delta to the backend benchmarking
 // TODO: close port
 
 export async function benchMark(plots, url) {
@@ -31,11 +40,10 @@ export async function benchMark(plots, url) {
     clientId = Number(clientId);
 
     // BASE CASE------------------------------------------------------------------------------------------------------//
-    let timeBetween = 50;
-    let waitBetweenTestDuration = 1000;
-    let receivedBrushThrottle = 150;
+    let timeBetween = 50; // 50
+    let waitBetweenTestDuration = 20*1000;
     let isStaggered = false;
-    let testDuration = 500; // 40
+    let testDuration = 40; // 40
     const baseConfig = {
         dataDistribution: "evenly distributed",
         plotsAmount: 4,
@@ -68,11 +76,11 @@ export async function benchMark(plots, url) {
     // modifiedConfigs = layout.generateConfigsBrushSizeAndTypeOfData(baseConfig)
     // modifiedConfigs = layout.generateConfigsAmountOfEntries(baseConfig);
     // modifiedConfigs = layout.generateConfigsBrushSizeVsStepSize(baseConfig);
-    // modifiedConfigs = layout.generateConfigsStaggeredBrushingEventWith4Clients(baseConfig)
-    // isStaggered = true;
+    modifiedConfigs = layout.generateConfigsStaggeredBrushingEventWith4Clients(baseConfig)
+    isStaggered = true;
     // modifiedConfigs = layout.generateConfigsForEventAnalysis2Clients(baseConfig)
-    modifiedConfigs = layout.generateConfigsBigIntervalBetweenBrushes(baseConfig);
-    timeBetween = 500;
+    // modifiedConfigs = layout.generateConfigsBigIntervalBetweenBrushes(baseConfig);
+    // timeBetween = 500;
     // [isCustomLayoutSelected, layoutData] = layout.singleScatterLayout();
 
 
@@ -82,11 +90,12 @@ export async function benchMark(plots, url) {
     // modifiedConfigs.unshift(modifiedConfigs[0]);
 
     // BENCHMARK CONFIGS HERE-----------------------------------------------------------------------------------------//
-
+    let brushIdRef = {
+        brushId: 0,
+    }
     let socketRef;
     let firstTimeInit = true;
     for (let i = 0; i < modifiedConfigs.length; i++) {
-        // Make sure the benchmark makes sense
         const cfg = modifiedConfigs[i];
         validateConfig(cfg);
 
@@ -134,19 +143,23 @@ export async function benchMark(plots, url) {
             cfg.dataSetNum,
             firstTimeInit,
             clientId,
-            receivedBrushThrottle
+            brushIdRef
         );
         await sendClientInfo(cfg, socketRef, clientId, pcRef);
 
         // set up message sending when a brush selection is made
         if (!firstTimeInit) {
-            setupSelectionBroadcast(pcRef, socketRef, clientId);
+            setupSelectionBroadcast(pcRef, socketRef, clientId, brushIdRef);
         }
         loadLayout(layoutData, pcRef, plots);
 
         // set up dummy plot to have the benchmark make selections
         pcRef.pc.BENCHMARK.isActive = true;
-        pcRef.pc.addPlot(-1, () => {});
+        pcRef.pc.addPlot(-1,
+            (measurement, wasSent)=>{
+                sendBenchMarkTimings(socketRef, pcRef, brushIdRef, clientId, measurement, wasSent);
+            }
+        );
 
         // have the main client make all the field groups
         if (isMainClient) {
@@ -162,11 +175,11 @@ export async function benchMark(plots, url) {
         }
 
         // when the start trigger is received start brushing back and forth (if it is an active client)
-        await waitForStartTrigger(socketRef, pcRef, clientId, receivedBrushThrottle);
+        await waitForStartTrigger(socketRef);
 
         if (clientId <= cfg.numberOfClientBrushing) {
             await brushBackAndForth(
-                ((cfg.testDuration * 1000) / timeBetween) * 0.60,
+                ((cfg.testDuration * 1000) / timeBetween),
                 cfg.stepSize,
                 cfg.numDimensionsSelected,
                 cfg.catDimensionsSelected,

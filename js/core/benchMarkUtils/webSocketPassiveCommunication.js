@@ -1,132 +1,61 @@
-import throttle from "lodash-es/throttle.js";
 import { populateGroups } from "../../uiLogic/fieldGroups.js";
-import { rangeSet } from "../rangeSet.js";
 
 export function createSocketMessageHandler({
     pcRef,
     socketRef,
-    clientId,
-    throttle_ms,
 }) {
     return function onSocketMessage(event) {
         const receivedData = JSON.parse(event.data);
 
         switch (receivedData.type) {
             case 'link':
-                populateGroups(
-                    receivedData.links,
-                    pcRef.pc.fields(),
-                    socketRef,
-                    pcRef
-                );
+                populateGroups(receivedData.links, pcRef.pc.fields(), socketRef, pcRef);
                 break;
-
-            case 'BenchMark':
-                {
-                    const bm = receivedData.benchMark;
-                    switch (bm.action) {
-                        case 'doBrushClient':
-                            handleReceivedDoBrush(pcRef, socketRef, bm, clientId);
-                            break;
-                        case 'translatedBrushClient':
-                            handleReceivedTranslatedBrushClient(
-                                pcRef,
-                                socketRef,
-                                bm,
-                                clientId
-                            );
-                            break;
-                    }
-                }
+            case "selection":
+                pcRef.pc.throttledUpdatePlotsView(0, receivedData.range ?? []);
                 break;
         }
     };
 }
 
-
-export function handleReceivedTranslatedBrushClient(pcRef, socketRef, receivedData, clientId) {
-    // alert(receivedData.type);
-    console.log("  <<< translatedBrush:");
-    console.log(receivedData);
-    pcRef.pc.updatePlotsView(-1, receivedData.range ?? []);
-
-    let timeToUpdatePlots = pcRef.pc.BENCHMARK.deltaUpdatePlots;
-    let timeToProcessBrushLocally = pcRef.pc.BENCHMARK.deltaUpdateIndexes;
-
-    let message = {
-        type: "BenchMark",
-        benchMark: {
-            action: "receivedBrush",
-            timeToProcessBrushLocally: timeToProcessBrushLocally,
-            timeToUpdatePlots: timeToUpdatePlots,
-            timeSent: receivedData.timeSent,
-            brushId: receivedData.brushId,
-            clientId: clientId,
-            brushClientId: receivedData.clientId,
-        },
-    };
-
-    let socket = socketRef.socket;
-    socket.send(JSON.stringify(message));
-    console.log(">>receivedBrush:"); // TODO: here maybe
-    console.log(message);
-}
-
-export function handleReceivedDoBrush(pcRef, socketRef, receivedData, clientId) {
-    console.log("  <<< doBrushClient:");
-    console.log(receivedData);
-
-    pcRef.pc.updatePlotsView(-1, receivedData.range ?? []);
-
-    let timeToUpdatePlots = pcRef.pc.BENCHMARK.deltaUpdatePlots;
-    let timeToProcessBrushLocally = pcRef.pc.BENCHMARK.deltaUpdateIndexes;
-
-    let reducedSelection = new rangeSet();
-    for (let [id, plot] of pcRef.pc._plots.entries()) {
-        if (id !== 0) {
-            reducedSelection.addSelectionArr(
-                JSON.parse(JSON.stringify(plot.lastSelectionRange))
-            );
-        }
+export function sendBenchMarkTimings(socketRef, pcRef, brushIdRef, clientId, measurement, wasSent) {
+    let message;
+    if(measurement === "postIndex") {
+        let timeToProcessBrushLocally = pcRef.pc.BENCHMARK.deltaUpdateIndexes;
+        message = {
+            type: "BenchMark",
+            benchMark: {
+                action: "updateIndexes",
+                timeToProcessBrushLocally: timeToProcessBrushLocally,
+                brushId: brushIdRef.brushId,
+                clientId: clientId,
+                isActiveBrush: wasSent,
+            },
+        };
     }
-    // reducedSelection.addSelectionArr(JSON.parse(JSON.stringify(receivedData.range)));
-
-    let message = {
-        type: "BenchMark",
-        benchMark: {
-            action: "brushed",
-            timeToProcessBrushLocally: timeToProcessBrushLocally,
-            timeToUpdatePlots: timeToUpdatePlots,
-            range: reducedSelection.toArr(),
-            timeSent: receivedData.timeSent,
-            brushId: receivedData.brushId,
-            clientId: clientId,
-        },
-    };
+    if(measurement === "postPlots") {
+        let timeToUpdatePlots = pcRef.pc.BENCHMARK.deltaUpdatePlots;
+        message = {
+            type: "BenchMark",
+            benchMark: {
+                action: "updatePlots",
+                timeToUpdatePlots: timeToUpdatePlots,
+                brushId: brushIdRef.brushId,
+                clientId: clientId,
+                isActiveBrush: wasSent,
+            },
+        };
+        brushIdRef.brushId++;
+    }
 
     let socket = socketRef.socket;
     socket.send(JSON.stringify(message));
-    console.log(">>brushed: ");
-    console.log(message);
 }
 
-export function waitForStartTrigger(
-    socketRef,
-    pcRef,
-    clientId,
-    receivedBrushThrottle
-) {
+export function waitForStartTrigger(socketRef) {
     const socket = socketRef.socket;
-    // (A) build your long‑lived handler exactly once:
-    // const onMessageFun = createSocketMessageHandler({
-    //     pcRef,
-    //     socketRef,
-    //     clientId,
-    //     receivedBrushThrottle,
-    // });
 
     return new Promise((resolve) => {
-        // (B) listen only for the “start” message:
         function startHandler(evt) {
             const data = JSON.parse(evt.data);
             if (
@@ -134,10 +63,7 @@ export function waitForStartTrigger(
                 data.benchMark.action === "start"
             ) {
                 console.log("BenchMark Started");
-                // (C) tear down the “start” watcher
                 socket.removeEventListener("message", startHandler);
-                // (D) install your real handler
-                // socket.addEventListener("message", onMessageFun);
                 resolve(data);
             }
         }

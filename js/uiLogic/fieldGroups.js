@@ -1,5 +1,4 @@
 import { rangeSet } from "../core/rangeSet.js";
-import throttle from "lodash-es/throttle.js";
 import deleteIcon from '../../assets/delete_icon.svg';
 
 export function initFieldGroups(pcRef, socketRef) {
