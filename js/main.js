@@ -13,10 +13,10 @@ function run(){
         parallelCoordinates,
     ];
 
-    let ip = "192.168.1.9";
+    let ip = "181.94.71.141";
     let url = `ws://${ip}:5226/`;
+    const BENCHMARK = true;
 
-    const BENCHMARK = false;
     if(BENCHMARK){
         benchMark(plots, url).then();
     }else{

@@ -1,5 +1,6 @@
 import { rangeSet } from "../core/rangeSet.js";
 import deleteIcon from '../../assets/delete_icon.svg';
+import { debounce } from "lodash-es";
 
 export function initFieldGroups(pcRef, socketRef) {
     document.getElementById("group-name-submit").addEventListener("click", function() {
@@ -46,32 +47,49 @@ export function connectToWebSocket(socketRef, pcRef, url) {
     };
 
     // When a message is received
-    socket.onmessage = function(event) {
-        const receivedData = JSON.parse(event.data);
+    const processSelection = debounce((range) => {
+        pcRef.pc.throttledUpdatePlotsView(0, range);
+    }, 0, { leading: false, trailing: true });
 
-        // console.log("Message from server:", receivedData);
-        switch (receivedData.type) {
-            case "selection":
-                pcRef.pc.throttledUpdatePlotsView(0, receivedData.range ?? []);
-
-                break;
-            case "link":
-                populateGroups(receivedData.links, pcRef.pc.fields(), socketRef, pcRef);
-                break;
+    socket.onmessage = ({ data }) => {
+        const msg = JSON.parse(data);
+        if (msg.type === 'selection') {
+            processSelection(msg.range ?? []);
+        } else if (msg.type === 'link') {
+            populateGroups(msg.links, pcRef.pc.fields(), socketRef, pcRef);
         }
     };
+
+    // socket.onmessage = function(event) {
+    //     const receivedData = JSON.parse(event.data);
+    //
+    //     // console.log("Message from server:", receivedData);
+    //     switch (receivedData.type) {
+    //         case "selection":
+    //             pcRef.pc.throttledUpdatePlotsView(0, receivedData.range ?? []);
+    //
+    //             break;
+    //         case "link":
+    //             populateGroups(receivedData.links, pcRef.pc.fields(), socketRef, pcRef);
+    //             break;
+    //     }
+    // };
 
     // When the connection is closed
     socket.onclose = function() {
         // console.log("WebSocket connection closed");
+        showOffErrorMsg("The tool is running in offline mode")
+        pcRef.pc.removePlot(0);
+        pcRef.pc.addPlot(0, ()=> {});
     };
 
     // Handle connection errors
     socket.onerror = function( error ) {
         console.log("WebSocket error:", error);
         console.log("The tool is currently in offline mode");
+        pcRef.pc.removePlot(0);
         pcRef.pc.addPlot(0, ()=> {});
-        showOffErrorMsg("The tool is running in offline mode")
+        // showOffErrorMsg("The tool is running in offline mode")
     };
 }
 

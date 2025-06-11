@@ -34,6 +34,7 @@ export class PlotCoordinator {
      * An array of integers where each index corresponds to an entry in _entries.
      * _entrySelectionTracker[entryIndex] stores how many times that entry is currently being selected.
      * A count increases for each plot selecting the entry and once more if selected by the intersection of all other clients and decreases if no longer selected.
+     * if _entrySelectionTracker[entryIndex] == numberOfPlots+1(the server) then the entry is considered selected
      */
 
     dsName = ""; // name of the dataset
@@ -92,6 +93,8 @@ export class PlotCoordinator {
     }
 
     removePlot(id) {
+        if (!this._plots.has(id)) return;
+
         let indexesSelected = this._plots.get(id).lastIndexesSelected;
         for (let i = 0; i < indexesSelected.length; i++) {
             this._entrySelectionTracker[indexesSelected[i]]--;
@@ -149,7 +152,7 @@ export class PlotCoordinator {
         return true;
     }
 
-    throttledUpdatePlotsView = throttle(this.updatePlotsView, 50);
+    throttledUpdatePlotsView = throttle(this.updatePlotsView, 70); // TODO: make it variable
 
     updatePlotsView(triggeringPlotId, newSelection) {
         this._plots.get(triggeringPlotId).lastSelectionRange = newSelection;

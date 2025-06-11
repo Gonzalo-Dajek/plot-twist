@@ -3,20 +3,11 @@ import { createData, dataToTable } from "./benchMarkUtils/dataCreation.js";
 import { benchMarkSetUp } from "./benchMarkUtils/setUp.js";
 import { logTimingInfo, validateConfig, wait } from "./benchMarkUtils/miscUtils.js";
 import * as layout from "./benchMarkUtils/createLayout.js";
-import {
-    sendBenchMarkTimings,
-    sendEndTrigger,
-    sendStartTrigger,
-    waitForEndTrigger,
-    waitForStartTrigger,
-} from "./benchMarkUtils/webSocketPassiveCommunication.js";
 import { createFieldGroups, deleteFieldGroups, sendClientInfo, setupSelectionBroadcast } from "./benchMarkUtils/webSocketActiveCommunication.js";
 import { brushBackAndForth } from "./benchMarkUtils/brushing.js";
 import { loadLayout } from "../uiLogic/gridUtils.js";
+import { sendBenchMarkTimings, sendEndTrigger, sendStartTrigger, waitForEndTrigger, waitForStartTrigger } from "./benchMarkUtils/webSocketPassiveCommunication.js";
 
-// TODO: change the benchmarking timing events to simple ACKs -
-// TODO: add serve node functionality -
-// TODO: add throttle to the server -
 // TODO: make presentation -
 // TODO: add basic custom complex function functionality -
 
@@ -40,10 +31,10 @@ export async function benchMark(plots, url) {
     clientId = Number(clientId);
 
     // BASE CASE------------------------------------------------------------------------------------------------------//
-    let timeBetween = 50; // 50
-    let waitBetweenTestDuration = 20*1000;
+    let timeBetween = 70; // 70
+    let waitBetweenTestDuration = 15*1000;
     let isStaggered = false;
-    let testDuration = 40; // 40
+    let testDuration = 1000*1000; // 40
     const baseConfig = {
         dataDistribution: "evenly distributed",
         plotsAmount: 4,
@@ -76,11 +67,11 @@ export async function benchMark(plots, url) {
     // modifiedConfigs = layout.generateConfigsBrushSizeAndTypeOfData(baseConfig)
     // modifiedConfigs = layout.generateConfigsAmountOfEntries(baseConfig);
     // modifiedConfigs = layout.generateConfigsBrushSizeVsStepSize(baseConfig);
-    modifiedConfigs = layout.generateConfigsStaggeredBrushingEventWith4Clients(baseConfig)
-    isStaggered = true;
+    // modifiedConfigs = layout.generateConfigsStaggeredBrushingEventWith4Clients(baseConfig)
+    // isStaggered = true;
     // modifiedConfigs = layout.generateConfigsForEventAnalysis2Clients(baseConfig)
-    // modifiedConfigs = layout.generateConfigsBigIntervalBetweenBrushes(baseConfig);
-    // timeBetween = 500;
+    modifiedConfigs = layout.generateConfigsBigIntervalBetweenBrushes(baseConfig);
+    timeBetween = 500;
     // [isCustomLayoutSelected, layoutData] = layout.singleScatterLayout();
 
 
@@ -179,7 +170,7 @@ export async function benchMark(plots, url) {
 
         if (clientId <= cfg.numberOfClientBrushing) {
             await brushBackAndForth(
-                ((cfg.testDuration * 1000) / timeBetween),
+                cfg.testDuration,
                 cfg.stepSize,
                 cfg.numDimensionsSelected,
                 cfg.catDimensionsSelected,

@@ -1,21 +1,36 @@
 import { populateGroups } from "../../uiLogic/fieldGroups.js";
+import { debounce } from "lodash-es";
 
 export function createSocketMessageHandler({
     pcRef,
     socketRef,
 }) {
-    return function onSocketMessage(event) {
-        const receivedData = JSON.parse(event.data);
+    // return function onSocketMessage(event) {
+    //     const receivedData = JSON.parse(event.data);
+    //
+    //     switch (receivedData.type) {
+    //         case 'link':
+    //             populateGroups(receivedData.links, pcRef.pc.fields(), socketRef, pcRef);
+    //             break;
+    //         case "selection":
+    //             pcRef.pc.throttledUpdatePlotsView(0, receivedData.range ?? []);
+    //             break;
+    //     }
+    // };
 
-        switch (receivedData.type) {
-            case 'link':
-                populateGroups(receivedData.links, pcRef.pc.fields(), socketRef, pcRef);
-                break;
-            case "selection":
-                pcRef.pc.throttledUpdatePlotsView(0, receivedData.range ?? []);
-                break;
+    const processSelection = debounce((range) => {
+        pcRef.pc.throttledUpdatePlotsView(0, range);
+    }, 0, { leading: false, trailing: true });
+
+    return ({ data }) => {
+        const msg = JSON.parse(data);
+        if (msg.type === 'selection') {
+            processSelection(msg.range ?? []);
+        } else if (msg.type === 'link') {
+            populateGroups(msg.links, pcRef.pc.fields(), socketRef, pcRef);
         }
     };
+
 }
 
 export function sendBenchMarkTimings(socketRef, pcRef, brushIdRef, clientId, measurement, wasSent) {

@@ -16,7 +16,7 @@ function createSelection(a, b, numFields, catFields) {
 }
 
 export async function brushBackAndForth(
-    steps,
+    timeAmount,
     stepSize,
     numDimensionsSelected,
     catDimensionsSelected,
@@ -28,20 +28,24 @@ export async function brushBackAndForth(
     isStaggered,
     numberOfClientBrushing
 ) {
-    let startPos = 0.2;
-    let endPos = 0.8;
+    const startPos = 0.2;
+    const endPos = 0.8;
     let x = startPos;
+    let forward = true;
 
-    // Compute when this client should start brushing if staggered
-    let startStep = 0;
+    // compute when (in ms) this client should start
+    let startDelay = 0;
     if (isStaggered) {
-        const stepFraction = (numberOfClientBrushing - clientId) / numberOfClientBrushing;
-        startStep = Math.floor(steps * stepFraction);
+        const frac = (numberOfClientBrushing - clientId) / numberOfClientBrushing;
+        startDelay = timeAmount * frac;
     }
 
-    let forward = true;
-    for (let i = 0; i < steps; i++) {
-        // Move step
+    let elapsed = 0;    // total elapsed (including enforced waits)
+
+    while (timeAmount > 0) {
+        const t0 = performance.now();
+
+        // advance x back-and-forth
         if (forward) {
             x += stepSize;
             if (x >= endPos) forward = false;
@@ -50,22 +54,34 @@ export async function brushBackAndForth(
             if (x <= startPos) forward = true;
         }
 
-
-        if (!isStaggered || i >= startStep) {
-            let a = x - brushSize / 2;
-            let b = x + brushSize / 2;
-            let selection = createSelection(
+        // only update once we've passed our stagger offset
+        if (!isStaggered || elapsed >= startDelay) {
+            const a = x - brushSize / 2;
+            const b = x + brushSize / 2;
+            const selection = createSelection(
                 a,
                 b,
                 numDimensionsSelected,
                 catDimensionsSelected
             );
-
             pcRef.pc.updatePlotsView(-1, selection);
         }
 
-        await new Promise((resolve) => setTimeout(resolve, timeBetween));
+        // enforce minimum loop time
+        const delta = performance.now() - t0;
+        const waitFor = timeBetween - delta;
+        if (waitFor > 0) {
+            await new Promise((resolve) => setTimeout(resolve, waitFor));
+            elapsed += timeBetween;
+            timeAmount -= timeBetween;
+        } else {
+            // iteration already took ≥ timeBetween
+            elapsed += delta;
+            timeAmount -= delta;
+        }
     }
 
+    // clear brush
     pcRef.pc.updatePlotsView(-1, []);
 }
+
