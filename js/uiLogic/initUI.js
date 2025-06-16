@@ -1,7 +1,5 @@
 import { csvParse } from "d3";
-import { PlotCoordinator } from "../core/plotCoordinator.js";
-import { initTopBarScroll } from "./topBarScroll.js";
-import { connectToWebSocket, initFieldGroups } from "./fieldGroups.js";
+import { initTopBarScroll, initLinkMenuResize } from "./topBarScroll.js";
 import { demoData, demoLayout } from "./demoLayout.js";
 import {
     adjustBodyStyle,
@@ -11,20 +9,31 @@ import {
     getGridElementsInfo,
     loadLayout,
 } from "./gridUtils.js";
+import { eventsCoordinator } from "../core/eventsCoordinator.js";
 
 /**
  * initializes all the ui components
  */
 export function initializeUI(plots, url) {
-    let pcRef = { pc: undefined };
-    let socketRef = { socket: undefined };
+    let eventsCoordinatorRef = {
+        eventsCoordinator: new eventsCoordinator(plots, url)
+    };
+
     initTopBarScroll();
+    initLinkMenuResize();
     initExportLayout();
-    initLoadLayout(pcRef, plots);
-    initGridResizing(pcRef, plots);
-    initFieldGroups(pcRef, socketRef);
-    initLoadCsv(pcRef, socketRef, url, plots);
-    initLoadDemo(pcRef, socketRef, url, plots);
+    initLoadLayout(eventsCoordinatorRef);
+    initGridResizing(eventsCoordinatorRef);
+    initLoadCsv(eventsCoordinatorRef);
+    initLoadDemo(eventsCoordinatorRef);
+    createWebSocketConnection(eventsCoordinatorRef);
+}
+
+/**
+ * creates a web socket connection to the backend
+ */
+export function createWebSocketConnection(eventsCoordinatorRef) {
+    eventsCoordinatorRef.eventsCoordinator.createWebSocketConnection()
 }
 
 /**
@@ -58,7 +67,7 @@ export function initExportLayout() {
 /**
  * initializes the restore layout from file button functionality
  */
-export function initLoadLayout(pcRef, plots) {
+export function initLoadLayout(eventsCoordinatorRef) {
     const fileInput = document.getElementById("layoutInput");
 
     fileInput.addEventListener("change", () => {
@@ -84,9 +93,9 @@ export function initLoadLayout(pcRef, plots) {
                     container.removeChild(container.firstChild);
                 }
 
-                pcRef.pc.removeAll();
+                eventsCoordinatorRef.eventsCoordinator.removeAllPlots();
 
-                loadLayout(parsedData, pcRef, plots);
+                loadLayout(parsedData, eventsCoordinatorRef);
                 adjustBodyStyle();
             };
 
@@ -98,7 +107,7 @@ export function initLoadLayout(pcRef, plots) {
 /**
  * initializes the buttons responsible for adding columns and rows to the grid
  */
-export function initGridResizing(pcRef, plots) {
+export function initGridResizing(eventsCoordinatorRef) {
     let containerId = "plotsContainer";
 
     window.addEventListener("resize", function() {
@@ -115,7 +124,7 @@ export function initGridResizing(pcRef, plots) {
         container.style.gridTemplateRows = `repeat(${grid.row}, 350px)`;
 
         for (let i = 1; i <= grid.row; i++) {
-            createEmptyGridCell( { col: grid.col, row: i }, pcRef, plots);
+            createEmptyGridCell( { col: grid.col, row: i }, eventsCoordinatorRef);
         }
         adjustBodyStyle();
     });
@@ -130,7 +139,7 @@ export function initGridResizing(pcRef, plots) {
         container.style.gridTemplateRows = `repeat(${grid.row}, 350px)`;
 
         for (let i = 1; i <= grid.col; i++) {
-            createEmptyGridCell({ col: i, row: grid.row }, pcRef, plots);
+            createEmptyGridCell({ col: i, row: grid.row }, eventsCoordinatorRef);
         }
         adjustBodyStyle();
     });
@@ -139,7 +148,7 @@ export function initGridResizing(pcRef, plots) {
 /**
  * initializes the button responsible for loading and parsing a csv file
  */
-export function initLoadCsv(pcRef, socketRef, url, plots) {
+export function initLoadCsv(eventsCoordinatorRef) {
 
     const fileInput = document.getElementById("fileInput");
 
@@ -160,17 +169,13 @@ export function initLoadCsv(pcRef, socketRef, url, plots) {
 
                 let data = await csvParse(csvData.toString());
 
-                pcRef.pc = new PlotCoordinator();
+                eventsCoordinatorRef.eventsCoordinator.addDataSet(data, file.name);
 
-                pcRef.pc.init(data, file.name);
-
-                createEmptyGrid(pcRef, plots);
+                createEmptyGrid(eventsCoordinatorRef);
 
                 document.getElementById("col").style.display = "flex";
                 document.getElementById("row").style.display = "flex";
                 document.getElementById("loadDemo").style.display = "none";
-
-                connectToWebSocket(socketRef, pcRef, url);
 
                 adjustBodyStyle();
             };
@@ -189,23 +194,20 @@ export function initLoadCsv(pcRef, socketRef, url, plots) {
 /**
  * initializes the load demo button
  */
-export function initLoadDemo(pcRef, socketRef, url, plots){
+export function initLoadDemo(eventsCoordinatorRef){
 
     function loadDemo()  {
-        let data = demoData;
 
-        pcRef.pc = new PlotCoordinator();
+        eventsCoordinatorRef.eventsCoordinator.addDataSet(demoData, "demo");
 
-        pcRef.pc.init(data, "demo");
-
-        createEmptyGrid(pcRef, plots);
+        createEmptyGrid(eventsCoordinatorRef);
         document.getElementById("col").style.display = "flex";
         document.getElementById("row").style.display = "flex";
         document.getElementById("loadDemo").style.display = "none";
-        connectToWebSocket(socketRef, pcRef, url);
+        // connectToWebSocket(socketRef, pcRef, url);
         adjustBodyStyle();
 
-        loadLayout(demoLayout,pcRef, plots);
+        loadLayout(demoLayout, eventsCoordinatorRef);
         document.getElementById("loadLayoutButton").style.display = "flex";
         document.getElementById("exportLayoutButton").style.display = "flex";
     }

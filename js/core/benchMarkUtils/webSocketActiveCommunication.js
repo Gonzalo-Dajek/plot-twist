@@ -58,6 +58,7 @@ export function sendClientInfo(clientInfo, socketRef, clientId, pcRef) {
     });
 }
 
+// TODO:
 export function createFieldGroups(socketRef, numFieldGroupsAmount, catFieldsGroupsAmount, dataSetNum) {
     let socket = socketRef.socket;
 

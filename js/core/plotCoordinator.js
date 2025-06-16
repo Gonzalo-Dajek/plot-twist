@@ -1,4 +1,5 @@
 import throttle from "lodash-es/throttle.js";
+import { rangeSet } from "./rangeSet.js";
 
 /**
  * Responsible for coordinating the brushing between different plots
@@ -16,14 +17,14 @@ export class PlotCoordinator {
      * plotUpdateFunction: A function that updates the plot based on the current selections by all plots.
      * lastSelectionRanges: Array of objects, each containing a `[from, to]` range and the corresponding field.
      *
-     * Example: _plots.get(id) = {
+     * Example: _plotsModules.get(id) = {
      *     lastSelectionRanges: [{
      *          range: [21.5, 41.7],
      *          field: "Age",
      *          type: "numerical"
      *          }, ...],
      *     lastIndexesSelected: [1, 2, 5, 7],
-     *     plotUpdateFunction: (howToUpdatePlot) => { ... }
+     *     plotUpdateFunction: howToUpdatePlot()
      * }
      */
 
@@ -37,13 +38,46 @@ export class PlotCoordinator {
      * if _entrySelectionTracker[entryIndex] == numberOfPlots+1(the server) then the entry is considered selected
      */
 
+    _crossDataSetLinks = [];
+
     dsName = ""; // name of the dataset
 
     BENCHMARK = {
         isActive: false,
         deltaUpdateIndexes: undefined,
         deltaUpdatePlots: undefined,
+        afterIndexesFun: ()=>{},
+        afterPlotFun: ()=>{},
     };
+
+    _onSelectionFunction = () => {};
+
+    updateLinks(){
+
+    }
+
+    onSelectionDo(afterSelectionFunction){
+        this._onSelectionFunction = () => {
+
+            let selection = new rangeSet();
+            for (let [id, plot] of this._plots.entries()) {
+                if (id !== 0) {
+                    selection.addSelectionArr(JSON.parse(JSON.stringify(plot.lastSelectionRange)));
+                }
+            }
+
+            afterSelectionFunction(selection.toArr(), this.dsName);
+        };
+    }
+
+    onBenchmarkDo(afterIndexFun, afterPlotFun){
+        this.BENCHMARK.afterIndexesFun = afterIndexFun;
+        this.BENCHMARK.afterPlotFun = afterPlotFun;
+    }
+
+    updateColor(dataSetColor) {
+        // TODO: add custom colors and update as necessary
+    }
 
     _benchMark(where) {
         if (this.BENCHMARK.isActive) {
@@ -107,8 +141,6 @@ export class PlotCoordinator {
     }
 
     removeAll() {
-        let keepWebSocket = this._plots.get(0);
-
         for (let [key, plot] of this._plots.entries()) {
             if (key === 0) continue;
 
@@ -119,7 +151,6 @@ export class PlotCoordinator {
         }
 
         this._plots.clear();
-        this._plots.set(0, keepWebSocket);
     }
 
     _isSelectedRange(d, selectionArr) {
@@ -152,10 +183,16 @@ export class PlotCoordinator {
         return true;
     }
 
-    throttledUpdatePlotsView = throttle(this.updatePlotsView, 70); // TODO: make it variable
+    throttledUpdatePlotsView = throttle(this.updatePlotsView, 70);
 
     updatePlotsView(triggeringPlotId, newSelection) {
         this._plots.get(triggeringPlotId).lastSelectionRange = newSelection;
+        // the id 0 is reserved for server communication
+        if(triggeringPlotId !== 0){
+            // the selection is sent to the server before updating the rest of the plots
+            this._onSelectionFunction();
+        }
+
 
         this._benchMark("preIndexUpdate");
         let lastSelectedIndexes = this._plots.get(triggeringPlotId).lastIndexesSelected;
@@ -168,32 +205,25 @@ export class PlotCoordinator {
                     newSelection
                 );
             });
-
         for (let index of lastSelectedIndexes) {
             this._entrySelectionTracker[index]--;
         }
         for (let index of newlySelectedIndexes) {
             this._entrySelectionTracker[index]++;
         }
-
         this._plots.get(triggeringPlotId).lastIndexesSelected = newlySelectedIndexes;
-        this._benchMark("postIndexUpdate");
 
-        // the id 0 is reserved for server communication, and the id -1 for benchmarking purposes
-        if(triggeringPlotId !== 0){
-            // the selection is sent to the server before updating the rest of the plots
-            this._plots.get(0)?.plotUpdateFunction();
-        }
-        this._plots.get(-1)?.plotUpdateFunction("postIndex", triggeringPlotId!==0);
+        this._benchMark("postIndexUpdate");
+        this.BENCHMARK.afterIndexesFun("postIndex", triggeringPlotId!==0);
 
         this._benchMark("prePlotsUpdate");
         for (let [plotToUpdateId, plot] of this._plots.entries()) {
             if (plotToUpdateId === 0 || plotToUpdateId === -1) continue;
             plot.plotUpdateFunction();
         }
-        this._benchMark("postPlotsUpdate");
 
-        this._plots.get(-1)?.plotUpdateFunction("postPlots", triggeringPlotId!==0);
+        this._benchMark("postPlotsUpdate");
+        this.BENCHMARK.afterPlotFun("postPlots", triggeringPlotId!==0);
     }
 
     fields() {
@@ -209,6 +239,7 @@ export class PlotCoordinator {
 
     isSelected(entry) {
         return this._entrySelectionTracker[entry] === this._plots.size;
+        // TODO:
     }
 
     entries(){
@@ -224,5 +255,7 @@ export class PlotCoordinator {
         for (let i = 0; i < n; i++) {
             this._entrySelectionTracker[i] = 0;
         }
+
+        this.addPlot(0, ()=>{});
     }
 }

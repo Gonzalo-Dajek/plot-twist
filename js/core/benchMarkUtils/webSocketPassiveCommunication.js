@@ -1,4 +1,3 @@
-import { populateGroups } from "../../uiLogic/fieldGroups.js";
 import { debounce } from "lodash-es";
 
 export function createSocketMessageHandler({

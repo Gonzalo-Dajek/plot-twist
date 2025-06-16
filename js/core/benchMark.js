@@ -32,9 +32,9 @@ export async function benchMark(plots, url) {
 
     // BASE CASE------------------------------------------------------------------------------------------------------//
     let timeBetween = 70; // 70
-    let waitBetweenTestDuration = 15*1000;
+    let waitBetweenTestDuration = 5*1000;
     let isStaggered = false;
-    let testDuration = 1000*1000; // 40
+    let testDuration = 20*1000; // 40
     const baseConfig = {
         dataDistribution: "evenly distributed",
         plotsAmount: 4,

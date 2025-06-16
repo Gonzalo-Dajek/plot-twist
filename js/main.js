@@ -13,9 +13,19 @@ function run(){
         parallelCoordinates,
     ];
 
-    let ip = "181.94.71.141";
+    // TODO: add ui to links
+    // TODO: add custom linking in plotCoordinator
+        // TODO: edit crossDataSetLinksTable.js
+
+    // TODO: change layout export to include dataset it came from
+    // TODO: change brush borders to purple
+    // TODO: add multiple plots in same client functionality
+
+    // TODO: edit createFieldGroups and delete fieldGroups in webSocketActiveCommunication.js
+
+    let ip = "186.153.49.206";
     let url = `ws://${ip}:5226/`;
-    const BENCHMARK = true;
+    const BENCHMARK = false;
 
     if(BENCHMARK){
         benchMark(plots, url).then();
