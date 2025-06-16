@@ -8,7 +8,6 @@ export class rangeSet {
     }
 
     addSelection(selectionRange){
-
         let alreadyIsInArr = false;
         for(let i = 0; i<this._selectionArr.length; i++){
             if(this._selectionArr[i].field===selectionRange.field){
@@ -20,7 +19,7 @@ export class rangeSet {
                 }else{ // "numerical"
                     let [x1, y1] = this._selectionArr[i].range;
 
-                    // interesection
+                    // intersection
                     let start = Math.max(x1, selectionRange.range[0]);
                     let end = Math.min(y1, selectionRange.range[1]);
                     this._selectionArr[i].range=[start,end];

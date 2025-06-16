@@ -1,6 +1,6 @@
 import { initTopBarScroll } from "../../uiLogic/topBarScroll.js";
 import { initExportLayout, initGridResizing, initLoadCsv, initLoadLayout } from "../../uiLogic/initUI.js";
-import { initFieldGroups } from "../../uiLogic/fieldGroups.js";
+// import { initCrossDataSetLinkTable } from "../../uiLogic/crossDataSetLinks.js";
 import { PlotCoordinator } from "../plotCoordinator.js";
 import { adjustBodyStyle} from "../../uiLogic/gridUtils.js";
 import { createSocketMessageHandler } from "./webSocketPassiveCommunication.js";
@@ -22,8 +22,8 @@ export function benchMarkSetUp(
     initExportLayout();
     initLoadLayout(pcRef, plots);
     initGridResizing(pcRef, plots);
-    initFieldGroups(pcRef, socketRef);
-    initLoadCsv(pcRef, socketRef, url, plots);
+    // initCrossDataSetLinkTable(pcRef, socketRef);
+    initLoadCsv(socketRef, url, plots, "TODO");
 
     const container = document.getElementById("plotsContainer");
     while (container.firstChild) {

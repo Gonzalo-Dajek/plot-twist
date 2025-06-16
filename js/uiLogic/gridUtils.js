@@ -1,7 +1,7 @@
-import { showOffErrorMsg } from "./fieldGroups.js";
+import { showOffErrorMsg } from "./crossDataSetLinks.js";
 import { analyzeFieldType } from "../plots/plotsUtils/fieldTypeCheck.js";
 
-export function loadLayout(layoutData, pcRef, plots) {
+export function loadLayout(layoutData, eventsCoordinatorRef) {
     let gridSize = { col: 3, row: 3 };
     gridSize.col = layoutData[0].col;
     gridSize.row = layoutData[0].row;
@@ -12,14 +12,15 @@ export function loadLayout(layoutData, pcRef, plots) {
         container.removeChild(container.firstChild);
     }
 
-    createEmptyGrid(pcRef, plots, gridSize);
+    const plots = eventsCoordinatorRef.eventsCoordinator.plotTypes();
+    createEmptyGrid(eventsCoordinatorRef, gridSize);
 
     if (layoutData[1]) {
         layoutData[1].forEach((item) => {
             plots.forEach((plot) => {
                 if(item.type === plot.plotName){
                     createPlot(plot,
-                        pcRef,
+                        eventsCoordinatorRef.eventsCoordinator.getDataSetPlotCoordinator("TODO"),
                         { col: item.col, row: item.row },
                         new Map(item.fields.map(field => [field.fieldName, field.fieldSelected])),
                         new Map(item.options.map(option => [option.optionName, option.optionCheckBox]))
@@ -27,11 +28,12 @@ export function loadLayout(layoutData, pcRef, plots) {
                 }
             });
         });
+        eventsCoordinatorRef.eventsCoordinator.updateStateOfPlotCoordinators();
     }
 }
 
-function createPlot(selectedPlot, pcRef, gridPos, selectedFields, selectedCheckBoxes){
-    let id = pcRef.pc.newPlotId();
+function createPlot(selectedPlot, plotCoordinator, gridPos, selectedFields, selectedCheckBoxes){
+    let id = plotCoordinator.newPlotId();
     let col = gridPos.col;
     let row = gridPos.row;
 
@@ -71,7 +73,7 @@ function createPlot(selectedPlot, pcRef, gridPos, selectedFields, selectedCheckB
     button.textContent = "Delete";
     button.classList.add("delete-plot");
     button.addEventListener("click", () => {
-        pcRef.pc.removePlot(id);
+        plotCoordinator.removePlot(id);
         plotDiv.remove();
     });
     deleteButtonContainer.appendChild(button);
@@ -87,19 +89,19 @@ function createPlot(selectedPlot, pcRef, gridPos, selectedFields, selectedCheckB
         selectedFields,
         selectedCheckBoxes,
         innerPlotContainer,
-        pcRef.pc.entries(),
+        plotCoordinator.entries(),
         (selection)=> {
-            pcRef.pc.throttledUpdatePlotsView(id, selection);
+            plotCoordinator.throttledUpdatePlotsView(id, selection);
         },
         (entry) => {
-            return pcRef.pc.isSelected(entry);
+            return plotCoordinator.isSelected(entry);
         }
     );
 
-    pcRef.pc.addPlot(id, updateFunction);
+    plotCoordinator.addPlot(id, updateFunction);
 }
 
-function createPlotWithErrorHandling(selectedPlot, pcRef, gridPos, plotTypes, selectedFields, selectedCheckBoxes) {
+function createPlotWithErrorHandling(selectedPlot, plotCoordinator, gridPos, plotTypes, selectedFields, selectedCheckBoxes) {
 
     let gridDimensions = getGridDimensions();
     let rows = gridDimensions.row;
@@ -133,13 +135,14 @@ function createPlotWithErrorHandling(selectedPlot, pcRef, gridPos, plotTypes, se
     }
 
     if(canBePlaced){
-        createPlot(selectedPlot, pcRef, gridPos, selectedFields, selectedCheckBoxes);
+        createPlot(selectedPlot, plotCoordinator, gridPos, selectedFields, selectedCheckBoxes);
     }else {
         showOffErrorMsg(`The plot doesn't fit`);
     }
 }
 
-function createFieldSelectionMenu(selectedPlot, pcRef, gridPos, plotTypes) {
+function createFieldSelectionMenu(selectedPlot, pcRef, gridPos, TODO, eventsCoordinatorRef) {
+    let plotTypes = eventsCoordinatorRef.eventsCoordinator.plotTypes();
     let col = gridPos.col;
     let row = gridPos.row;
     const gridCell = document.getElementById(`grid-cell-${col}-${row}`);
@@ -165,8 +168,8 @@ function createFieldSelectionMenu(selectedPlot, pcRef, gridPos, plotTypes) {
             selectField.appendChild(noneOption);
         }
 
-        pcRef.pc.fields().forEach((field) => {
-            const data = pcRef.pc.entries();
+        eventsCoordinatorRef.eventsCoordinator.getDataSetPlotCoordinator("TODO").fields().forEach((field) => {
+            const data = eventsCoordinatorRef.eventsCoordinator.getDataSetPlotCoordinator("TODO").entries();
             const { isCategorical, isNumerical } = analyzeFieldType(data, field);
 
             let isValidField = false;
@@ -235,8 +238,12 @@ function createFieldSelectionMenu(selectedPlot, pcRef, gridPos, plotTypes) {
     const createButton = document.createElement("button");
     createButton.textContent = "Create";
 
+    let plotCoordinator = eventsCoordinatorRef.eventsCoordinator.getDataSetPlotCoordinator("TODO");
     createButton.addEventListener("click",
-        () => {createPlotWithErrorHandling(selectedPlot, pcRef, gridPos, plotTypes, selectedFields, selectedCheckBoxes)});
+        () => {
+        createPlotWithErrorHandling(selectedPlot, plotCoordinator, gridPos, plotTypes, selectedFields, selectedCheckBoxes);
+        eventsCoordinatorRef.eventsCoordinator.updateStateOfPlotCoordinators();
+    });
 
     createButton.classList.add("plot-button", "create-plot-button");
 
@@ -246,7 +253,7 @@ function createFieldSelectionMenu(selectedPlot, pcRef, gridPos, plotTypes) {
     cancelButton.classList.add("plot-button", "cancel-button");
     cancelButton.addEventListener("click", () => {
         gridCell.removeChild(plotOptionsDiv); // Remove the plot options menu
-        createPlotTypeSelectionMenu(pcRef, gridPos, plotTypes); // Show plot type menu again
+        createPlotTypeSelectionMenu(null, gridPos, plotTypes, eventsCoordinatorRef); // Show plot type menu again
     });
 
     plotButtonsContainer.appendChild(cancelButton);
@@ -258,7 +265,7 @@ function createFieldSelectionMenu(selectedPlot, pcRef, gridPos, plotTypes) {
 /**
  * creates the menu responsible for the selection of the type of plot to be created
  */
-function createPlotTypeSelectionMenu(pcRef, gridPos, plotTypes) {
+function createPlotTypeSelectionMenu(pcRef, gridPos, TODO, eventsCoordinatorRef) {
     let col = gridPos.col;
     let row = gridPos.row;
     const gridCell = document.getElementById(`grid-cell-${col}-${row}`);
@@ -271,11 +278,11 @@ function createPlotTypeSelectionMenu(pcRef, gridPos, plotTypes) {
     plotSelectionInnerMenu.classList.add("plotSelectionInnerMenu");
     plotMenu.appendChild(plotSelectionInnerMenu);
 
-    plotTypes.forEach((plot) => {
+    eventsCoordinatorRef.eventsCoordinator.plotTypes().forEach((plot) => {
         const plotButton = document.createElement("button");
         plotButton.textContent = plot.plotName;
         plotButton.addEventListener("click", () => {
-            createFieldSelectionMenu(plot, pcRef, gridPos, plotTypes);
+            createFieldSelectionMenu(plot, null, gridPos, null, eventsCoordinatorRef);
             gridCell.removeChild(plotMenu);
         });
         plotSelectionInnerMenu.appendChild(plotButton);
@@ -296,7 +303,7 @@ function createPlotTypeSelectionMenu(pcRef, gridPos, plotTypes) {
 /**
  * creates an empty cell with an "Add Plot" button
  */
-export function createEmptyGridCell({ col, row }, pcRef, plots) {
+export function createEmptyGridCell({ col, row }, eventsCoordinatorRef) {
     const containerId = "plotsContainer";
     const container = document.getElementById(containerId);
 
@@ -314,7 +321,7 @@ export function createEmptyGridCell({ col, row }, pcRef, plots) {
     addPlotButton.textContent = "Add Plot";
     addPlotButton.addEventListener("click", () => {
         // when clicked display the plot type menu
-        createPlotTypeSelectionMenu(pcRef, { col: col, row: row }, plots);
+        createPlotTypeSelectionMenu(null, { col: col, row: row }, null, eventsCoordinatorRef);
 
         // Hide the Add Plot button
         buttonContainer.style.display = "none";
@@ -328,7 +335,7 @@ export function createEmptyGridCell({ col, row }, pcRef, plots) {
 /**
  * creates the default plot-less 3x3 grid
  */
-export function createEmptyGrid(pcRef, plots, gridDimensions = { col: -1, row: -1 }) {
+export function createEmptyGrid(eventsCoordinatorRef, gridDimensions = { col: -1, row: -1 }) {
 
     const containerId = "plotsContainer";
     const container = document.getElementById(containerId);
@@ -346,7 +353,8 @@ export function createEmptyGrid(pcRef, plots, gridDimensions = { col: -1, row: -
 
     for (let col = 1; col <= gridDimensions.col; col++) {
         for (let row = 1; row <= gridDimensions.row; row++) {
-            createEmptyGridCell({ col, row }, pcRef, plots);
+            // TODO: add another menu for selecting dataset
+            createEmptyGridCell({ col, row }, eventsCoordinatorRef);
         }
     }
 
@@ -359,28 +367,44 @@ export function createEmptyGrid(pcRef, plots, gridDimensions = { col: -1, row: -
  */
 export function adjustBodyStyle() {
     const content = document.getElementById("grid-container");
-    const body = document.body;
-
-    const contentRect = content.getBoundingClientRect();
     const appView = document.querySelector("#app-view");
+    const body = document.body;
+    const { height, width } = content.getBoundingClientRect();
+    const isMobile = window.matchMedia("(max-width: 600px)").matches;
 
-    if(contentRect.height + 60 > window.innerHeight){
-        appView.style.paddingTop = "68px";
-    }else{
-        appView.style.paddingTop = "0px";
+    if (isMobile) {
+        // Mobile: make #app-view scrollable
+        body.style.display = "block";
+        appView.style.cssText = `
+      padding-top: 0;
+      overflow-y: auto;
+      max-height: 100vh;
+    `;
+        return;
     }
 
-    if (contentRect.width + 20 >= window.innerWidth) {
+    // Non‑mobile: revert any mobile scroll settings
+    appView.style.overflowY = "visible";
+    appView.style.maxHeight = "none";
+
+    // 1) adjust top padding if content is taller than window
+    appView.style.paddingTop = (height + 60 > window.innerHeight)
+        ? "68px"
+        : "0";
+
+    // 2) switch between flex‑centered vs block layout
+    if (width + 20 >= window.innerWidth) {
         body.style.display = "block";
         body.style.flexDirection = "";
         body.style.alignItems = "";
-        appView.style.paddingTop = "0px";
+        appView.style.paddingTop = "0";
     } else {
         body.style.display = "flex";
         body.style.flexDirection = "column";
         body.style.alignItems = "center";
     }
 }
+
 
 /**
  * Returns the grid width (number of columns) and height (number of rows)
