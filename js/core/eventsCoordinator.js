@@ -1,6 +1,5 @@
 import { PlotCoordinator } from "./plotCoordinator.js";
 import { updateCrossDataSetLinkTable } from "../uiLogic/crossDataSetLinksTable.js";
-import { rangeSet } from "./rangeSet.js";
 import { adjustBodyStyle } from "../uiLogic/gridUtils.js";
 
 export class eventsCoordinator {
