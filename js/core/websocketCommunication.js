@@ -1,8 +1,9 @@
 import { PlotCoordinator } from "./plotCoordinator.js";
 import { updateCrossDataSetLinkTable } from "../uiLogic/crossDataSetLinksTable.js";
 import { adjustBodyStyle } from "../uiLogic/gridUtils.js";
+import { showOffErrorMsg } from "../uiLogic/crossDataSetLinksTable.js";
 
-export class eventsCoordinator {
+export class websocketCommunication {
     _plotCoordinatorPerDataSet = [];
 
     _plotsModules = null;
@@ -12,35 +13,32 @@ export class eventsCoordinator {
 
     _localSelectionPerDataset = [];
     _serverSelectionPerDataSet = [];
+    _serverCrossSelectionPerDataSet;
 
-    _dataSets = []; // Dict dsName -> colorIndex,fieldsArr
-    _localColorPool =
-        ["#5C6BC0",
-        "#E4572E",
-        "#00A676",
-        "#C44D9F",
-        "#F3A712"];
+    _dataSets = [];
 
     linkOperator = "And"
     serverCreatedLinks = [
-        {
-            type: "Direct Link",
-            id: 1,
-            state: {
-                dataSet1: "demo",
-                dataSet2: null,
-                inputField: ""
-            }
-        },
-        {
-            type: "Bidirectional Link",
-            id: 2,
-            state: {
-                    dataSet1: "demo",
-                    dataSet2: "demo",
-                    inputField: ""
-                }
-        }
+        // {
+        //     type: "Direct Link",
+        //     id: 1,
+        //     state: {
+        //         dataSet1: "demo",
+        //         dataSet2: null,
+        //         inputField: ""
+        //     },
+        //     isError: true,
+        // },
+        // {
+        //     type: "Bidirectional Link",
+        //     id: 2,
+        //     state: {
+        //             dataSet1: "demo",
+        //             dataSet2: "demo",
+        //             inputField: ""
+        //         },
+        //     isError: false,
+        // }
     ];
 
     sendUpdatedLinks(){
@@ -70,50 +68,19 @@ export class eventsCoordinator {
                         selectionPerDataSet: [
                             {
                                 dataSetName: dsName,
-                                selection: selection,
+                                indexesSelected: selection,
                             },
                         ],
                     },
                 ],
             };
-            // console.log(msg);
+            // console.log("Msg sent:");
+            // console.log(msg.clientsSelections[0].selectionPerDataSet[0].indexesSelected);
+            // console.log("---------------------------");
             // console.log(JSON.stringify(msg));
             this._socket.send(JSON.stringify(msg));
         }
     }
-
-    // _selectionPerClientToPerDataSet(selectionPerClient) {
-    //     const resultMap = new Map();
-    //
-    //     for (const client of selectionPerClient) {
-    //         if(!client.selectionPerDataSet) continue;
-    //         for (const ds of client.selectionPerDataSet) {
-    //             if (!resultMap.has(ds.dataSetName)) {
-    //                 resultMap.set(ds.dataSetName, []);
-    //             }
-    //
-    //             resultMap.get(ds.dataSetName).push(...ds.selection);
-    //         }
-    //     }
-    //
-    //     let nonCompressedSelections = Array.from(resultMap.entries()).map(
-    //         ([dataSetName, selections]) => ({
-    //             dataSetName,
-    //             selection: selections,
-    //         })
-    //     );
-    //
-    //     function compressSelection(selection) {
-    //         let ranges = new rangeSet();
-    //         ranges.addSelectionArr(selection);
-    //         return ranges.toArr();
-    //     }
-    //
-    //     return nonCompressedSelections.map(ds => ({
-    //         dataSetName: ds.dataSetName,
-    //         selection: compressSelection(ds.selection)
-    //     }));
-    // }
 
     createWebSocketConnection() {
         this._socket = new WebSocket(this._url);
@@ -128,34 +95,43 @@ export class eventsCoordinator {
 
         this._socket.onmessage = ({ data }) => {
             const msg = JSON.parse(data);
+            // console.log(`Received ${msg.type}`);
+            // console.log(msg);
             if (msg.type === "selection") {
                 // console.log(msg.clientsSelections);
-                this._serverSelectionPerDataSet = this._selectionPerClientToPerDataSet(msg.clientsSelections);
-
+                let selection = msg.clientsSelections[0].selectionPerDataSet;
+                this._serverSelectionPerDataSet = selection;
                 this.updateStateOfPlotCoordinators();
-            }else if (msg.type === "dataSets") {
-                console.log("dataSets:", msg.dataSet);
+            } else if (msg.type === 'link') {
+                this.serverCreatedLinks = msg.links;
+                this.linkOperator = msg.linksOperator;
                 this._dataSets = Object.fromEntries(
                     msg.dataSet.map(ds => [ds.name, {
                         fields: ds.fields,
                         dataSetColorIndex: ds.dataSetColorIndex
                     }])
                 );
-                this.updateStateOfPlotCoordinators();
-            } else if (msg.type === 'link') {
-                // TODO: also handle dataSetColors
+                console.log("Received selection"); // TODO: move to another message
+                console.log(this._dataSets);
+                updateCrossDataSetLinkTable({ eventsCoordinator: this }, false);
+            }else if (msg.type === "crossSelection") {
+                this._serverCrossSelectionPerDataSet = msg.dataSetCrossSelection;
+                console.log(`Received ${msg.type}`);
+                console.log(this._serverCrossSelectionPerDataSet);
+                this.updateStateOfPlotCoordinators()
             }
             adjustBodyStyle();
         };
 
         this._socket.onclose = function () {
             console.log("WebSocket connection closed");
+            showOffErrorMsg("The connection to the server was lost");
         };
 
         this._socket.onerror = function (error) {
             console.log("WebSocket error:", error);
             console.log("The server is offline");
-            // showOffErrorMsg("The server is offline");
+            showOffErrorMsg("An error occurred trying to connect to the server");
         };
 
         document.getElementById("slide-menu-btn").style.display = "flex";
@@ -176,16 +152,27 @@ export class eventsCoordinator {
         };
 
         if (this._socket.readyState === WebSocket.OPEN) {
+            if (!dataSet.length) return { columns: [], rows: [] };
+            const columns = Object.keys(dataSet[0]);
+            const rows = dataSet.map(obj =>
+                columns.map(key =>
+                    // coerce everything to either number or string
+                    typeof obj[key] === 'number' ? obj[key] : String(obj[key])
+                )
+            );
+
             let msg = {
                 type: "addDataSet",
                 dataSet: [
                     {
                         name: dataSetName,
                         fields: pc.fields(),
+                        table: { columns, rows },
+                        length: pc.entries().length,
                     }
                 ],
             };
-            // console.log(msg);
+            // console.log("Sent dataset",msg);
             // console.log(JSON.stringify(msg));
             this._socket.send(JSON.stringify(msg));
         }
@@ -218,11 +205,39 @@ export class eventsCoordinator {
     updateStateOfPlotCoordinators() {
         for (let plotCoordinator of this._plotCoordinatorPerDataSet) {
             let dsName = plotCoordinator.dsName;
-            let dataSetColor = this._localColorPool[this._dataSets[dsName].dataSetColorIndex];
-            let dsServerSelection = this._serverSelectionPerDataSet.find(ds => ds.dataSetName === dsName);
-            dsServerSelection = dsServerSelection ? dsServerSelection.selection : [];
-            plotCoordinator.updateColor(dataSetColor);
-            plotCoordinator.throttledUpdatePlotsView(0, dsServerSelection);
+            let dsServerSelection;
+            for (let ds of this._serverSelectionPerDataSet) {
+                if (ds.dataSetName === dsName) {
+                    dsServerSelection = ds;
+                    break;
+                }
+            }
+            let indexesSelected = dsServerSelection ? dsServerSelection.indexesSelected : Array(plotCoordinator.entries().length).fill(true);
+
+            if(this._serverCrossSelectionPerDataSet){
+                let selectedBy = this._serverCrossSelectionPerDataSet.find(item => item["DataSet"] === dsName);
+                if(this._serverCrossSelectionPerDataSet && selectedBy){
+                    selectedBy = selectedBy["SelectedByIds"];
+                    plotCoordinator.updateCrossSelection(selectedBy);
+                }
+            }
+
+            let dataSetColorIndex = this._dataSets[dsName].dataSetColorIndex;
+            plotCoordinator.updateDefaultColor(dataSetColorIndex);
+            let newSelection = {type: "index", indexes: indexesSelected};
+            plotCoordinator.throttledUpdatePlotsView(0, [newSelection]);
+        }
+
+        const container = document.getElementById("plotsContainer");
+        const elements = container.getElementsByClassName("plotAndDeleteButton-container");
+        for (const element of elements) {
+            const jsonData = JSON.parse(element.getAttribute("data-json"));
+            let dataSet = jsonData.dataSet;
+            if(dataSet){
+                const matchingPlot = this._plotCoordinatorPerDataSet.find(p => p.dsName === dataSet);
+                let color = matchingPlot.dataSetColor();
+                element.style.borderColor = color;
+            }
         }
     }
 

@@ -7,6 +7,7 @@ export class bidirectionalFieldLink {
         dataSet2: null,
         inputField: ""
     }
+    isError = false;
     //     [
     //         {
     //             dataSet: null,
@@ -24,9 +25,12 @@ export class bidirectionalFieldLink {
     id = null;
     updateFun = null;
 
-    constructor(fieldsPerDataSet, id, newState) {
+    constructor(fieldsPerDataSet, id, newState, isError) {
         if (newState) {
             this.state=newState;
+        }
+        if(isError) {
+            this.isError = isError;
         }
         this.id = id;
         this.fieldPerDataset = fieldsPerDataSet;
@@ -47,11 +51,11 @@ export class bidirectionalFieldLink {
             const lbl = document.createElement('span');
             lbl.className = 'links-item__label';
             if(key==="dataSet1"){
-                lbl.textContent = "Data Set 1";
+                lbl.textContent = "X : Data Set 1";
                 wrapper.appendChild(lbl);
             }
             if(key==="dataSet2"){
-                lbl.textContent = "Data Set 2";
+                lbl.textContent = "Y : Data Set 2";
                 wrapper.appendChild(lbl);
             }
 
@@ -61,6 +65,10 @@ export class bidirectionalFieldLink {
                 // dataset dropdown
                 const dsSelect = document.createElement('select');
                 dsSelect.className = 'links-item__dataset-select';
+                if(this.isError) {
+                    dsSelect.classList.add('links-item__dataset-select__error');
+                }
+
                 dsSelect.add(new Option('-- Select Dataset --', ''));
                 Object.keys(this.fieldPerDataset).forEach(ds => {
                     dsSelect.add(new Option(ds, ds));
@@ -102,7 +110,15 @@ export class bidirectionalFieldLink {
                 wrapper.className = 'links-item-input';
 
                 const textInput = document.createElement('textarea');
+                textInput.setAttribute('spellcheck', 'false');
+                textInput.setAttribute('autocorrect', 'off');
+                textInput.setAttribute('autocomplete', 'off');
+                textInput.setAttribute('autocapitalize', 'off');
+
                 textInput.className = 'links-item__text-input';
+                if(this.isError) {
+                    textInput.classList.add('links-item-input__error');
+                }
                 textInput.value = val || '';
                 wrapper.appendChild(textInput);
 

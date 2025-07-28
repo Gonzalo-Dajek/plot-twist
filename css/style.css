@@ -649,6 +649,11 @@ body{
     align-items: flex-start;
     transition: left 0.3s ease;
     z-index: 200;
+    pointer-events: none;
+}
+
+.menu-wrapper > * {
+    pointer-events: auto;
 }
 
 .menu-wrapper.active {
@@ -664,10 +669,10 @@ body{
     padding: 10px;
     display: flex;
     flex-direction: column;
-    height: 95vh;
+    height: 92vh;
     width: 300px;
     min-width: 300px;
-    max-width: 50vw;
+    max-width: 90vw;
     resize: horizontal;
     overflow: auto;
 }
@@ -750,6 +755,9 @@ body{
     margin: 0;
 }
 
+.tittle-error{
+    color: #e53935;
+}
 
 #groups-list{
     flex-grow: 1;
@@ -941,6 +949,10 @@ body{
     border: 2px solid rgba(92, 107, 192, 0.4);
 }
 
+.group-error{
+    border: 1px solid rgba(255, 91, 62, 0.7);
+}
+
 .group-deleteBar {
     display: flex;
     justify-content: space-between;
@@ -1027,6 +1039,11 @@ body{
     box-shadow: 0 0 0 2px rgba(92, 107, 192, 0.2);
 }
 
+textarea.links-item-input__error:focus{
+    border-color: rgba(0, 0, 0, 0.33);
+    box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.2);
+}
+
 .links-item__label {
     grid-area: label;
     align-self: center;
@@ -1092,9 +1109,15 @@ body{
     font-size: 14px;
 }
 
+
 .links-item__dataset-select:focus {
     outline: none;
     border-color: #5C6BC0;
+}
+
+select.links-item__dataset-select__error:focus {
+    outline: none;
+    border-color: rgba(0, 0, 0, 0.35);
 }
 
 .links-item__field-select {

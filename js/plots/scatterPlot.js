@@ -26,7 +26,7 @@ export const scatterPlot = {
     createPlotFunction: createScatterPlot,
 };
 
-export function createScatterPlot(fields, options, plotDiv, data, updatePlotsFun, isSelectedFun) {
+export function createScatterPlot(fields, options, plotDiv, data, updatePlotsFun, isSelectedFun, colorOf) {
     let xField = fields.get("x-axis");
     let yField = fields.get("y-axis");
 
@@ -225,6 +225,7 @@ export function createScatterPlot(fields, options, plotDiv, data, updatePlotsFun
                 yField,
             );
 
+            let dsColor  = colorOf(0)[colorOf(0).length-1];
             // Append the updated regression line within the clipping path
             svg.append("line")
                 .attr("class", "regression-line")
@@ -232,7 +233,7 @@ export function createScatterPlot(fields, options, plotDiv, data, updatePlotsFun
                 .attr("y1", y(regression(xMin)))
                 .attr("x2", x(xMax))
                 .attr("y2", y(regression(xMax)))
-                .attr("stroke", "#465191")
+                .attr("stroke", dsColor )
                 .attr("stroke-width", 1)
                 .attr("clip-path", "url(#clip)");
         }
@@ -323,15 +324,16 @@ export function createScatterPlot(fields, options, plotDiv, data, updatePlotsFun
     return () => {
         dot.each(function(d, i) {
             const isSelected = isSelectedFun(i);
+            selectedColor = colorOf(i)[0];
 
             d3.select(this)
                 .style("fill", isSelected ? selectedColor : unselectedColor)
-                .attr("r", isSelected ? radiusScale(data.length) : (radiusScale(data.length) / 2))
+                // .attr("r", isSelected ? radiusScale(data.length) : (radiusScale(data.length) / 2))
                 .style("fill-opacity", isSelected ? 1 : 1)
-                // .style("r", isSelected ? 2.5 : 1.2);
+                .style("r", isSelected ? 2.5 : 1.2);
 
             if (isSelected) {
-                d3.select(this).raise();  // Bring selected dots to the top
+                d3.select(this).raise();
             }
         });
 

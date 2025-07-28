@@ -9,24 +9,24 @@ import {
     getGridElementsInfo,
     loadLayout,
 } from "./gridUtils.js";
-import { eventsCoordinator } from "../core/eventsCoordinator.js";
+import { websocketCommunication } from "../core/websocketCommunication.js";
 
 /**
  * initializes all the ui components
  */
 export function initializeUI(plots, url) {
-    let eventsCoordinatorRef = {
-        eventsCoordinator: new eventsCoordinator(plots, url)
+    let websocketCommunicationRef = {
+        eventsCoordinator: new websocketCommunication(plots, url)
     };
 
     initTopBarScroll();
     initLinkMenuResize();
     initExportLayout();
-    initLoadLayout(eventsCoordinatorRef);
-    initGridResizing(eventsCoordinatorRef);
-    initLoadCsv(eventsCoordinatorRef);
-    initLoadDemo(eventsCoordinatorRef);
-    createWebSocketConnection(eventsCoordinatorRef);
+    initLoadLayout(websocketCommunicationRef);
+    initGridResizing(websocketCommunicationRef);
+    initLoadCsv(websocketCommunicationRef);
+    initLoadDemo(websocketCommunicationRef);
+    createWebSocketConnection(websocketCommunicationRef);
 }
 
 /**

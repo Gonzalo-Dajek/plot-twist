@@ -38,8 +38,8 @@ let linkUIWidgetsTypes = [
     directFieldLink
 ];
 
-export function updateCrossDataSetLinkTable(eventsCoordinatorRef) {
-    let eventsCoordinator = eventsCoordinatorRef.eventsCoordinator;
+export function updateCrossDataSetLinkTable(eventsCoordinatorRef, shouldSendUpdate=true) {
+    let websocketCommunication = eventsCoordinatorRef.eventsCoordinator;
     document.getElementById("group-name-submit").innerHTML = "Add Link";
     const select = document.getElementById("field-group-name");
     select.innerHTML = "";
@@ -49,7 +49,7 @@ export function updateCrossDataSetLinkTable(eventsCoordinatorRef) {
     const btns = document.querySelectorAll('.group-component-buttons button');
     btns.forEach(b => b.classList.remove('active'));
     btns.forEach(btn => {
-        if (eventsCoordinator.linkOperator === "Or") {
+        if (websocketCommunication.linkOperator === "Or") {
             if (btn.id === 'or-btn') {
                 btn.classList.add('active');
             }
@@ -64,8 +64,8 @@ export function updateCrossDataSetLinkTable(eventsCoordinatorRef) {
         btns.forEach(b => b.classList.remove('active'));
         e.currentTarget.classList.add('active');
 
-        eventsCoordinator.linkOperator = (e.currentTarget.id === 'or-btn') ? "Or" : "And";
-        eventsCoordinator.sendUpdatedLinks();
+        websocketCommunication.linkOperator = (e.currentTarget.id === 'or-btn') ? "Or" : "And";
+        websocketCommunication.sendUpdatedLinks();
     }
 
     btns.forEach(btn => {
@@ -85,8 +85,8 @@ export function updateCrossDataSetLinkTable(eventsCoordinatorRef) {
     }
     
     // populate widget list
-    for (let link of eventsCoordinator.serverCreatedLinks) {
-        createLinkWidget(link.type, eventsCoordinatorRef, link.id, link.state);
+    for (let link of websocketCommunication.serverCreatedLinks) {
+        createLinkWidget(link.type, eventsCoordinatorRef, link.id, link.state, link.isError);
     }
 
     // on submit: instantiate matching widget classes and call onDraw()
@@ -120,10 +120,12 @@ export function updateCrossDataSetLinkTable(eventsCoordinatorRef) {
         autoResize();
     });
 
-    eventsCoordinator.sendUpdatedLinks();
+    if(shouldSendUpdate){
+        websocketCommunication.sendUpdatedLinks();
+    }
 }
 
-function createLinkWidget(chosen, eventsCoordinatorRef, id, state) {
+function createLinkWidget(chosen, eventsCoordinatorRef, id, state, error) {
     let eventsCoordinator = eventsCoordinatorRef.eventsCoordinator;
 
     for (let LinkClass of linkUIWidgetsTypes) {
@@ -133,7 +135,8 @@ function createLinkWidget(chosen, eventsCoordinatorRef, id, state) {
                 instance = new LinkClass(
                     eventsCoordinator._dataSets,
                     id,
-                    state
+                    state,
+                    error
                 );
             }else{
                 const newId = eventsCoordinator.serverCreatedLinks.length
@@ -149,6 +152,9 @@ function createLinkWidget(chosen, eventsCoordinatorRef, id, state) {
             // 1) outer wrapper
             const wrapper = document.createElement("div");
             wrapper.classList.add("group-wrapper");
+            if(instance.isError){
+                wrapper.classList.add("group-error");
+            }
 
             // 2) delete‑button bar with title
             const deleteBar = document.createElement("div");
@@ -157,6 +163,9 @@ function createLinkWidget(chosen, eventsCoordinatorRef, id, state) {
             const titleDiv = document.createElement("div");
             titleDiv.classList.add("group-title");
             titleDiv.textContent = chosen;
+            if(instance.isError){
+                titleDiv.classList.add("tittle-error");
+            }
 
             const delBtn = document.createElement("button");
             delBtn.textContent = "Delete";
@@ -192,6 +201,7 @@ function createLinkWidget(chosen, eventsCoordinatorRef, id, state) {
                         type: widgetType,
                         id: fromId,
                         state: newState,
+                        isError: true,
                     });
                 }
 

@@ -10,10 +10,14 @@ export class directFieldLink {
 
     id = null;
     updateFun = null;
+    isError = false;
 
-    constructor(fieldsPerDataSet, id, newState) {
+    constructor(fieldsPerDataSet, id, newState, isError) {
         if (newState) {
             this.state=newState;
+        }
+        if(isError) {
+            this.isError = isError;
         }
         this.id = id;
         this.fieldPerDataset = fieldsPerDataSet;
@@ -34,11 +38,11 @@ export class directFieldLink {
             const lbl = document.createElement('span');
             lbl.className = 'links-item__label';
             if(key==="dataSet1"){
-                lbl.textContent = "From";
+                lbl.textContent = "X : From";
                 wrapper.appendChild(lbl);
             }
             if(key==="dataSet2"){
-                lbl.textContent = "To";
+                lbl.textContent = "Y : To";
                 wrapper.appendChild(lbl);
             }
 
@@ -48,6 +52,9 @@ export class directFieldLink {
                 // dataset dropdown
                 const dsSelect = document.createElement('select');
                 dsSelect.className = 'links-item__dataset-select';
+                if(this.isError) {
+                    dsSelect.classList.add('links-item__dataset-select__error');
+                }
                 dsSelect.add(new Option('-- Select Dataset --', ''));
                 Object.keys(this.fieldPerDataset).forEach(ds => {
                     dsSelect.add(new Option(ds, ds));
@@ -89,7 +96,15 @@ export class directFieldLink {
                 wrapper.className = 'links-item-input';
 
                 const textInput = document.createElement('textarea');
+                textInput.setAttribute('spellcheck', 'false');
+                textInput.setAttribute('autocorrect', 'off');
+                textInput.setAttribute('autocomplete', 'off');
+                textInput.setAttribute('autocapitalize', 'off');
+
                 textInput.className = 'links-item__text-input';
+                if(this.isError) {
+                    textInput.classList.add('links-item-input__error');
+                }
                 textInput.value = val || '';
                 wrapper.appendChild(textInput);
 

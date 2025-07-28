@@ -24,7 +24,7 @@ export function loadLayout(layoutData, eventsCoordinatorRef) {
                         { col: item.col, row: item.row },
                         new Map(item.fields.map(field => [field.fieldName, field.fieldSelected])),
                         new Map(item.options.map(option => [option.optionName, option.optionCheckBox]))
-                    )
+                    ) // TODO: fix layout
                 }
             });
         });
@@ -39,6 +39,7 @@ function createPlot(selectedPlot, plotCoordinator, gridPos, selectedFields, sele
 
     // stores the Plot details into a json embedded in the div for the layout information
     const createdPlotJsonInfo = {
+        dataSet: plotCoordinator.dsName,
         plotName: selectedPlot.plotName,
         fields: Array.from(selectedFields.entries()).map(([key, value]) => ({
             fieldName: key,
@@ -95,7 +96,10 @@ function createPlot(selectedPlot, plotCoordinator, gridPos, selectedFields, sele
         },
         (entry) => {
             return plotCoordinator.isSelected(entry);
-        }
+        },
+        (entry) => {
+            return plotCoordinator.colorOf(entry);
+        },
     );
 
     plotCoordinator.addPlot(id, updateFunction);

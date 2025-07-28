@@ -1,5 +1,4 @@
 import throttle from "lodash-es/throttle.js";
-import { rangeSet } from "./rangeSet.js";
 
 /**
  * Responsible for coordinating the brushing between different plots
@@ -23,7 +22,7 @@ export class PlotCoordinator {
      *          field: "Age",
      *          type: "numerical"
      *          }, ...],
-     *     lastIndexesSelected: [1, 2, 5, 7],
+     *     lastIndexesSelected: [true, false, true, false],
      *     plotUpdateFunction: howToUpdatePlot()
      * }
      */
@@ -38,7 +37,15 @@ export class PlotCoordinator {
      * if _entrySelectionTracker[entryIndex] == numberOfPlots+1(the server) then the entry is considered selected
      */
 
-    _crossDataSetLinks = [];
+    _crossSelection;
+    _defaultColorIndex = 0;
+
+    _localColorPool =
+        ["#5C6BC0",
+        "#E4572E",
+        "#00A676",
+        "#C44D9F",
+        "#F3A712"];
 
     dsName = ""; // name of the dataset
 
@@ -50,33 +57,65 @@ export class PlotCoordinator {
         afterPlotFun: ()=>{},
     };
 
-    _onSelectionFunction = () => {};
+    isSelected(entryIndex) {
+        return this._entrySelectionTracker[entryIndex] === this._plots.size;
+    }
 
-    updateLinks(){
+    colorOf(idx) {
+        const sel = this._crossSelection[idx] || [];
+        const defaultColor = this.dataSetColor();
 
+        const unique = [
+            ...new Set(
+                sel
+                    .map(i => this._localColorPool[i])
+                    .filter(color => color !== defaultColor)
+            )
+        ];
+
+        return [...unique, defaultColor];
+    }
+
+    dataSetColor(){
+        return this._localColorPool[this._defaultColorIndex];
+    }
+
+    updateCrossSelection(newCrossSelection) {
+        this._crossSelection = newCrossSelection;
+    }
+
+    updateDefaultColor(dataSetColorIndex) {
+        this._defaultColorIndex = dataSetColorIndex;
+    }
+
+    locallySelectedEntriesIndexes(){
+        const results = [];
+        const plot = this._plots.get(0);
+        const expectedCount = this._plots.size - 1;
+
+        for (let idx = 0; idx < this._entrySelectionTracker.length; idx++) {
+            const count = this._entrySelectionTracker[idx];
+            const lastSelected = plot.lastIndexesSelected[idx];
+            const serverSelection = lastSelected ? 1 : 0;
+            const adjustedCount = count - serverSelection;
+
+            results.push(adjustedCount === expectedCount);
+        }
+
+        return results;
     }
 
     onSelectionDo(afterSelectionFunction){
         this._onSelectionFunction = () => {
-
-            let selection = new rangeSet();
-            for (let [id, plot] of this._plots.entries()) {
-                if (id !== 0) {
-                    selection.addSelectionArr(JSON.parse(JSON.stringify(plot.lastSelectionRange)));
-                }
-            }
-
-            afterSelectionFunction(selection.toArr(), this.dsName);
+            afterSelectionFunction(this.locallySelectedEntriesIndexes(), this.dsName);
         };
     }
+
+    _onSelectionFunction = () => {};
 
     onBenchmarkDo(afterIndexFun, afterPlotFun){
         this.BENCHMARK.afterIndexesFun = afterIndexFun;
         this.BENCHMARK.afterPlotFun = afterPlotFun;
-    }
-
-    updateColor(dataSetColor) {
-        // TODO: add custom colors and update as necessary
     }
 
     _benchMark(where) {
@@ -115,7 +154,7 @@ export class PlotCoordinator {
         });
 
         for (let i = 0; i < this._entries.length; i++) {
-            this._plots.get(id).lastIndexesSelected.push(i);
+            this._plots.get(id).lastIndexesSelected.push(true);
         }
 
         for (let i = 0; i < this._entrySelectionTracker.length; i++) {
@@ -131,13 +170,16 @@ export class PlotCoordinator {
 
         let indexesSelected = this._plots.get(id).lastIndexesSelected;
         for (let i = 0; i < indexesSelected.length; i++) {
-            this._entrySelectionTracker[indexesSelected[i]]--;
+            if(indexesSelected[i]){
+                this._entrySelectionTracker[i]--;
+            }
         }
 
         this._plots.delete(id);
         for (let plot of this._plots.values()) {
             plot.plotUpdateFunction();
         }
+        this._onSelectionFunction();
     }
 
     removeAll() {
@@ -146,14 +188,16 @@ export class PlotCoordinator {
 
             let indexesSelected = plot.lastIndexesSelected;
             for (let i = 0; i < indexesSelected.length; i++) {
-                this._entrySelectionTracker[indexesSelected[i]]--;
+                if(indexesSelected[i]){
+                    this._entrySelectionTracker[i]--;
+                }
             }
         }
 
         this._plots.clear();
     }
 
-    _isSelectedRange(d, selectionArr) {
+    _isSelectedRange(d, selectionArr, idx) {
         for (let selection of selectionArr) {
             const field = selection.field;
 
@@ -165,7 +209,7 @@ export class PlotCoordinator {
                         return false;
                     }
                 }
-            } else { // selection.type === "categorical"; ie: string
+            } else if(selection.type === "categorical") {
                 const categories = selection.categories;
                 let isSelected = false;
                 for (let cat of categories) {
@@ -177,6 +221,10 @@ export class PlotCoordinator {
                 if (!isSelected) {
                     return false;
                 }
+            }else{
+                if(selection.indexes){
+                    return selection.indexes.length>0 ? selection.indexes[idx] : true;
+                }
             }
         }
 
@@ -187,31 +235,32 @@ export class PlotCoordinator {
 
     updatePlotsView(triggeringPlotId, newSelection) {
         this._plots.get(triggeringPlotId).lastSelectionRange = newSelection;
+
+        this._benchMark("preIndexUpdate");
+        let lastSelectedIndexes = this._plots.get(triggeringPlotId).lastIndexesSelected;
+
+        let newlySelectedIndexes = this._entries.map((d, i) =>
+            this._isSelectedRange(this._entries[i], newSelection, i)
+        );
+
+        for (let idx = 0; idx < lastSelectedIndexes.length; idx++){
+            let isSelected = lastSelectedIndexes[idx];
+            if(isSelected){
+                this._entrySelectionTracker[idx]--;
+            }
+        }
+        for (let idx = 0; idx < newlySelectedIndexes.length; idx++){
+            let isSelected = newlySelectedIndexes[idx];
+            if(isSelected){
+                this._entrySelectionTracker[idx]++;
+            }
+        }
+        this._plots.get(triggeringPlotId).lastIndexesSelected = newlySelectedIndexes;
         // the id 0 is reserved for server communication
         if(triggeringPlotId !== 0){
             // the selection is sent to the server before updating the rest of the plots
             this._onSelectionFunction();
         }
-
-
-        this._benchMark("preIndexUpdate");
-        let lastSelectedIndexes = this._plots.get(triggeringPlotId).lastIndexesSelected;
-
-        let newlySelectedIndexes = this._entries
-            .map((d, i) => i)
-            .filter((i) => {
-                return this._isSelectedRange(
-                    this._entries[i],
-                    newSelection
-                );
-            });
-        for (let index of lastSelectedIndexes) {
-            this._entrySelectionTracker[index]--;
-        }
-        for (let index of newlySelectedIndexes) {
-            this._entrySelectionTracker[index]++;
-        }
-        this._plots.get(triggeringPlotId).lastIndexesSelected = newlySelectedIndexes;
 
         this._benchMark("postIndexUpdate");
         this.BENCHMARK.afterIndexesFun("postIndex", triggeringPlotId!==0);
@@ -237,11 +286,6 @@ export class PlotCoordinator {
         return fields;
     }
 
-    isSelected(entry) {
-        return this._entrySelectionTracker[entry] === this._plots.size;
-        // TODO:
-    }
-
     entries(){
         return this._entries;
     }
@@ -252,8 +296,10 @@ export class PlotCoordinator {
 
         let n = entries.length;
         this._entrySelectionTracker = Array(n);
+        this._crossSelection = Array(n);
         for (let i = 0; i < n; i++) {
             this._entrySelectionTracker[i] = 0;
+            this._crossSelection[i] = [];
         }
 
         this.addPlot(0, ()=>{});
