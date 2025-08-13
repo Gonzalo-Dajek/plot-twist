@@ -94,11 +94,11 @@ function createPlot(selectedPlot, plotCoordinator, gridPos, selectedFields, sele
         (selection)=> {
             plotCoordinator.throttledUpdatePlotsView(id, selection);
         },
-        (entry) => {
-            return plotCoordinator.isSelected(entry);
-        },
-        (entry) => {
-            return plotCoordinator.colorOf(entry);
+        // (entry) => {
+        //     return plotCoordinator.isSelected(entry);
+        // },
+        () => {
+            return plotCoordinator.plotUtils();
         },
     );
 

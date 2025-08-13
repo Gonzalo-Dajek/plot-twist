@@ -94,7 +94,7 @@ export class bidirectionalFieldLink {
                     this.state[key] = dsSelect.value;
                     // item.field = '';
                     // refreshFields();
-                    this.updateFun(this, true);
+                    // this.updateFun(this, true);
                 };
 
                 // fieldSelect.onchange = () => {
@@ -125,7 +125,7 @@ export class bidirectionalFieldLink {
                 const acceptBtn = document.createElement('button');
                 acceptBtn.type = 'button';
                 acceptBtn.className = 'links-item__accept-btn';
-                acceptBtn.textContent = 'Submit';
+                acceptBtn.textContent = 'Update';
                 acceptBtn.onclick = () => {
                     this.state[key] = textInput.value;
                     this.updateFun(this, true);

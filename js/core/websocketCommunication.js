@@ -111,13 +111,13 @@ export class websocketCommunication {
                         dataSetColorIndex: ds.dataSetColorIndex
                     }])
                 );
-                console.log("Received selection"); // TODO: move to another message
-                console.log(this._dataSets);
+                // console.log("Received selection");
+                // console.log(this._dataSets);
                 updateCrossDataSetLinkTable({ eventsCoordinator: this }, false);
             }else if (msg.type === "crossSelection") {
                 this._serverCrossSelectionPerDataSet = msg.dataSetCrossSelection;
-                console.log(`Received ${msg.type}`);
-                console.log(this._serverCrossSelectionPerDataSet);
+                // console.log(`Received ${msg.type}`);
+                // console.log(this._serverCrossSelectionPerDataSet);
                 this.updateStateOfPlotCoordinators()
             }
             adjustBodyStyle();
@@ -224,6 +224,10 @@ export class websocketCommunication {
 
             let dataSetColorIndex = this._dataSets[dsName].dataSetColorIndex;
             plotCoordinator.updateDefaultColor(dataSetColorIndex);
+            const colorsPerDataSet = Object.fromEntries(
+                Object.entries(this._dataSets).map(([name, value]) => [name, value.dataSetColorIndex])
+            );
+            plotCoordinator.updateDataSetsColors(colorsPerDataSet);
             let newSelection = {type: "index", indexes: indexesSelected};
             plotCoordinator.throttledUpdatePlotsView(0, [newSelection]);
         }

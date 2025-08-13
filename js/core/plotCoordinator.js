@@ -39,13 +39,17 @@ export class PlotCoordinator {
 
     _crossSelection;
     _defaultColorIndex = 0;
+    _colorIndexPerDataSet;
 
     _localColorPool =
         ["#5C6BC0",
         "#E4572E",
-        "#00A676",
+            "#76B041",
+        // "#00A676",
         "#C44D9F",
-        "#F3A712"];
+        "#F3A712",
+        // "#2E86AB",
+        "#C92C48"];
 
     dsName = ""; // name of the dataset
 
@@ -76,8 +80,41 @@ export class PlotCoordinator {
         return [...unique, defaultColor];
     }
 
+    dataSetsOf(idx) {
+        const sel = this._crossSelection[idx] || [];
+
+        return sel.map(i =>
+            Object.keys(this._colorIndexPerDataSet)
+                .find(name => this._colorIndexPerDataSet[name] === i)
+        );
+    }
+
     dataSetColor(){
         return this._localColorPool[this._defaultColorIndex];
+    }
+
+    colorsPerDataSet(){
+        return Object.fromEntries(
+            Object.entries(this._colorIndexPerDataSet).map(
+                ([name, idx]) => [name, this._localColorPool[idx]]
+            )
+        );
+    }
+
+    allDataSets(){
+        return Object.keys(this._colorIndexPerDataSet);
+    }
+
+    plotUtils(){
+        return {
+            isRowSelected: (...args) => this.isSelected(...args),
+            colorsPerDataSet: () => this.colorsPerDataSet(),
+            dataSet: () => {return this.dsName},
+            dataSetsOf: (...args) => this.dataSetsOf(...args),
+            colorsOf: (...args) => this.colorOf(...args),
+            dataSetColor: () => this.dataSetColor(),
+            allDataSets: () => this.allDataSets(),
+        }
     }
 
     updateCrossSelection(newCrossSelection) {
@@ -86,6 +123,10 @@ export class PlotCoordinator {
 
     updateDefaultColor(dataSetColorIndex) {
         this._defaultColorIndex = dataSetColorIndex;
+    }
+
+    updateDataSetsColors(colorsPerDataSet) {
+        this._colorIndexPerDataSet = colorsPerDataSet;
     }
 
     locallySelectedEntriesIndexes(){
