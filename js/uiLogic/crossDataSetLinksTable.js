@@ -38,6 +38,8 @@ let linkUIWidgetsTypes = [
     directFieldLink
 ];
 
+let widgetZIndexCounter = 100;
+
 export function updateCrossDataSetLinkTable(eventsCoordinatorRef, shouldSendUpdate=true) {
     let websocketCommunication = eventsCoordinatorRef.eventsCoordinator;
     document.getElementById("group-name-submit").innerHTML = "Add Link";
@@ -123,7 +125,10 @@ export function updateCrossDataSetLinkTable(eventsCoordinatorRef, shouldSendUpda
     if(shouldSendUpdate){
         websocketCommunication.sendUpdatedLinks();
     }
+
+    widgetZIndexCounter = 100;
 }
+
 
 function createLinkWidget(chosen, eventsCoordinatorRef, id, state, error) {
     let eventsCoordinator = eventsCoordinatorRef.eventsCoordinator;
@@ -131,39 +136,37 @@ function createLinkWidget(chosen, eventsCoordinatorRef, id, state, error) {
     for (let LinkClass of linkUIWidgetsTypes) {
         if (LinkClass.UIWidgetName === chosen) {
             let instance;
-            if(id){
+            if (id) {
                 instance = new LinkClass(
                     eventsCoordinator._dataSets,
                     id,
                     state,
                     error
                 );
-            }else{
+            } else {
                 const newId = eventsCoordinator.serverCreatedLinks.length
                     ? Math.max(...eventsCoordinator.serverCreatedLinks.map(link => link.id)) + 1
                     : 1;
 
-                instance = new LinkClass(
-                    eventsCoordinator._dataSets,
-                    newId
-                );
+                instance = new LinkClass(eventsCoordinator._dataSets, newId);
             }
 
             // 1) outer wrapper
             const wrapper = document.createElement("div");
             wrapper.classList.add("group-wrapper");
-            if(instance.isError){
+            wrapper.style.zIndex = widgetZIndexCounter--;  // assign and decrement
+            if (instance.isError) {
                 wrapper.classList.add("group-error");
             }
 
-            // 2) delete‑button bar with title
+            // 2) delete-button bar with title
             const deleteBar = document.createElement("div");
             deleteBar.classList.add("group-deleteBar");
 
             const titleDiv = document.createElement("div");
             titleDiv.classList.add("group-title");
             titleDiv.textContent = chosen;
-            if(instance.isError){
+            if (instance.isError) {
                 titleDiv.classList.add("tittle-error");
             }
 
@@ -205,7 +208,7 @@ function createLinkWidget(chosen, eventsCoordinatorRef, id, state, error) {
                     });
                 }
 
-                if(shouldRefreshTable) {
+                if (shouldRefreshTable) {
                     updateCrossDataSetLinkTable(eventsCoordinatorRef);
                 }
             };
@@ -214,7 +217,8 @@ function createLinkWidget(chosen, eventsCoordinatorRef, id, state, error) {
 
             delBtn.addEventListener("click", () => {
                 wrapper.remove();
-                eventsCoordinator.serverCreatedLinks = eventsCoordinator.serverCreatedLinks.filter(e => e.id !== instance.id);
+                eventsCoordinator.serverCreatedLinks =
+                    eventsCoordinator.serverCreatedLinks.filter(e => e.id !== instance.id);
                 updateCrossDataSetLinkTable(eventsCoordinatorRef);
             });
 

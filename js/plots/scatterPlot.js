@@ -443,6 +443,7 @@ export function createScatterPlot(fields, options, plotDiv, data, updatePlotsFun
     }
 
     const throttledHandleSelection = throttle(handleSelection, brushThrottleMs);
+    // const throttledHandleSelection = handleSelection;
     svg.call(d3.brush().extent([[marginLeft, marginTop], [width - marginRight, height - marginBottom]]).on("start brush end", throttledHandleSelection));
 
     // initial update

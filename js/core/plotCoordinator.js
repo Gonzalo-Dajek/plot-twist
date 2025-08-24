@@ -1,4 +1,5 @@
 import throttle from "lodash-es/throttle.js";
+import { makeAdaptiveThrottle } from "./adaptiveThrottle.js";
 
 /**
  * Responsible for coordinating the brushing between different plots
@@ -45,10 +46,8 @@ export class PlotCoordinator {
         ["#5C6BC0",
         "#E4572E",
             "#76B041",
-        // "#00A676",
         "#C44D9F",
         "#F3A712",
-        // "#2E86AB",
         "#C92C48"];
 
     dsName = ""; // name of the dataset
@@ -272,9 +271,12 @@ export class PlotCoordinator {
         return true;
     }
 
-    throttledUpdatePlotsView = throttle(this.updatePlotsView, 70);
+    // throttledUpdatePlotsView = throttle(this.updatePlotsView, 70);
+    throttledUpdatePlotsView = makeAdaptiveThrottle(this.updatePlotsView);
 
     updatePlotsView(triggeringPlotId, newSelection) {
+        const t0 = Date.now();
+
         this._plots.get(triggeringPlotId).lastSelectionRange = newSelection;
 
         this._benchMark("preIndexUpdate");
@@ -314,6 +316,9 @@ export class PlotCoordinator {
 
         this._benchMark("postPlotsUpdate");
         this.BENCHMARK.afterPlotFun("postPlots", triggeringPlotId!==0);
+
+        const elapsed = Date.now() - t0; // ms
+        this.throttledUpdatePlotsView.report(elapsed);
     }
 
     fields() {

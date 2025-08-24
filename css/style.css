@@ -675,6 +675,7 @@ body{
     max-width: 90vw;
     resize: horizontal;
     overflow: auto;
+    overflow-x: visible;
 }
 
 #slide-menu-btn {
@@ -761,7 +762,9 @@ body{
 
 #groups-list{
     flex-grow: 1;
+    min-width: 0;
     overflow-y: auto;
+    overflow-x: visible;
     padding: 10px;
     background-color: rgba(255, 255, 255, 0.7);
     border-radius: 8px;
@@ -1158,6 +1161,10 @@ select.links-item__dataset-select__error:focus {
 .add-link-container__button:hover {
     background-color: #d9d9d9;
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+.links-item__cm-editor {
+    overflow: visible;
 }
 
 

@@ -461,7 +461,7 @@ export function createBarPlot(fields, options, plotDiv, data, updatePlotsFun, ut
                     update => update
                         .attr('x', 0)
                         .attr('width', x.bandwidth())
-                        .transition().duration(transitionMs)
+                        // .transition().duration(transitionMs)
                         .attr('y', c => y(c.total))
                         .attr('height', c => (svgHeight - marginBottom) - y(c.total)),
 
@@ -492,8 +492,8 @@ export function createBarPlot(fields, options, plotDiv, data, updatePlotsFun, ut
                     // .on('mouseleave', function() { tooltip.style('display', 'none'); })
                     .style('fill', d => colors[d.name] || fallbackColor(d.name))
                     .style('opacity', d => hiddenDatasets.has(d.name) ? 0 : 1)
-                    .attr('y', d => y(0)).attr('height', 0)
-                    .call(ent => ent.transition().duration(transitionMs).attr('y', d => y(d.count)).attr('height', d => (svgHeight - marginBottom) - y(d.count))),
+                    .attr('y', d => y(0)).attr('height', 0),
+                    // .call(ent => ent.transition().duration(transitionMs).attr('y', d => y(d.count)).attr('height', d => (svgHeight - marginBottom) - y(d.count))),
 
                 update => update
                     .attr('x', d => d.idx * (innerW + innerPadding))
@@ -506,7 +506,7 @@ export function createBarPlot(fields, options, plotDiv, data, updatePlotsFun, ut
                         // })
                         // .on('mousemove', function(event) { tooltip.style('left', (event.pageX + 8) + 'px').style('top', (event.pageY + 8) + 'px'); })
                         // .on('mouseleave', function() { tooltip.style('display', 'none'); })
-                        .transition().duration(transitionMs)
+                        // .transition().duration(transitionMs)
                         .attr('y', d => y(d.count))
                         .attr('height', d => (svgHeight - marginBottom) - y(d.count))
                         .style('fill', d => colors[d.name] || fallbackColor(d.name))

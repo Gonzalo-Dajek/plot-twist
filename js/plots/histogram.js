@@ -406,8 +406,8 @@ export function createHistogram(fields, options, plotDiv, data, updatePlotsFun, 
                 .on("mouseleave", function() {
                     tooltip.style("display", "none");
                 })
-                .transition()
-                .duration(transitionMs)
+                // .transition()
+                // .duration(transitionMs)
                 .attr("y", d => y(d.count))
                 .attr("height", d => (height - marginBottom) - y(d.count))
                 .style("fill", d => colors[d.name] || fallbackColor(d.name))

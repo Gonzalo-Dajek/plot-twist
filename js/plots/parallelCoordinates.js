@@ -293,7 +293,7 @@ export function createParallelCoordinates(fields, options, plotDiv, data, update
                 .interrupt()
                 .attr("stroke", dsColor)
                 // preserve original parallel stroke-width/opacity behavior
-                .attr("stroke-width", isRowSel ? 1.2 : 0.1)
+                .attr("stroke-width", isRowSel ? 0.8 : 0.08)
                 .attr("stroke-opacity", 1);
                 // .attr("stroke-opacity", isRowSel ? 0.7 : 0.05);
         });
