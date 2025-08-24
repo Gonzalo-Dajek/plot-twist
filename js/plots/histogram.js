@@ -11,7 +11,8 @@ export const histogram = {
             fieldType: "numerical",
         },
     ],
-    options: [],
+    // NEW: boolean option to toggle log-like Y axis
+    options: ["y-axis log scale"],
     height: 1,
     width: 1,
     createPlotFunction: createHistogram,
@@ -19,6 +20,8 @@ export const histogram = {
 
 export function createHistogram(fields, options, plotDiv, data, updatePlotsFun, utils) {
     const field = fields.get("bin-variable");
+    const isLogSelected = options.get("y-axis log scale");
+
     const container = d3.select(plotDiv);
     const width = container.node().clientWidth;
     const height = container.node().clientHeight;
@@ -64,7 +67,13 @@ export function createHistogram(fields, options, plotDiv, data, updatePlotsFun, 
         .attr("transform", `translate(0,${height - marginBottom})`)
         .call(d3.axisBottom(x).ticks(5).tickFormat(customTickFormat));
 
-    const y = d3.scaleLinear().range([height - marginBottom, marginTop]);
+    // Create both linear and symlog (log-like) scales; pick one when setting domain
+    const yLinear = d3.scaleLinear().range([height - marginBottom, marginTop]);
+    // symlog allows zero and negative safely; use constant 1 for smoother small-value behavior
+    const yLogLike = d3.scaleSymlog().constant(1).range([height - marginBottom, marginTop]);
+
+    // Start with one reference (will set domain later in initialRender)
+    let y = isLogSelected ? yLogLike : yLinear;
 
     const yAxisG = svg.append("g")
         .attr("transform", `translate(${marginLeft},0)`);
@@ -97,6 +106,7 @@ export function createHistogram(fields, options, plotDiv, data, updatePlotsFun, 
         .attr("class", "grid")
         .attr("transform", `translate(${marginLeft},0)`)
         .call(
+            // use whichever y was chosen (domain will be set before first render)
             d3.axisLeft(y)
                 .tickSize(-width + marginLeft + marginRight)
                 .tickFormat("")
@@ -180,7 +190,16 @@ export function createHistogram(fields, options, plotDiv, data, updatePlotsFun, 
         // compute y domain using counts
         const maxDatasetCount = d3.max(countsPerBin, bin => d3.max(allDataSets.map(ds => bin.datasets[ds] || 0))) || 0;
         const maxTotal = d3.max(countsPerBin, bin => bin.total) || 0;
-        y.domain([0, Math.max(maxDatasetCount, maxTotal)]);
+        let yMax = Math.max(maxDatasetCount, maxTotal);
+
+        // Guard against zero/negative when using log-like scale
+        if (isLogSelected) {
+            if (yMax < 1) yMax = 1;
+            // set symlog domain so zeros are allowed but scale is log-like
+            y = yLogLike.domain([0, yMax]);
+        } else {
+            y = yLinear.domain([0, yMax]);
+        }
 
         // y axis
         yAxisG.call(d3.axisLeft(y).ticks(7).tickFormat(customTickFormat));
@@ -254,7 +273,6 @@ export function createHistogram(fields, options, plotDiv, data, updatePlotsFun, 
         .style("transform", "translateY(5px)")
         .style("transition", "opacity 0.3s ease, transform 0.3s ease")
         .style("display", "none");
-        // .style("display", "none");
 
     // Render or update legend items
     function renderLegend(allDataSets, colors) {
@@ -272,8 +290,7 @@ export function createHistogram(fields, options, plotDiv, data, updatePlotsFun, 
             .style("right", utils().allDataSets().length +10 + "px")
             .style("top", -25 + "px")
             .style("display", "flex")
-            // .style("flex-direction", "column") // vertical stacking
-            .style("gap", "6px") // matches gap from second function
+            .style("gap", "6px")
             .style("z-index", 9999)
             .style("pointer-events", "auto");
 
@@ -352,8 +369,14 @@ export function createHistogram(fields, options, plotDiv, data, updatePlotsFun, 
         // recompute y domain
         const maxDatasetCount = d3.max(countsPerBin, bin => d3.max(allDataSets.map(ds => bin.datasets[ds] || 0))) || 0;
         const maxTotal = d3.max(countsPerBin, bin => bin.total) || 0;
-        const yMax = Math.max(maxDatasetCount, maxTotal);
-        y.domain([0, yMax]);
+        let yMax = Math.max(maxDatasetCount, maxTotal);
+
+        if (isLogSelected) {
+            if (yMax < 1) yMax = 1;
+            y = yLogLike.domain([0, yMax]);
+        } else {
+            y = yLinear.domain([0, yMax]);
+        }
 
         yAxisG.transition().duration(transitionMs).call(d3.axisLeft(y).ticks(7).tickFormat(customTickFormat));
 
