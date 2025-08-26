@@ -1,5 +1,5 @@
 import { PlotCoordinator } from "./plotCoordinator.js";
-import { updateCrossDataSetLinkTable } from "../uiLogic/crossDataSetLinksTable.js";
+import { refreshLinkWidgetsErrorState, updateCrossDataSetLinkTable } from "../uiLogic/crossDataSetLinksTable.js";
 import { adjustBodyStyle } from "../uiLogic/gridUtils.js";
 import { showOffErrorMsg } from "../uiLogic/crossDataSetLinksTable.js";
 
@@ -119,6 +119,16 @@ export class websocketCommunication {
                 // console.log(`Received ${msg.type}`);
                 // console.log(this._serverCrossSelectionPerDataSet);
                 this.updateStateOfPlotCoordinators()
+            }else if (msg.type === "linkUpdate"){
+                this.serverCreatedLinks = msg.links;
+                this.linkOperator = msg.linksOperator;
+                this._dataSets = Object.fromEntries(
+                    msg.dataSet.map(ds => [ds.name, {
+                        fields: ds.fields,
+                        dataSetColorIndex: ds.dataSetColorIndex
+                    }])
+                );
+                refreshLinkWidgetsErrorState({ eventsCoordinator: this });
             }
             adjustBodyStyle();
         };

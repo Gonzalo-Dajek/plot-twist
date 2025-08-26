@@ -13,9 +13,6 @@ function run(){
         parallelCoordinates,
     ];
 
-    // TODO: change layout export to include dataset it came from
-    // TODO: add multiple plots in same client functionality
-
     let ip = "186.153.49.206";
     let url = `ws://${ip}:5226/`;
     const BENCHMARK = false;

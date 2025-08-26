@@ -38,6 +38,30 @@ let linkUIWidgetsTypes = [
     directFieldLink
 ];
 
+export function refreshLinkWidgetsErrorState(eventsCoordinatorRef) {
+    const websocketCommunication = eventsCoordinatorRef.eventsCoordinator;
+    if (!websocketCommunication || !Array.isArray(websocketCommunication.serverCreatedLinks)) return;
+
+    for (let fooLinkInfo of websocketCommunication.serverCreatedLinks) {
+        const id = String(fooLinkInfo.id);
+        // find the wrapper created by createLinkWidget
+        const wrapper = document.querySelector(`.group-wrapper[data-link-id="${id}"]`);
+        if (!wrapper) continue;
+
+        const instance = wrapper._linkInstance || wrapper.linkWidget || null;
+
+        if (instance && typeof instance.updateErrorState === 'function') {
+            // direct call if available
+            instance.updateErrorState(Boolean(fooLinkInfo.isError));
+        } else {
+            // fallback: dispatch event the widget can listen to
+            wrapper.dispatchEvent(new CustomEvent('link:updateErrorState', {
+                detail: { isError: Boolean(fooLinkInfo.isError), linkId: id }
+            }));
+        }
+    }
+}
+
 let widgetZIndexCounter = 100;
 
 export function updateCrossDataSetLinkTable(eventsCoordinatorRef, shouldSendUpdate=true) {
@@ -129,7 +153,6 @@ export function updateCrossDataSetLinkTable(eventsCoordinatorRef, shouldSendUpda
     widgetZIndexCounter = 100;
 }
 
-
 function createLinkWidget(chosen, eventsCoordinatorRef, id, state, error) {
     let eventsCoordinator = eventsCoordinatorRef.eventsCoordinator;
 
@@ -141,20 +164,23 @@ function createLinkWidget(chosen, eventsCoordinatorRef, id, state, error) {
                     eventsCoordinator._dataSets,
                     id,
                     state,
-                    error
+                    error,
+                    eventsCoordinatorRef
                 );
             } else {
                 const newId = eventsCoordinator.serverCreatedLinks.length
                     ? Math.max(...eventsCoordinator.serverCreatedLinks.map(link => link.id)) + 1
                     : 1;
 
-                instance = new LinkClass(eventsCoordinator._dataSets, newId);
+                instance = new LinkClass(eventsCoordinator._dataSets, newId, null, null, eventsCoordinatorRef);
             }
 
             // 1) outer wrapper
             const wrapper = document.createElement("div");
             wrapper.classList.add("group-wrapper");
             wrapper.style.zIndex = widgetZIndexCounter--;  // assign and decrement
+            wrapper.dataset.linkId = String(instance.id);  // mark DOM node with link id
+            wrapper._linkInstance = instance;
             if (instance.isError) {
                 wrapper.classList.add("group-error");
             }

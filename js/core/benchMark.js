@@ -8,23 +8,16 @@ import { brushBackAndForth } from "./benchMarkUtils/brushing.js";
 import { loadLayout } from "../uiLogic/gridUtils.js";
 import { sendBenchMarkTimings, sendEndTrigger, sendStartTrigger, waitForEndTrigger, waitForStartTrigger } from "./benchMarkUtils/webSocketPassiveCommunication.js";
 
-// TODO: make presentation -
-// TODO: add basic custom complex function functionality -
 
-// TODO: make svg favicon and logo
+// TODO: change layout export to include dataset it came from
+// TODO: add multiple plots in same client functionality
+
 // TODO: make GitHub pretty with instructions
-// TODO: put some practical use cases in the description
-// TODO: example usage
-// TODO: add gif
-// TODO: sales pitch
+// TODO: example usage, add gif
 // TODO: add introductory text before loadCSV
-// TODO: add iris dataset
-// TODO: fix scatter plot dot size so it is smaller
-// TODO: fix labels so they are always on top and properly placed
 // TODO: clean plots code
 
 // TODO: test backend install instructions
-// TODO: close port
 
 export async function benchMark(plots, url) {
     let clientId = prompt("Enter clientId:", "");

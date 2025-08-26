@@ -1,4 +1,4 @@
-import { initTopBarScroll } from "../../uiLogic/topBarScroll.js";
+import { initLinkMenuResize, initTopBarScroll } from "../../uiLogic/topBarScroll.js";
 import { initExportLayout, initGridResizing, initLoadCsv, initLoadLayout } from "../../uiLogic/initUI.js";
 // import { updateCrossDataSetLinkTable } from "../../uiLogic/crossDataSetLinksTable.js";
 import { PlotCoordinator } from "../plotCoordinator.js";
@@ -19,6 +19,7 @@ export function benchMarkSetUp(
     brushIdRef
 ) {
     initTopBarScroll();
+    initLinkMenuResize();
     initExportLayout();
     initLoadLayout(pcRef, plots);
     initGridResizing(pcRef, plots);
