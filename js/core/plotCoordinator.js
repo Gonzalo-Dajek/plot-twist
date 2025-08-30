@@ -45,10 +45,9 @@ export class PlotCoordinator {
     _localColorPool =
         ["#5C6BC0",
         "#E4572E",
-            "#76B041",
+        "#76B041",
         "#C44D9F",
-        "#F3A712",
-        "#C92C48"];
+        "#F3A712"];
 
     dsName = ""; // name of the dataset
 

@@ -16,6 +16,10 @@ export const barPlot = {
     createPlotFunction: createBarPlot,
 };
 
+// Canvas-based refactor of the original SVG/D3 bar plot with transparent background.
+// Preserves: pinned Y axis, scrollable right pane, legend overlay, click selection (single / multi via ctrl/cmd), tooltip, dataset hiding.
+// Rendering is done on <canvas> (faster for many categories). d3 scales/utilities still used for math.
+
 export function createBarPlot(fields, options, plotDiv, data, updatePlotsFun, utils) {
     const field = fields.get("bin-variable");
     const container = d3.select(plotDiv).style("position", "relative");
@@ -28,14 +32,13 @@ export function createBarPlot(fields, options, plotDiv, data, updatePlotsFun, ut
     const marginBottom = 40; // leave extra for rotated labels
     const marginLeft = 60; // space reserved for pinned y-axis
 
-    const transitionMs = 150;
     const innerPadding = 2;
     const fallbackColor = d3.scaleOrdinal(d3.schemeCategory10);
     const minBinWidth = 40; // minimal width per category
 
-    // Hide arrow buttons and make scrollbar minimal — injected CSS scoped to this container
     const uid = `barplot-${Math.random().toString(36).slice(2,9)}`;
     container.attr("data-barplot-id", uid);
+
     const style = `
         [data-barplot-id="${uid}"] .bp-scroll { overflow-x: auto; overflow-y: hidden; -webkit-overflow-scrolling: touch; }
         [data-barplot-id="${uid}"] .bp-scroll::-webkit-scrollbar { height: 10px; }
@@ -50,7 +53,6 @@ export function createBarPlot(fields, options, plotDiv, data, updatePlotsFun, ut
         [data-barplot-id="${uid}"] .legend-item { display:flex; align-items:center; cursor:pointer; height:18px; }
         [data-barplot-id="${uid}"] .legend-swatch { width:16px; height:16px; border-radius:7px; border:1px solid #ccc; }
     `;
-    // inject style
     container.append("style").text(style);
 
     // Tooltip (placed inside container)
@@ -60,7 +62,7 @@ export function createBarPlot(fields, options, plotDiv, data, updatePlotsFun, ut
         .style("position", "absolute")
         .style("pointer-events", "none")
         .style("color", "#333")
-        .style("background", "rgba(250, 250, 250, 0.9)")
+        .style("background", "rgba(250, 250, 250, 0.95)")
         .style("padding", "6px 12px")
         .style("border-radius", "8px")
         .style("box-shadow", "0 2px 8px rgba(0,0,0,0.15)")
@@ -68,7 +70,7 @@ export function createBarPlot(fields, options, plotDiv, data, updatePlotsFun, ut
         .style("z-index", 10000)
         .style("opacity", 0)
         .style("transform", "translateY(5px)")
-        .style("transition", "opacity 0.3s ease, transform 0.3s ease")
+        .style("transition", "opacity 0.15s ease, transform 0.15s ease")
         .style("display", "none");
 
     // categories
@@ -77,8 +79,8 @@ export function createBarPlot(fields, options, plotDiv, data, updatePlotsFun, ut
     // compute widths
     const minTotalWidth = categories.length * minBinWidth;
     const rightPaneWidth = Math.max(containerWidth - marginLeft, minTotalWidth);
-    let svgRightWidth = rightPaneWidth;
-    const svgHeight = height;
+    let canvasRightWidth = rightPaneWidth;
+    const canvasHeight = height;
 
     // create left (pinned y-axis) and right (scrollable plot) panes
     const leftDiv = container.append("div").attr("class", "bp-left");
@@ -87,45 +89,54 @@ export function createBarPlot(fields, options, plotDiv, data, updatePlotsFun, ut
     // pinned title (top-right, pinned not scrolling)
     container.append("div").attr("class", "bp-title").text(field);
 
-    // Left SVG will host y-axis only (pinned)
-    const leftSvg = leftDiv.append("svg")
-        .attr("width", marginLeft)
-        .attr("height", svgHeight)
-        .style("display", "block");
+    // left canvas (y-axis)
+    const leftCanvasNode = leftDiv.append("canvas").node();
+    leftCanvasNode.style.background = 'transparent';
+    leftCanvasNode.style.display = 'block';
+    leftCanvasNode.style.pointerEvents = 'none';
+    const leftCtx = leftCanvasNode.getContext('2d');
 
-    // Right SVG holds bars and x-axis and scrolls horizontally
-    const rightSvg = rightDiv.append("svg")
-        .attr("width", svgRightWidth)
-        .attr("height", svgHeight)
-        .style("display", "block");
+    // right canvas (bars + x-axis + grid)
+    const rightCanvasNode = rightDiv.append("canvas").node();
+    rightCanvasNode.style.background = 'transparent';
+    rightCanvasNode.style.display = 'block';
+    const rightCtx = rightCanvasNode.getContext('2d');
 
-    // background click capture on rightSvg (so clicking empty area clears)
-    rightSvg.append("rect")
-        .attr("width", svgRightWidth)
-        .attr("height", svgHeight)
-        .attr("fill", "transparent")
-        .on("click", () => handleBackgroundClick());
+    // high DPI handling
+    function setCanvasSize(node, ctx, w, h) {
+        const ratio = window.devicePixelRatio || 1;
+        node.width = Math.max(1, Math.floor(w * ratio));
+        node.height = Math.max(1, Math.floor(h * ratio));
+        node.style.width = w + 'px';
+        node.style.height = h + 'px';
+        ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+    }
+
+    setCanvasSize(leftCanvasNode, leftCtx, marginLeft, canvasHeight);
+    setCanvasSize(rightCanvasNode, rightCtx, canvasRightWidth, canvasHeight);
+
+    // background click capture on rightCanvas - will clear selection when clicking empty area
+    rightCanvasNode.addEventListener('click', (ev) => handleCanvasClick(ev));
+    rightCanvasNode.addEventListener('mousemove', (ev) => handleCanvasMouseMove(ev));
+    rightCanvasNode.addEventListener('mouseleave', () => {
+        tooltip.style('opacity', 0).style('display', 'none');
+    });
 
     // Scales
-    const x = d3.scaleBand()
+    let x = d3.scaleBand()
         .domain(categories)
-        .range([0, svgRightWidth - marginRight])
+        .range([0, canvasRightWidth - marginRight])
         .padding(0.1);
 
-    const y = d3.scaleLinear().range([svgHeight - marginBottom, marginTop]);
+    let y = d3.scaleLinear().range([canvasHeight - marginBottom, marginTop]);
 
-    const yAxisGroup = leftSvg.append("g")
-        .attr("transform", `translate(${marginLeft - 8},0)`); // push ticks near right edge of left pane
-
-    const xAxisGroup = rightSvg.append("g")
-        .attr("transform", `translate(0,${svgHeight - marginBottom})`)
-        .attr("class", "x-axis");
-
-    const gridG = rightSvg.append("g").attr("class", "grid");
-    const barsG = rightSvg.append("g").attr("class", "bars-group");
-
+    // state
     let hiddenDatasets = new Set();
     let selectedCategories = [];
+
+    // hit-test maps
+    let categoryRects = []; // [{x,y,width,height,category,index}]
+    let barRects = []; // [{x,y,width,height,category,dsName,count,idx}]
 
     function handleMultiClick(clickedCategory) {
         const idx = selectedCategories.indexOf(clickedCategory);
@@ -145,44 +156,64 @@ export function createBarPlot(fields, options, plotDiv, data, updatePlotsFun, ut
     function updateSelection() {
         let payload = [];
         if (selectedCategories.length) payload = [{ categories: selectedCategories, field, type: 'categorical' }];
-        // style pinned labels (we still create x-axis labels in rightSvg but keep visual emphasis via class)
-        xAxisGroup.selectAll('text.x-axis-label')
-            .style('font-weight', function(d) { return selectedCategories.includes(d) ? 'bolder' : 'normal'; })
-            .style('font-size', function(d) { return selectedCategories.includes(d) ? '12px' : '10px'; });
         updatePlotsFun(payload);
+        // re-render visual emphasis on labels/bars
+        renderAll();
     }
 
-    // attach click + tooltip handlers for a category rect
-    function attachBinHandlers(rectSelection, category, infoGetter) {
-        rectSelection
-            .attr('class', 'bg-rect')
-            .attr('x', 0)
-            .attr('width', x.bandwidth())
-            // .style('cursor', 'pointer')
-            .on('click', function(event, d) {
-                const clickedCategory = category;
-                if (event.ctrlKey || event.metaKey) handleMultiClick(clickedCategory);
-                else handleSingleClick(clickedCategory);
-            });
-            // .on('mouseover', function(event) {
-            //     const info = typeof infoGetter === 'function' ? infoGetter() : infoGetter;
-            //     if (!info) return;
-            //     const lines = Object.keys(info.datasets || {}).map(ds => `${ds}: ${info.datasets[ds]}`);
-            //     tooltip.html(`<strong>${category}</strong><br/>total: ${info.total || 0}<br/>${lines.join('<br/>')}`)
-            //         .style('left', (event.pageX + 8) + 'px')
-            //         .style('top', (event.pageY + 8) + 'px')
-            //         .style('display', 'block');
-            // })
-            // .on('mousemove', function(event) {
-            //     tooltip.style('left', (event.pageX + 8) + 'px')
-            //         .style('top', (event.pageY + 8) + 'px');
-            // })
-            // .on('mouseleave', function() {
-            //     tooltip.style('display', 'none');
-            // });
+    // canvas mouse handlers — perform hit testing
+    function getEventOffset(ev, canvas) {
+        const rect = canvas.getBoundingClientRect();
+        return { x: ev.clientX - rect.left, y: ev.clientY - rect.top };
     }
 
-    // computeCounts unchanged
+    function handleCanvasClick(ev) {
+        const { x: mx, y: my } = getEventOffset(ev, rightCanvasNode);
+        // check barRects first
+        const hitBar = barRects.find(r => mx >= r.x && mx <= r.x + r.width && my >= r.y && my <= r.y + r.height);
+        if (hitBar) {
+            const clickedCategory = hitBar.category;
+            if (ev.ctrlKey || ev.metaKey) handleMultiClick(clickedCategory);
+            else handleSingleClick(clickedCategory);
+            return;
+        }
+        // check category bg rects
+        const hitCat = categoryRects.find(r => mx >= r.x && mx <= r.x + r.width && my >= r.y && my <= r.y + r.height);
+        if (hitCat) {
+            const clickedCategory = hitCat.category;
+            if (ev.ctrlKey || ev.metaKey) handleMultiClick(clickedCategory);
+            else handleSingleClick(clickedCategory);
+            return;
+        }
+        handleBackgroundClick();
+    }
+
+    function handleCanvasMouseMove(ev) {
+        const { x: mx, y: my } = getEventOffset(ev, rightCanvasNode);
+        // prefer bar hover
+        const hitBar = barRects.find(r => mx >= r.x && mx <= r.x + r.width && my >= r.y && my <= r.y + r.height);
+        if (hitBar) {
+            tooltip.html(`<strong>${hitBar.dsName}</strong><br/>count: ${hitBar.count}<br/>category: ${hitBar.category}`)
+                .style('left', (ev.pageX + 8) + 'px')
+                .style('top', (ev.pageY + 8) + 'px')
+                .style('display', 'block')
+                .style('opacity', 1);
+            return;
+        }
+        const hitCat = categoryRects.find(r => mx >= r.x && mx <= r.x + r.width && my >= r.y && my <= r.y + r.height);
+        if (hitCat) {
+            // hover total
+            tooltip.html(`<strong>${hitCat.category}</strong><br/>total: ${hitCat.total || 0}`)
+                .style('left', (ev.pageX + 8) + 'px')
+                .style('top', (ev.pageY + 8) + 'px')
+                .style('display', 'block')
+                .style('opacity', 1);
+            return;
+        }
+        tooltip.style('opacity', 0).style('display', 'none');
+    }
+
+    // computeCounts reused
     function computeCounts() {
         const u = utils();
         const origin = typeof u.dataSet === 'function' ? u.dataSet() : (u.dataSet || '');
@@ -219,43 +250,150 @@ export function createBarPlot(fields, options, plotDiv, data, updatePlotsFun, ut
         return { countsPerCat, allDataSets, colors };
     }
 
-    // helper: truncate/fit x labels with rotation and tooltip
-    function adjustXAxisLabels(bandwidth) {
-        const labels = xAxisGroup.selectAll('text').attr('class', 'x-axis-label x-label').style('font-family', 'sans-serif');
-        labels.each(function(d) {
-            const txt = d3.select(this);
-            const full = String(d);
-            let fs = 12;
-            txt.style('font-size', fs + 'px').text(full);
-            // rotate downwards and set anchor
-            txt.attr('transform', `rotate(45, ${txt.attr('x') || 0}, ${txt.attr('y') || 0})`)
-                .attr('text-anchor', 'start')
-                .attr('dx', '-5px')
-                .attr('dy', '10px');
+    // draw helpers
+    function clearContext(ctx, w, h) {
+        ctx.clearRect(0, 0, w, h);
+    }
 
-            // shrink font until fits reasonably or reach min size
-            const minFs = 8;
-            while (fs > minFs && this.getComputedTextLength() > Math.max(8, bandwidth)) {
-                fs -= 1;
-                txt.style('font-size', fs + 'px');
-            }
+    function drawLeftAxis(yScale, yMax) {
+        const ctx = leftCtx;
+        const w = marginLeft;
+        const h = canvasHeight;
+        clearContext(ctx, w, h);
+        // transparent background intentionally left (no fill)
 
-            // if still too long, truncate by removing chars until it fits
-            if (this.getComputedTextLength() > Math.max(8, bandwidth)) {
-                let t = full;
-                txt.text(t + '...');
-                while (t.length > 0 && this.getComputedTextLength() > Math.max(8, bandwidth)) {
-                    t = t.slice(0, -1);
-                    txt.text(t + '...');
-                }
+        ctx.fillStyle = '#333';
+        ctx.textAlign = 'right';
+        ctx.textBaseline = 'middle';
+        ctx.font = '12px sans-serif';
+
+        const ticks = yScale.ticks ? yScale.ticks(7) : d3.range(0, yMax + 1, Math.ceil(yMax / 7));
+        ticks.forEach(t => {
+            const yPos = yScale(t);
+            // tick line small
+            ctx.strokeStyle = '#666';
+            ctx.globalAlpha = 0.7;
+            ctx.beginPath();
+            ctx.moveTo(w - 6, yPos);
+            ctx.lineTo(w - 2, yPos);
+            ctx.stroke();
+            ctx.globalAlpha = 1;
+            ctx.fillText(customTickFormat(t), w - 8, yPos);
+        });
+    }
+
+    function drawGridAndBars(countsPerCat, allDataSets, colors) {
+        const ctx = rightCtx;
+        const w = canvasRightWidth;
+        const h = canvasHeight;
+        clearContext(ctx, w, h);
+        // transparent background — no fillRect
+
+        // y grid lines
+        const yTicks = y.ticks ? y.ticks(7) : d3.range(0, (y.domain()[1] || 1) + 1, Math.ceil(y.domain()[1] / 7));
+        ctx.strokeStyle = '#999';
+        ctx.globalAlpha = 0.12;
+        ctx.lineWidth = 0.5;
+        yTicks.forEach(t => {
+            const yPos = y(t);
+            ctx.beginPath();
+            ctx.moveTo(0, yPos);
+            ctx.lineTo(w - marginRight, yPos);
+            ctx.stroke();
+        });
+        ctx.globalAlpha = 1;
+
+        // prepare category rectangles and dataset bars for hit-testing
+        categoryRects = [];
+        barRects = [];
+
+        const catWidth = Math.max(1, x.bandwidth());
+        const N = Math.max(1, allDataSets.length);
+        const innerW = Math.max(0, (catWidth - (N - 1) * innerPadding) / N);
+
+        categories.forEach((cat, ci) => {
+            const cx = x(cat) || 0;
+            // background grey rect (total)
+            const total = countsPerCat[ci].total || 0;
+            const rectY = y(total);
+            const rectH = (canvasHeight - marginBottom) - rectY;
+            ctx.fillStyle = '#e6e6e6';
+            ctx.fillRect(cx, rectY, catWidth, rectH);
+
+            categoryRects.push({ x: cx, y: rectY, width: catWidth, height: rectH, category: cat, total });
+
+            // dataset bars
+            allDataSets.forEach((ds, idx) => {
+                const count = countsPerCat[ci].datasets[ds] || 0;
+                const bx = cx + idx * (innerW + innerPadding);
+                const by = y(count);
+                const bh = (canvasHeight - marginBottom) - by;
+                const color = colors[ds] || fallbackColor(ds);
+                ctx.fillStyle = hiddenDatasets.has(ds) ? 'rgba(0,0,0,0)' : color;
+                ctx.globalAlpha = hiddenDatasets.has(ds) ? 0 : 1;
+                ctx.fillRect(bx, by, innerW, bh);
+                ctx.globalAlpha = 1;
+                barRects.push({ x: bx, y: by, width: innerW, height: bh, category: cat, dsName: ds, count, idx });
+            });
+
+            // highlight selection border if selected
+            if (selectedCategories.includes(cat)) {
+                ctx.strokeStyle = '#222';
+                ctx.lineWidth = 2;
+                ctx.strokeRect(cx + 1, rectY + 1, catWidth - 2, Math.max(1, rectH - 2));
             }
-            // add hover tooltip (title)
-            txt.selectAll('title').remove();
-            txt.append('title').text(full);
         });
 
-        // ensure pointer events on labels (for hover title)
-        labels.style('pointer-events', 'auto');
+        // draw x-axis line
+        ctx.strokeStyle = '#000';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(0, canvasHeight - marginBottom);
+        ctx.lineTo(Math.max(0, canvasRightWidth - marginRight), canvasHeight - marginBottom);
+        ctx.stroke();
+
+        // draw x-axis labels (rotated like original, with truncation)
+        drawXAxisLabels(ctx, categories, x.bandwidth());
+    }
+
+    function drawXAxisLabels(ctx, cats, bandwidth) {
+        ctx.save();
+        ctx.translate(0, canvasHeight - marginBottom + 6);
+        ctx.fillStyle = '#111';
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'top';
+        // rotate each label by 45deg about its x position
+        const maxW = Math.max(8, bandwidth);
+        cats.forEach(cat => {
+            const cx = x(cat) + 4; // small offset
+            const full = String(cat);
+            // measure and possibly truncate
+            ctx.font = '12px sans-serif';
+            let text = full;
+            let measure = ctx.measureText(text).width;
+            const minFs = 8;
+            // if too wide, reduce font size (simple approach: reduce to 10 then 9 then 8)
+            let fontSize = 12;
+            while (fontSize > minFs && measure > maxW) {
+                fontSize -= 1;
+                ctx.font = `${fontSize}px sans-serif`;
+                measure = ctx.measureText(text).width;
+            }
+            // if still too wide, truncate
+            if (measure > maxW) {
+                let t = full;
+                ctx.font = `${fontSize}px sans-serif`;
+                while (t.length > 0 && ctx.measureText(t + '...').width > maxW) t = t.slice(0, -1);
+                text = t + '...';
+            }
+            // draw rotated
+            ctx.save();
+            ctx.translate(x(cat), 0);
+            ctx.rotate((45 * Math.PI) / 180);
+            ctx.fillText(text, 0, 0);
+            ctx.restore();
+        });
+        ctx.restore();
     }
 
     // Render or update legend items — only swatches, labels on hover (tooltip), like histogram
@@ -268,7 +406,6 @@ export function createBarPlot(fields, options, plotDiv, data, updatePlotsFun, ut
         const swatchSize = 16;
         if (!allDataSets || allDataSets.length === 0) return;
 
-        // Position legend on the right, below marginTop
         const legendDiv = outer
             .append("div")
             .attr("class", "legend-overlay")
@@ -319,14 +456,12 @@ export function createBarPlot(fields, options, plotDiv, data, updatePlotsFun, ut
                 if (hiddenDatasets.has(d)) hiddenDatasets.delete(d);
                 else hiddenDatasets.add(d);
                 renderLegend(allDataSets, colors);
-                updateBarPlot();
+                renderAll();
             });
 
-        // append only swatch (no text)
         enter.append("div")
             .attr("class", "legend-swatch");
 
-        // merge and set swatch color/opacity
         enter.merge(items)
             .select(".legend-swatch")
             .style("background-color", d => colors[d] || fallbackColor(d))
@@ -339,197 +474,47 @@ export function createBarPlot(fields, options, plotDiv, data, updatePlotsFun, ut
         const maxTotal = d3.max(countsPerCat, c => c.total) || 0;
         y.domain([0, Math.max(maxDatasetCount, maxTotal)]);
 
-        // pinned y axis
-        yAxisGroup.call(d3.axisLeft(y).ticks(7).tickFormat(customTickFormat));
-
-        // y-grid lines drawn inside right SVG so they scroll horizontally with bars
-        const yTicks = y.ticks(7);
-        gridG.selectAll('line').data(yTicks).enter().append('line')
-            .attr('x1', 0).attr('x2', svgRightWidth - marginRight)
-            .attr('y1', d => y(d)).attr('y2', d => y(d))
-            .attr('stroke', '#999').style('stroke-opacity', 0.5).style('stroke-width', 0.5);
-
-        // category groups — positioned in rightSvg using x scale
-        const catGroups = barsG.selectAll('g.cat-group')
-            .data(categories)
-            .enter()
-            .append('g')
-            .attr('class', 'cat-group')
-            .attr('transform', d => `translate(${x(d)},0)`);
-
-        // background grey rect (total) — clipped inside rightSvg so nothing appears left of pinned y-axis
-        catGroups.append('rect')
-            .attr('fill', '#e6e6e6')
-            .each(function(category, i) {
-                const infoFn = () => countsPerCat[i];
-                const sel = d3.select(this);
-                attachBinHandlers(sel, category, infoFn);
-                sel.attr('y', y(countsPerCat[i].total))
-                    .attr('height', (svgHeight - marginBottom) - y(countsPerCat[i].total))
-                    .attr('x', 0)
-                    .attr('width', x.bandwidth());
-            });
-
-        // dataset bars groups inside each category
-        catGroups.selectAll('g.dataset-bar')
-            .data((d, i) => allDataSets.map((ds, idx) => ({ name: ds, count: countsPerCat[i].datasets[ds] || 0, idx, catIndex: i, category: d })))
-            .enter()
-            .append('g')
-            .attr('class', 'dataset-bar')
-            .each(function(d) { d3.select(this).append('rect').attr('class', 'bar-rect'); });
-
-        // draw x-axis (on rightSvg) — note: x axis labels are created here and adjusted later
-        xAxisGroup.call(d3.axisBottom(x).tickSizeOuter(0));
-        // adjust labels (size/rotate/truncate/hover)
-        adjustXAxisLabels(x.bandwidth());
+        // draw pinned y axis and grid + bars
+        drawLeftAxis(y, Math.max(maxDatasetCount, maxTotal));
+        drawGridAndBars(countsPerCat, allDataSets, colors);
 
         // legend
         renderLegend(allDataSets, colors);
     }
 
-    function updateBarPlot() {
+    function renderAll() {
         const { countsPerCat, allDataSets, colors } = computeCounts();
         const maxDatasetCount = d3.max(countsPerCat, c => d3.max(allDataSets.map(ds => c.datasets[ds] || 0))) || 0;
         const maxTotal = d3.max(countsPerCat, c => c.total) || 0;
         const yMax = Math.max(maxDatasetCount, maxTotal) || 1;
         y.domain([0, yMax]);
 
-        // Ensure legend is in sync
-        renderLegend(allDataSets, colors);
+        // update left axis
+        drawLeftAxis(y, yMax);
 
-        // Update y axis (pinned)
-        yAxisGroup.transition().duration(transitionMs).call(d3.axisLeft(y).ticks(7).tickFormat(customTickFormat));
+        // recompute right canvas size & x range based on container
+        const cw = container.node().clientWidth;
+        const newRightPaneWidth = Math.max(cw - marginLeft, categories.length * minBinWidth);
+        canvasRightWidth = newRightPaneWidth;
+        setCanvasSize(rightCanvasNode, rightCtx, canvasRightWidth, canvasHeight);
 
-        // update y grid lines in rightSvg
-        const yTicks = y.ticks(7);
-        const grid = gridG.selectAll('line').data(yTicks);
-        grid.join(
-            enter => enter.append('line').attr('x1', 0).attr('x2', svgRightWidth - marginRight).attr('y1', d => y(d)).attr('y2', d => y(d)).attr('stroke', '#999').style('stroke-opacity', 0.12).style('stroke-width', 0.5),
-            update => update.transition().duration(transitionMs).attr('y1', d => y(d)).attr('y2', d => y(d)),
-            exit => exit.remove()
-        );
+        x.range([0, canvasRightWidth - marginRight]);
 
-        // If categories length changed, recompute widths & x range
-        const newMinTotalWidth = categories.length * minBinWidth;
-        const newRightPaneWidth = Math.max(container.node().clientWidth - marginLeft, newMinTotalWidth);
-        svgRightWidth = newRightPaneWidth;
-        rightSvg.attr("width", svgRightWidth);
-        x.range([0, svgRightWidth - marginRight]);
-
-        // update x axis
-        xAxisGroup.call(d3.axisBottom(x).tickSizeOuter(0));
-        adjustXAxisLabels(x.bandwidth());
-
-        // update category groups binding
-        const catGroups = barsG.selectAll('g.cat-group').data(categories);
-
-        // enter new groups if any — attach bg rect with unified handlers
-        catGroups.enter()
-            .append('g')
-            .attr('class', 'cat-group')
-            .attr('transform', d => `translate(${x(d)},0)`)
-            .each(function(category, ci) {
-                const g = d3.select(this);
-                // append the visible grey rect (fill) and attach handlers via helper
-                const rect = g.append('rect').attr('fill', '#e6e6e6');
-                const infoFn = () => countsPerCat[ci];
-                attachBinHandlers(rect, category, infoFn);
-                rect.attr('x', 0)
-                    .attr('width', x.bandwidth())
-                    .attr('y', y(countsPerCat[ci].total))
-                    .attr('height', (svgHeight - marginBottom) - y(countsPerCat[ci].total));
-            });
-
-        // update background rects (join)
-        barsG.selectAll('g.cat-group').attr('transform', d => `translate(${x(d)},0)`);
-        barsG.selectAll('g.cat-group').each(function(category, ci) {
-            const g = d3.select(this);
-            const info = countsPerCat[ci];
-            g.selectAll('rect.bg-rect')
-                .data([info])
-                .join(
-                    enter => enter.append('rect').call(sel => {
-                        // new rect: style + handlers
-                        sel.attr('fill', '#e6e6e6');
-                        attachBinHandlers(sel, category, () => countsPerCat[ci]);
-                    })
-                        .attr('x', 0)
-                        .attr('width', x.bandwidth())
-                        .attr('y', c => y(c.total))
-                        .attr('height', c => (svgHeight - marginBottom) - y(c.total)),
-
-                    update => update
-                        .attr('x', 0)
-                        .attr('width', x.bandwidth())
-                        // .transition().duration(transitionMs)
-                        .attr('y', c => y(c.total))
-                        .attr('height', c => (svgHeight - marginBottom) - y(c.total)),
-
-                    exit => exit.remove()
-                );
-        });
-
-        // update dataset bars inside each category
-        barsG.selectAll('g.cat-group').each(function(category, ci) {
-            const g = d3.select(this);
-            const catWidth = Math.max(1, x.bandwidth());
-            const N = allDataSets.length || 1;
-            const innerW = Math.max(0, (catWidth - (N - 1) * innerPadding) / N);
-            const dsData = allDataSets.map((ds, idx) => ({ name: ds, count: countsPerCat[ci].datasets[ds] || 0, idx, catIndex: ci, category }));
-
-            const rects = g.selectAll('rect.bar-rect').data(dsData, d => d.name);
-
-            rects.join(
-                enter => enter.append('rect').attr('class', 'bar-rect')
-                    .attr('x', d => d.idx * (innerW + innerPadding))
-                    .attr('width', innerW)
-                    .on('click', function(event, d) { const clickedCategory = d.category; if (event.ctrlKey || event.metaKey) handleMultiClick(clickedCategory); else handleSingleClick(clickedCategory); })
-                    // .on('mouseover', function(event, d) {
-                    //     tooltip.html(`<strong>${d.name}</strong><br/>count: ${d.count}<br/>category: ${d.category}`)
-                    //         .style('left', (event.pageX + 8) + 'px').style('top', (event.pageY + 8) + 'px').style('display', 'block');
-                    // })
-                    // .on('mousemove', function(event) { tooltip.style('left', (event.pageX + 8) + 'px').style('top', (event.pageY + 8) + 'px'); })
-                    // .on('mouseleave', function() { tooltip.style('display', 'none'); })
-                    .style('fill', d => colors[d.name] || fallbackColor(d.name))
-                    .style('opacity', d => hiddenDatasets.has(d.name) ? 0 : 1)
-                    .attr('y', d => y(0)).attr('height', 0),
-                    // .call(ent => ent.transition().duration(transitionMs).attr('y', d => y(d.count)).attr('height', d => (svgHeight - marginBottom) - y(d.count))),
-
-                update => update
-                    .attr('x', d => d.idx * (innerW + innerPadding))
-                    .attr('width', innerW)
-                    .call(sel => sel
-                        .on('click', function(event, d) { const clickedCategory = d.category; if (event.ctrlKey || event.metaKey) handleMultiClick(clickedCategory); else handleSingleClick(clickedCategory); })
-                        // .on('mouseover', function(event, d) {
-                        //     tooltip.html(`<strong>${d.name}</strong><br/>count: ${d.count}<br/>category: ${d.category}`)
-                        //         .style('left', (event.pageX + 8) + 'px').style('top', (event.pageY + 8) + 'px').style('display', 'block');
-                        // })
-                        // .on('mousemove', function(event) { tooltip.style('left', (event.pageX + 8) + 'px').style('top', (event.pageY + 8) + 'px'); })
-                        // .on('mouseleave', function() { tooltip.style('display', 'none'); })
-                        // .transition().duration(transitionMs)
-                        .attr('y', d => y(d.count))
-                        .attr('height', d => (svgHeight - marginBottom) - y(d.count))
-                        .style('fill', d => colors[d.name] || fallbackColor(d.name))
-                        .style('opacity', d => hiddenDatasets.has(d.name) ? 0 : 1)
-                    ),
-
-                exit => exit.remove()
-            );
-        });
+        // draw everything on right canvas
+        drawGridAndBars(countsPerCat, allDataSets, colors);
     }
 
     // initial draw
     initialRender();
-    updateBarPlot();
 
     // return updater
     return function() {
         // update layout sizes if container resized externally
         const cw = container.node().clientWidth;
         const newRightPaneWidth = Math.max(cw - marginLeft, categories.length * minBinWidth);
-        svgRightWidth = newRightPaneWidth;
-        rightSvg.attr("width", svgRightWidth);
-        x.range([0, svgRightWidth - marginRight]);
-        updateBarPlot();
+        canvasRightWidth = newRightPaneWidth;
+        setCanvasSize(rightCanvasNode, rightCtx, canvasRightWidth, canvasHeight);
+        x.range([0, canvasRightWidth - marginRight]);
+        renderAll();
     };
 }

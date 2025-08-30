@@ -1,6 +1,6 @@
 export function makeAdaptiveThrottle(fn) {
-    let initialDelay = 70,
-        multiplier = 5,
+    let initialDelay = 50,
+        multiplier = 1.5,
         alpha = 0.20,
         leading = true,
         trailing = true;
